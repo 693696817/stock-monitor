@@ -218,9 +218,9 @@ MIT License
    - 在个人中心获取Token
    - 将Token填入 `config.json` 的 `tushare_token` 字段
 
-2. **AI分析服务 API Key**
-   - 访问 [Volcengine智能对话](https://www.volcengine.com/product/intelligent-chat)
-   - 注册企业账号并开通服务
+2. **豆包大模型 API Key**
+   - 访问 [豆包大模型](https://www.doubao.com/)
+   - 注册并登录账号
    - 在控制台获取API Key和模型ID
    - 将API Key填入 `config.json` 的 `ai_api_key` 字段
    - 将模型ID填入 `config.json` 的 `ai_model_id` 字段
