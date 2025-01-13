@@ -1,0 +1,2283 @@
+{
+    "300059": {
+        "data": {
+            "stock_info": {
+                "code": "300059",
+                "name": "东方财富",
+                "market_value": 3491.76,
+                "pe_ratio": 42.62,
+                "pb_ratio": 4.54,
+                "ps_ratio": 89.81,
+                "dividend_yield": 0.0018,
+                "price": 22.12,
+                "change_percent": 0.011,
+                "roe": 0.0811,
+                "gross_profit_margin": 0.8372,
+                "net_profit_margin": 2.694,
+                "debt_to_assets": 0.7643,
+                "revenue_yoy": 0,
+                "net_profit_yoy": -0.0269,
+                "bps": 4.874,
+                "ocfps": 4.062,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 2500.0,
+                    "max": 2800.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "601318": {
+        "data": {
+            "stock_info": {
+                "code": "601318",
+                "name": "中国平安",
+                "market_value": 8848.35,
+                "pe_ratio": 10.33,
+                "pb_ratio": 0.99,
+                "ps_ratio": 0.97,
+                "dividend_yield": 0.0498,
+                "price": 48.59,
+                "change_percent": -0.0074,
+                "roe": 0.1319,
+                "gross_profit_margin": 0,
+                "net_profit_margin": 0.1806,
+                "debt_to_assets": 0.8979,
+                "revenue_yoy": 0,
+                "net_profit_yoy": 0.3609,
+                "bps": 49.859,
+                "ocfps": 22.933,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 8000.0,
+                    "max": 9500.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "600085": {
+        "data": {
+            "stock_info": {
+                "code": "600085",
+                "name": "同仁堂",
+                "market_value": 507.86,
+                "pe_ratio": 30.43,
+                "pb_ratio": 4.13,
+                "ps_ratio": 2.84,
+                "dividend_yield": 0.027,
+                "price": 37.03,
+                "change_percent": 0.0082,
+                "roe": 0.1037,
+                "gross_profit_margin": 0.437,
+                "net_profit_margin": 0.1435,
+                "debt_to_assets": 0.3435,
+                "revenue_yoy": 0,
+                "net_profit_yoy": -0.0292,
+                "bps": 9.463,
+                "ocfps": -0.038,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 336.0,
+                    "max": 429.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "002714": {
+        "data": {
+            "stock_info": {
+                "code": "002714",
+                "name": "牧原股份",
+                "market_value": 1980.25,
+                "pe_ratio": 0,
+                "pb_ratio": 2.97,
+                "ps_ratio": 1.79,
+                "dividend_yield": 0.0227,
+                "price": 36.25,
+                "change_percent": 0.0014,
+                "roe": 0.1552,
+                "gross_profit_margin": 0.1727,
+                "net_profit_margin": 0.1162,
+                "debt_to_assets": 0.5838,
+                "revenue_yoy": 0,
+                "net_profit_yoy": 6.689,
+                "bps": 13.034,
+                "ocfps": 5.339,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 1650.0,
+                    "max": 2200.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "000538": {
+        "data": {
+            "stock_info": {
+                "code": "000538",
+                "name": "云南白药",
+                "market_value": 1001.86,
+                "pe_ratio": 24.47,
+                "pb_ratio": 2.61,
+                "ps_ratio": 2.56,
+                "dividend_yield": 0.0586,
+                "price": 56.15,
+                "change_percent": -0.0083,
+                "roe": 0.1076,
+                "gross_profit_margin": 0.284,
+                "net_profit_margin": 0.1447,
+                "debt_to_assets": 0.271,
+                "revenue_yoy": 0,
+                "net_profit_yoy": 0.0493,
+                "bps": 22.711,
+                "ocfps": 2.283,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 807.0,
+                    "max": 1210.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "000423": {
+        "data": {
+            "stock_info": {
+                "code": "000423",
+                "name": "东阿阿胶",
+                "market_value": 391.86,
+                "pe_ratio": 34.05,
+                "pb_ratio": 3.95,
+                "ps_ratio": 8.31,
+                "dividend_yield": 0.0481,
+                "price": 60.85,
+                "change_percent": -0.0178,
+                "roe": 0.1117,
+                "gross_profit_margin": 0.7413,
+                "net_profit_margin": 0.2661,
+                "debt_to_assets": 0.2188,
+                "revenue_yoy": 0,
+                "net_profit_yoy": 0.47,
+                "bps": 15.392,
+                "ocfps": 2.238,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 270.0,
+                    "max": 330.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "000963": {
+        "data": {
+            "stock_info": {
+                "code": "000963",
+                "name": "华东医药",
+                "market_value": 567.33,
+                "pe_ratio": 19.98,
+                "pb_ratio": 2.57,
+                "ps_ratio": 1.4,
+                "dividend_yield": 0.0288,
+                "price": 32.34,
+                "change_percent": -0.0089,
+                "roe": 0.1189,
+                "gross_profit_margin": 0.3255,
+                "net_profit_margin": 0.0814,
+                "debt_to_assets": 0.398,
+                "revenue_yoy": 0,
+                "net_profit_yoy": 0.1705,
+                "bps": 12.565,
+                "ocfps": 1.429,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 500.0,
+                    "max": 650.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "002415": {
+        "data": {
+            "stock_info": {
+                "code": "002415",
+                "name": "海康威视",
+                "market_value": 2554.83,
+                "pe_ratio": 18.11,
+                "pb_ratio": 3.33,
+                "ps_ratio": 2.86,
+                "dividend_yield": 0.0329,
+                "price": 27.67,
+                "change_percent": -0.0047,
+                "roe": 0.1059,
+                "gross_profit_margin": 0.4476,
+                "net_profit_margin": 0.1371,
+                "debt_to_assets": 0.3296,
+                "revenue_yoy": 0,
+                "net_profit_yoy": -0.084,
+                "bps": 8.321,
+                "ocfps": 0.282,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 2000.0,
+                    "max": 2200.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "002007": {
+        "data": {
+            "stock_info": {
+                "code": "002007",
+                "name": "华兰生物",
+                "market_value": 284.92,
+                "pe_ratio": 19.23,
+                "pb_ratio": 2.44,
+                "ps_ratio": 5.33,
+                "dividend_yield": 0.0193,
+                "price": 15.58,
+                "change_percent": -0.0133,
+                "roe": 0.0801,
+                "gross_profit_margin": 0.6177,
+                "net_profit_margin": 0.2897,
+                "debt_to_assets": 0.1485,
+                "revenue_yoy": 0,
+                "net_profit_yoy": -0.1346,
+                "bps": 6.396,
+                "ocfps": 0.251,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 240.0,
+                    "max": 288.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "600132": {
+        "data": {
+            "stock_info": {
+                "code": "600132",
+                "name": "重庆啤酒",
+                "market_value": 277.32,
+                "pe_ratio": 20.75,
+                "pb_ratio": 19.67,
+                "ps_ratio": 1.87,
+                "dividend_yield": 0.075,
+                "price": 57.3,
+                "change_percent": 0.0145,
+                "roe": 0.623,
+                "gross_profit_margin": 0.492,
+                "net_profit_margin": 0.2041,
+                "debt_to_assets": 0.6684,
+                "revenue_yoy": 0,
+                "net_profit_yoy": -0.009,
+                "bps": 4.413,
+                "ocfps": 7.153,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 225.0,
+                    "max": 260.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "002049": {
+        "data": {
+            "stock_info": {
+                "code": "002049",
+                "name": "紫光国微",
+                "market_value": 492.36,
+                "pe_ratio": 19.46,
+                "pb_ratio": 4.1,
+                "ps_ratio": 6.51,
+                "dividend_yield": 0.0116,
+                "price": 57.95,
+                "change_percent": -0.0113,
+                "roe": 0.0847,
+                "gross_profit_margin": 0.5681,
+                "net_profit_margin": 0.2383,
+                "debt_to_assets": 0.2684,
+                "revenue_yoy": 0,
+                "net_profit_yoy": -0.5027,
+                "bps": 14.13,
+                "ocfps": 1.145,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 360.0,
+                    "max": 480.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "600436": {
+        "data": {
+            "stock_info": {
+                "code": "600436",
+                "name": "片仔癀",
+                "market_value": 1236.8,
+                "pe_ratio": 44.21,
+                "pb_ratio": 9.28,
+                "ps_ratio": 12.3,
+                "dividend_yield": 0.0169,
+                "price": 205.0,
+                "change_percent": 0.0029,
+                "roe": 0.1961,
+                "gross_profit_margin": 0.4544,
+                "net_profit_margin": 0.3216,
+                "debt_to_assets": 0.1882,
+                "revenue_yoy": 0,
+                "net_profit_yoy": 0.1173,
+                "bps": 23.24,
+                "ocfps": 2.153,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 960.0,
+                    "max": 1080.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "002216": {
+        "data": {
+            "stock_info": {
+                "code": "002216",
+                "name": "三全食品",
+                "market_value": 97.77,
+                "pe_ratio": 13.05,
+                "pb_ratio": 2.28,
+                "ps_ratio": 1.39,
+                "dividend_yield": 0.045,
+                "price": 11.12,
+                "change_percent": 0.0091,
+                "roe": 0.0914,
+                "gross_profit_margin": 0.2503,
+                "net_profit_margin": 0.0769,
+                "debt_to_assets": 0.4028,
+                "revenue_yoy": 0,
+                "net_profit_yoy": -0.2861,
+                "bps": 4.878,
+                "ocfps": 0.835,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 72.0,
+                    "max": 96.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "601966": {
+        "data": {
+            "stock_info": {
+                "code": "601966",
+                "name": "玲珑轮胎",
+                "market_value": 251.87,
+                "pe_ratio": 18.11,
+                "pb_ratio": 1.18,
+                "ps_ratio": 1.25,
+                "dividend_yield": 0.0371,
+                "price": 17.21,
+                "change_percent": -0.0023,
+                "roe": 0.0801,
+                "gross_profit_margin": 0.2435,
+                "net_profit_margin": 0.1073,
+                "debt_to_assets": 0.5242,
+                "revenue_yoy": 0,
+                "net_profit_yoy": 0.7839,
+                "bps": 14.836,
+                "ocfps": 0.953,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 220.0,
+                    "max": 280.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "603195": {
+        "data": {
+            "stock_info": {
+                "code": "603195",
+                "name": "公牛集团",
+                "market_value": 861.35,
+                "pe_ratio": 22.26,
+                "pb_ratio": 5.8,
+                "ps_ratio": 5.49,
+                "dividend_yield": 0.0321,
+                "price": 66.66,
+                "change_percent": -0.0141,
+                "roe": 0.2228,
+                "gross_profit_margin": 0.4312,
+                "net_profit_margin": 0.2589,
+                "debt_to_assets": 0.231,
+                "revenue_yoy": 0,
+                "net_profit_yoy": 0.16,
+                "bps": 11.493,
+                "ocfps": 2.333,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 730.0,
+                    "max": 950.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "000001": {
+        "data": {
+            "stock_info": {
+                "code": "000001",
+                "name": "平安银行",
+                "market_value": 2173.46,
+                "pe_ratio": 4.68,
+                "pb_ratio": 0.52,
+                "ps_ratio": 1.32,
+                "dividend_yield": 0.0862,
+                "price": 11.2,
+                "change_percent": -0.0089,
+                "roe": 0.0825,
+                "gross_profit_margin": 0,
+                "net_profit_margin": 0.3561,
+                "debt_to_assets": 0.9146,
+                "revenue_yoy": 0,
+                "net_profit_yoy": 0.0024,
+                "bps": 21.67,
+                "ocfps": 7.07,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 2300.0,
+                    "max": 2800.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "600867": {
+        "data": {
+            "stock_info": {
+                "code": "600867",
+                "name": "通化东宝",
+                "market_value": 145.52,
+                "pe_ratio": 12.46,
+                "pb_ratio": 2.33,
+                "ps_ratio": 4.73,
+                "dividend_yield": 0.034,
+                "price": 7.43,
+                "change_percent": 0.0095,
+                "roe": -0.0097,
+                "gross_profit_margin": 0.7447,
+                "net_profit_margin": -0.0459,
+                "debt_to_assets": 0.0974,
+                "revenue_yoy": 0,
+                "net_profit_yoy": -1.0873,
+                "bps": 3.243,
+                "ocfps": 0.114,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 120.0,
+                    "max": 160.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "603087": {
+        "data": {
+            "stock_info": {
+                "code": "603087",
+                "name": "甘李药业",
+                "market_value": 250.34,
+                "pe_ratio": 73.62,
+                "pb_ratio": 2.3,
+                "ps_ratio": 9.6,
+                "dividend_yield": 0.0168,
+                "price": 41.65,
+                "change_percent": 0.0161,
+                "roe": 0.0462,
+                "gross_profit_margin": 0.7536,
+                "net_profit_margin": 0.226,
+                "debt_to_assets": 0.083,
+                "revenue_yoy": 0,
+                "net_profit_yoy": 0.9036,
+                "bps": 18.645,
+                "ocfps": 0.774,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 170.0,
+                    "max": 283.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "603290": {
+        "data": {
+            "stock_info": {
+                "code": "603290",
+                "name": "斯达半导",
+                "market_value": 193.85,
+                "pe_ratio": 21.29,
+                "pb_ratio": 2.94,
+                "ps_ratio": 5.29,
+                "dividend_yield": 0.0141,
+                "price": 80.95,
+                "change_percent": 0.0021,
+                "roe": 0.065,
+                "gross_profit_margin": 0.3169,
+                "net_profit_margin": 0.1773,
+                "debt_to_assets": 0.2998,
+                "revenue_yoy": 0,
+                "net_profit_yoy": -0.3569,
+                "bps": 27.532,
+                "ocfps": 2.727,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 150.0,
+                    "max": 200.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "600332": {
+        "data": {
+            "stock_info": {
+                "code": "600332",
+                "name": "白云山",
+                "market_value": 433.11,
+                "pe_ratio": 10.68,
+                "pb_ratio": 1.22,
+                "ps_ratio": 0.57,
+                "dividend_yield": 0.0431,
+                "price": 26.64,
+                "change_percent": 0.0019,
+                "roe": 0.0888,
+                "gross_profit_margin": 0.177,
+                "net_profit_margin": 0.0557,
+                "debt_to_assets": 0.5199,
+                "revenue_yoy": 0,
+                "net_profit_yoy": -0.1668,
+                "bps": 22.28,
+                "ocfps": -0.462,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 380.0,
+                    "max": 460.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "300124": {
+        "data": {
+            "stock_info": {
+                "code": "300124",
+                "name": "汇川技术",
+                "market_value": 1570.93,
+                "pe_ratio": 33.13,
+                "pb_ratio": 5.86,
+                "ps_ratio": 5.16,
+                "dividend_yield": 0.0077,
+                "price": 58.35,
+                "change_percent": -0.0273,
+                "roe": 0.1316,
+                "gross_profit_margin": 0.3102,
+                "net_profit_margin": 0.1345,
+                "debt_to_assets": 0.4929,
+                "revenue_yoy": 0,
+                "net_profit_yoy": 0.0104,
+                "bps": 9.885,
+                "ocfps": 1.44,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 1200.0,
+                    "max": 1400.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "300146": {
+        "data": {
+            "stock_info": {
+                "code": "300146",
+                "name": "汤臣倍健",
+                "market_value": 192.2,
+                "pe_ratio": 11.01,
+                "pb_ratio": 1.7,
+                "ps_ratio": 2.04,
+                "dividend_yield": 0.0789,
+                "price": 11.3,
+                "change_percent": 0.0116,
+                "roe": 0.074,
+                "gross_profit_margin": 0.6793,
+                "net_profit_margin": 0.1504,
+                "debt_to_assets": 0.1611,
+                "revenue_yoy": 0,
+                "net_profit_yoy": -0.5431,
+                "bps": 6.659,
+                "ocfps": 0.201,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 150.0,
+                    "max": 200.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "000999": {
+        "data": {
+            "stock_info": {
+                "code": "000999",
+                "name": "华润三九",
+                "market_value": 546.6,
+                "pe_ratio": 19.16,
+                "pb_ratio": 2.84,
+                "ps_ratio": 2.21,
+                "dividend_yield": 0.0506,
+                "price": 42.56,
+                "change_percent": -0.0014,
+                "roe": 0.1499,
+                "gross_profit_margin": 0.5268,
+                "net_profit_margin": 0.1644,
+                "debt_to_assets": 0.3607,
+                "revenue_yoy": 0,
+                "net_profit_yoy": 0.2319,
+                "bps": 15.987,
+                "ocfps": 2.495,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 450.0,
+                    "max": 580.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "000516": {
+        "data": {
+            "stock_info": {
+                "code": "000516",
+                "name": "国际医学",
+                "market_value": 109.4,
+                "pe_ratio": 0,
+                "pb_ratio": 3.0,
+                "ps_ratio": 2.37,
+                "dividend_yield": 0.0,
+                "price": 4.84,
+                "change_percent": -0.032,
+                "roe": -0.0561,
+                "gross_profit_margin": 0.0919,
+                "net_profit_margin": -0.0816,
+                "debt_to_assets": 0.6704,
+                "revenue_yoy": 0,
+                "net_profit_yoy": 0.0459,
+                "bps": 1.616,
+                "ocfps": 0.276,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 100.0,
+                    "max": 120.0
+                }
+            }
+        },
+        "timestamp": "2025-01-10"
+    },
+    "002466": {
+        "data": {
+            "stock_info": {
+                "code": "002466",
+                "name": "天齐锂业",
+                "market_value": 529.95,
+                "pe_ratio": 7.26,
+                "pb_ratio": 1.22,
+                "ps_ratio": 1.31,
+                "dividend_yield": 0.0418,
+                "price": 32.29,
+                "change_percent": 0.0416,
+                "roe": -0.12,
+                "gross_profit_margin": 0.4903,
+                "net_profit_margin": 0.1723,
+                "debt_to_assets": 0.2843,
+                "revenue_yoy": 0,
+                "net_profit_yoy": -1.704,
+                "bps": 26.51,
+                "ocfps": 2.554,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": 330.0,
+                    "max": 415.0
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "index_data": {
+        "data": {
+            "data": [
+                {
+                    "code": "000001.SH",
+                    "name": "上证指数",
+                    "price": 3168.5238,
+                    "change": -1.3349,
+                    "kline_data": [
+                        {
+                            "date": "20250110",
+                            "open": 3211.7068,
+                            "close": 3168.5238,
+                            "high": 3220.1073,
+                            "low": 3168.5238,
+                            "vol": 403663348.0
+                        },
+                        {
+                            "date": "20250109",
+                            "open": 3220.7205,
+                            "close": 3211.3933,
+                            "high": 3228.9725,
+                            "low": 3205.9103,
+                            "vol": 382943557.0
+                        },
+                        {
+                            "date": "20250108",
+                            "open": 3218.8577,
+                            "close": 3230.1679,
+                            "high": 3246.2908,
+                            "low": 3175.7247,
+                            "vol": 472864390.0
+                        },
+                        {
+                            "date": "20250107",
+                            "open": 3203.3068,
+                            "close": 3229.6439,
+                            "high": 3230.8529,
+                            "low": 3190.4612,
+                            "vol": 409660529.0
+                        },
+                        {
+                            "date": "20250106",
+                            "open": 3209.7832,
+                            "close": 3206.9228,
+                            "high": 3219.4877,
+                            "low": 3185.4631,
+                            "vol": 430978403.0
+                        },
+                        {
+                            "date": "20250103",
+                            "open": 3267.0766,
+                            "close": 3211.4299,
+                            "high": 3273.5656,
+                            "low": 3205.7755,
+                            "vol": 517592014.0
+                        },
+                        {
+                            "date": "20250102",
+                            "open": 3347.9392,
+                            "close": 3262.5607,
+                            "high": 3351.722,
+                            "low": 3242.0865,
+                            "vol": 561375199.0
+                        },
+                        {
+                            "date": "20241231",
+                            "open": 3406.9652,
+                            "close": 3351.763,
+                            "high": 3413.4545,
+                            "low": 3351.763,
+                            "vol": 502731062.0
+                        },
+                        {
+                            "date": "20241230",
+                            "open": 3395.3962,
+                            "close": 3407.3259,
+                            "high": 3412.8414,
+                            "low": 3394.9648,
+                            "vol": 455262383.0
+                        },
+                        {
+                            "date": "20241227",
+                            "open": 3397.2939,
+                            "close": 3400.142,
+                            "high": 3418.952,
+                            "low": 3388.3215,
+                            "vol": 500488130.0
+                        },
+                        {
+                            "date": "20241226",
+                            "open": 3389.3383,
+                            "close": 3398.0765,
+                            "high": 3401.0951,
+                            "low": 3380.255,
+                            "vol": 422177271.0
+                        },
+                        {
+                            "date": "20241225",
+                            "open": 3395.1072,
+                            "close": 3393.3501,
+                            "high": 3406.2125,
+                            "low": 3374.0113,
+                            "vol": 471315592.0
+                        },
+                        {
+                            "date": "20241224",
+                            "open": 3353.5354,
+                            "close": 3393.5281,
+                            "high": 3394.9044,
+                            "low": 3352.9474,
+                            "vol": 471992673.0
+                        },
+                        {
+                            "date": "20241223",
+                            "open": 3367.9037,
+                            "close": 3351.2571,
+                            "high": 3384.9918,
+                            "low": 3348.277,
+                            "vol": 556747248.0
+                        },
+                        {
+                            "date": "20241220",
+                            "open": 3364.481,
+                            "close": 3368.0693,
+                            "high": 3390.6182,
+                            "low": 3362.8193,
+                            "vol": 490964621.0
+                        },
+                        {
+                            "date": "20241219",
+                            "open": 3355.9041,
+                            "close": 3370.0331,
+                            "high": 3377.5321,
+                            "low": 3346.469,
+                            "vol": 513909063.0
+                        },
+                        {
+                            "date": "20241218",
+                            "open": 3371.2955,
+                            "close": 3382.2081,
+                            "high": 3396.4603,
+                            "low": 3371.2955,
+                            "vol": 512524979.0
+                        },
+                        {
+                            "date": "20241217",
+                            "open": 3381.8141,
+                            "close": 3361.485,
+                            "high": 3396.2074,
+                            "low": 3357.7694,
+                            "vol": 568941505.0
+                        },
+                        {
+                            "date": "20241216",
+                            "open": 3390.083,
+                            "close": 3386.3312,
+                            "high": 3401.9263,
+                            "low": 3376.5358,
+                            "vol": 625578996.0
+                        },
+                        {
+                            "date": "20241213",
+                            "open": 3442.9259,
+                            "close": 3391.8782,
+                            "high": 3442.9259,
+                            "low": 3390.7537,
+                            "vol": 777464144.0
+                        }
+                    ]
+                },
+                {
+                    "code": "399001.SZ",
+                    "name": "深证成指",
+                    "price": 9795.9438,
+                    "change": -1.8049,
+                    "kline_data": [
+                        {
+                            "date": "20250110",
+                            "open": 9957.8343,
+                            "close": 9795.9438,
+                            "high": 10004.0607,
+                            "low": 9795.9438,
+                            "vol": 616360985.0
+                        },
+                        {
+                            "date": "20250109",
+                            "open": 9906.9088,
+                            "close": 9976.0038,
+                            "high": 10021.9397,
+                            "low": 9901.6345,
+                            "vol": 605202920.0
+                        },
+                        {
+                            "date": "20250108",
+                            "open": 9940.1968,
+                            "close": 9944.6404,
+                            "high": 10016.2192,
+                            "low": 9731.4379,
+                            "vol": 683561380.0
+                        },
+                        {
+                            "date": "20250107",
+                            "open": 9860.578,
+                            "close": 9998.7565,
+                            "high": 10000.3408,
+                            "low": 9822.0008,
+                            "vol": 588919068.0
+                        },
+                        {
+                            "date": "20250106",
+                            "open": 9890.9841,
+                            "close": 9885.6545,
+                            "high": 9975.9921,
+                            "low": 9817.7509,
+                            "vol": 586235482.0
+                        },
+                        {
+                            "date": "20250103",
+                            "open": 10097.9312,
+                            "close": 9897.1203,
+                            "high": 10139.9895,
+                            "low": 9891.8398,
+                            "vol": 685235256.0
+                        },
+                        {
+                            "date": "20250102",
+                            "open": 10400.6644,
+                            "close": 10088.0589,
+                            "high": 10409.6132,
+                            "low": 10006.5558,
+                            "vol": 681116709.0
+                        },
+                        {
+                            "date": "20241231",
+                            "open": 10668.168,
+                            "close": 10414.6113,
+                            "high": 10678.7711,
+                            "low": 10414.6113,
+                            "vol": 646653008.0
+                        },
+                        {
+                            "date": "20241230",
+                            "open": 10644.1537,
+                            "close": 10671.155,
+                            "high": 10726.6603,
+                            "low": 10632.7442,
+                            "vol": 609052769.0
+                        },
+                        {
+                            "date": "20241227",
+                            "open": 10679.3433,
+                            "close": 10659.9751,
+                            "high": 10780.5327,
+                            "low": 10632.5252,
+                            "vol": 679934587.0
+                        },
+                        {
+                            "date": "20241226",
+                            "open": 10586.957,
+                            "close": 10673.9684,
+                            "high": 10692.8864,
+                            "low": 10570.0857,
+                            "vol": 593997426.0
+                        },
+                        {
+                            "date": "20241225",
+                            "open": 10675.729,
+                            "close": 10603.0998,
+                            "high": 10677.6475,
+                            "low": 10544.8803,
+                            "vol": 667963062.0
+                        },
+                        {
+                            "date": "20241224",
+                            "open": 10548.1453,
+                            "close": 10671.4274,
+                            "high": 10673.3372,
+                            "low": 10548.1453,
+                            "vol": 664977041.0
+                        },
+                        {
+                            "date": "20241223",
+                            "open": 10650.575,
+                            "close": 10537.4021,
+                            "high": 10708.8229,
+                            "low": 10527.1463,
+                            "vol": 795687830.0
+                        },
+                        {
+                            "date": "20241220",
+                            "open": 10631.4447,
+                            "close": 10646.6176,
+                            "high": 10731.0762,
+                            "low": 10618.7944,
+                            "vol": 732375378.0
+                        },
+                        {
+                            "date": "20241219",
+                            "open": 10483.5035,
+                            "close": 10649.0339,
+                            "high": 10673.9616,
+                            "low": 10460.1961,
+                            "vol": 760693343.0
+                        },
+                        {
+                            "date": "20241218",
+                            "open": 10561.9354,
+                            "close": 10584.2695,
+                            "high": 10639.7699,
+                            "low": 10535.7611,
+                            "vol": 740846621.0
+                        },
+                        {
+                            "date": "20241217",
+                            "open": 10557.2316,
+                            "close": 10537.4285,
+                            "high": 10677.7429,
+                            "low": 10526.2556,
+                            "vol": 858140531.0
+                        },
+                        {
+                            "date": "20241216",
+                            "open": 10705.5166,
+                            "close": 10573.9194,
+                            "high": 10721.7095,
+                            "low": 10535.5265,
+                            "vol": 922676962.0
+                        },
+                        {
+                            "date": "20241213",
+                            "open": 10876.1903,
+                            "close": 10713.072,
+                            "high": 10876.1903,
+                            "low": 10709.1393,
+                            "vol": 1075547182.0
+                        }
+                    ]
+                },
+                {
+                    "code": "399006.SZ",
+                    "name": "创业板指",
+                    "price": 1975.3048,
+                    "change": -1.7584,
+                    "kline_data": [
+                        {
+                            "date": "20250110",
+                            "open": 2006.5527,
+                            "close": 1975.3048,
+                            "high": 2024.4268,
+                            "low": 1975.3048,
+                            "vol": 178384005.0
+                        },
+                        {
+                            "date": "20250109",
+                            "open": 1994.81,
+                            "close": 2010.6601,
+                            "high": 2025.306,
+                            "low": 1994.7047,
+                            "vol": 174244807.0
+                        },
+                        {
+                            "date": "20250108",
+                            "open": 2011.7489,
+                            "close": 2008.4441,
+                            "high": 2029.0233,
+                            "low": 1963.8057,
+                            "vol": 195527838.0
+                        },
+                        {
+                            "date": "20250107",
+                            "open": 1996.0003,
+                            "close": 2028.3582,
+                            "high": 2028.7513,
+                            "low": 1988.418,
+                            "vol": 168570528.0
+                        },
+                        {
+                            "date": "20250106",
+                            "open": 2018.2457,
+                            "close": 2014.1899,
+                            "high": 2033.2681,
+                            "low": 2000.8615,
+                            "vol": 169375612.0
+                        },
+                        {
+                            "date": "20250103",
+                            "open": 2062.4025,
+                            "close": 2015.9671,
+                            "high": 2067.4089,
+                            "low": 2015.9633,
+                            "vol": 206064912.0
+                        },
+                        {
+                            "date": "20250102",
+                            "open": 2136.9221,
+                            "close": 2060.4422,
+                            "high": 2137.6549,
+                            "low": 2040.3792,
+                            "vol": 196587394.0
+                        },
+                        {
+                            "date": "20241231",
+                            "open": 2202.1811,
+                            "close": 2141.5958,
+                            "high": 2207.3112,
+                            "low": 2141.5958,
+                            "vol": 199428413.0
+                        },
+                        {
+                            "date": "20241230",
+                            "open": 2198.8648,
+                            "close": 2206.2852,
+                            "high": 2218.7352,
+                            "low": 2198.1247,
+                            "vol": 187201460.0
+                        },
+                        {
+                            "date": "20241227",
+                            "open": 2209.7101,
+                            "close": 2204.8965,
+                            "high": 2235.5559,
+                            "low": 2196.2938,
+                            "vol": 207513529.0
+                        },
+                        {
+                            "date": "20241226",
+                            "open": 2200.3188,
+                            "close": 2209.8464,
+                            "high": 2219.6932,
+                            "low": 2193.5882,
+                            "vol": 184436466.0
+                        },
+                        {
+                            "date": "20241225",
+                            "open": 2215.6123,
+                            "close": 2201.296,
+                            "high": 2216.3572,
+                            "low": 2186.9997,
+                            "vol": 203868100.0
+                        },
+                        {
+                            "date": "20241224",
+                            "open": 2190.4696,
+                            "close": 2213.548,
+                            "high": 2215.1924,
+                            "low": 2187.7803,
+                            "vol": 200966406.0
+                        },
+                        {
+                            "date": "20241223",
+                            "open": 2205.6903,
+                            "close": 2187.9448,
+                            "high": 2223.6367,
+                            "low": 2185.3528,
+                            "vol": 245538770.0
+                        },
+                        {
+                            "date": "20241220",
+                            "open": 2209.3755,
+                            "close": 2209.6616,
+                            "high": 2234.1315,
+                            "low": 2201.9409,
+                            "vol": 230049274.0
+                        },
+                        {
+                            "date": "20241219",
+                            "open": 2178.463,
+                            "close": 2213.5429,
+                            "high": 2220.4332,
+                            "low": 2174.9434,
+                            "vol": 221719261.0
+                        },
+                        {
+                            "date": "20241218",
+                            "open": 2207.1823,
+                            "close": 2202.1373,
+                            "high": 2216.0033,
+                            "low": 2192.5973,
+                            "vol": 216481475.0
+                        },
+                        {
+                            "date": "20241217",
+                            "open": 2197.1259,
+                            "close": 2201.181,
+                            "high": 2233.172,
+                            "low": 2197.1259,
+                            "vol": 248753480.0
+                        },
+                        {
+                            "date": "20241216",
+                            "open": 2232.6249,
+                            "close": 2201.5324,
+                            "high": 2234.1863,
+                            "low": 2192.2524,
+                            "vol": 273787933.0
+                        },
+                        {
+                            "date": "20241213",
+                            "open": 2272.2664,
+                            "close": 2235.2586,
+                            "high": 2276.1275,
+                            "low": 2234.1701,
+                            "vol": 328537971.0
+                        }
+                    ]
+                },
+                {
+                    "code": "000016.SH",
+                    "name": "上证50",
+                    "price": 2560.2497,
+                    "change": -0.7492,
+                    "kline_data": [
+                        {
+                            "date": "20250110",
+                            "open": 2585.1998,
+                            "close": 2560.2497,
+                            "high": 2593.0872,
+                            "low": 2560.2497,
+                            "vol": 36166878.0
+                        },
+                        {
+                            "date": "20250109",
+                            "open": 2595.6918,
+                            "close": 2579.5751,
+                            "high": 2597.0557,
+                            "low": 2574.603,
+                            "vol": 34356506.0
+                        },
+                        {
+                            "date": "20250108",
+                            "open": 2587.5267,
+                            "close": 2597.4459,
+                            "high": 2611.1528,
+                            "low": 2565.5989,
+                            "vol": 46257463.0
+                        },
+                        {
+                            "date": "20250107",
+                            "open": 2576.6772,
+                            "close": 2593.9654,
+                            "high": 2595.6633,
+                            "low": 2566.6785,
+                            "vol": 39218598.0
+                        },
+                        {
+                            "date": "20250106",
+                            "open": 2589.3354,
+                            "close": 2579.9632,
+                            "high": 2591.8944,
+                            "low": 2555.9276,
+                            "vol": 44486402.0
+                        },
+                        {
+                            "date": "20250103",
+                            "open": 2615.3507,
+                            "close": 2587.1316,
+                            "high": 2620.6463,
+                            "low": 2579.439,
+                            "vol": 50804858.0
+                        },
+                        {
+                            "date": "20250102",
+                            "open": 2682.4157,
+                            "close": 2610.342,
+                            "high": 2684.2467,
+                            "low": 2595.3991,
+                            "vol": 61160984.0
+                        },
+                        {
+                            "date": "20241231",
+                            "open": 2715.2066,
+                            "close": 2684.7706,
+                            "high": 2725.7876,
+                            "low": 2684.7706,
+                            "vol": 50745554.0
+                        },
+                        {
+                            "date": "20241230",
+                            "open": 2700.2245,
+                            "close": 2718.7486,
+                            "high": 2724.7263,
+                            "low": 2700.2245,
+                            "vol": 44994763.0
+                        },
+                        {
+                            "date": "20241227",
+                            "open": 2701.2086,
+                            "close": 2701.7031,
+                            "high": 2713.8405,
+                            "low": 2686.5011,
+                            "vol": 44894855.0
+                        },
+                        {
+                            "date": "20241226",
+                            "open": 2709.5915,
+                            "close": 2702.5952,
+                            "high": 2709.5915,
+                            "low": 2692.8677,
+                            "vol": 41770736.0
+                        },
+                        {
+                            "date": "20241225",
+                            "open": 2706.5666,
+                            "close": 2710.1649,
+                            "high": 2726.1403,
+                            "low": 2700.6812,
+                            "vol": 51010381.0
+                        },
+                        {
+                            "date": "20241224",
+                            "open": 2671.9088,
+                            "close": 2702.282,
+                            "high": 2704.5775,
+                            "low": 2666.3412,
+                            "vol": 46469198.0
+                        },
+                        {
+                            "date": "20241223",
+                            "open": 2648.9188,
+                            "close": 2671.2025,
+                            "high": 2688.8864,
+                            "low": 2648.9188,
+                            "vol": 56629099.0
+                        },
+                        {
+                            "date": "20241220",
+                            "open": 2654.8486,
+                            "close": 2648.4609,
+                            "high": 2670.3177,
+                            "low": 2644.8364,
+                            "vol": 42493510.0
+                        },
+                        {
+                            "date": "20241219",
+                            "open": 2652.1949,
+                            "close": 2661.7224,
+                            "high": 2672.5807,
+                            "low": 2642.6831,
+                            "vol": 40214140.0
+                        },
+                        {
+                            "date": "20241218",
+                            "open": 2662.0322,
+                            "close": 2671.3461,
+                            "high": 2681.1212,
+                            "low": 2661.8983,
+                            "vol": 44259056.0
+                        },
+                        {
+                            "date": "20241217",
+                            "open": 2637.3498,
+                            "close": 2652.3455,
+                            "high": 2672.9552,
+                            "low": 2637.3498,
+                            "vol": 44279234.0
+                        },
+                        {
+                            "date": "20241216",
+                            "open": 2637.7401,
+                            "close": 2641.5604,
+                            "high": 2647.6977,
+                            "low": 2635.2467,
+                            "vol": 54098120.0
+                        },
+                        {
+                            "date": "20241213",
+                            "open": 2684.2932,
+                            "close": 2638.0266,
+                            "high": 2684.4109,
+                            "low": 2636.9729,
+                            "vol": 61597705.0
+                        }
+                    ]
+                },
+                {
+                    "code": "000300.SH",
+                    "name": "沪深300",
+                    "price": 3732.4806,
+                    "change": -1.2539,
+                    "kline_data": [
+                        {
+                            "date": "20250110",
+                            "open": 3778.8928,
+                            "close": 3732.4806,
+                            "high": 3786.8069,
+                            "low": 3732.4806,
+                            "vol": 137523171.0
+                        },
+                        {
+                            "date": "20250109",
+                            "open": 3780.7341,
+                            "close": 3779.8773,
+                            "high": 3795.2608,
+                            "low": 3768.681,
+                            "vol": 129794002.0
+                        },
+                        {
+                            "date": "20250108",
+                            "open": 3781.261,
+                            "close": 3789.2153,
+                            "high": 3810.7355,
+                            "low": 3731.1887,
+                            "vol": 169166968.0
+                        },
+                        {
+                            "date": "20250107",
+                            "open": 3760.866,
+                            "close": 3796.1055,
+                            "high": 3797.602,
+                            "low": 3749.0581,
+                            "vol": 146455779.0
+                        },
+                        {
+                            "date": "20250106",
+                            "open": 3775.9902,
+                            "close": 3768.9697,
+                            "high": 3788.8489,
+                            "low": 3743.0727,
+                            "vol": 150946670.0
+                        },
+                        {
+                            "date": "20250103",
+                            "open": 3825.2426,
+                            "close": 3775.1648,
+                            "high": 3835.9353,
+                            "low": 3767.6653,
+                            "vol": 175342676.0
+                        },
+                        {
+                            "date": "20250102",
+                            "open": 3931.8155,
+                            "close": 3820.3952,
+                            "high": 3934.2034,
+                            "low": 3796.3389,
+                            "vol": 217898724.0
+                        },
+                        {
+                            "date": "20241231",
+                            "open": 3995.8705,
+                            "close": 3934.9109,
+                            "high": 4004.3462,
+                            "low": 3934.9109,
+                            "vol": 183928397.0
+                        },
+                        {
+                            "date": "20241230",
+                            "open": 3976.7004,
+                            "close": 3999.0549,
+                            "high": 4005.778,
+                            "low": 3976.7004,
+                            "vol": 164612485.0
+                        },
+                        {
+                            "date": "20241227",
+                            "open": 3987.0189,
+                            "close": 3981.0307,
+                            "high": 4007.1314,
+                            "low": 3970.9365,
+                            "vol": 169268666.0
+                        },
+                        {
+                            "date": "20241226",
+                            "open": 3981.7317,
+                            "close": 3987.4801,
+                            "high": 3991.5331,
+                            "low": 3965.5461,
+                            "vol": 143425286.0
+                        },
+                        {
+                            "date": "20241225",
+                            "open": 3987.9557,
+                            "close": 3985.6291,
+                            "high": 4007.7626,
+                            "low": 3969.4766,
+                            "vol": 159390747.0
+                        },
+                        {
+                            "date": "20241224",
+                            "open": 3934.9422,
+                            "close": 3983.6882,
+                            "high": 3985.8588,
+                            "low": 3934.7338,
+                            "vol": 161494589.0
+                        },
+                        {
+                            "date": "20241223",
+                            "open": 3928.1493,
+                            "close": 3933.5718,
+                            "high": 3965.8502,
+                            "low": 3928.1493,
+                            "vol": 190067362.0
+                        },
+                        {
+                            "date": "20241220",
+                            "open": 3937.4722,
+                            "close": 3927.7441,
+                            "high": 3958.6336,
+                            "low": 3923.2562,
+                            "vol": 154986496.0
+                        },
+                        {
+                            "date": "20241219",
+                            "open": 3911.8901,
+                            "close": 3945.4635,
+                            "high": 3954.3491,
+                            "low": 3899.7479,
+                            "vol": 161081040.0
+                        },
+                        {
+                            "date": "20241218",
+                            "open": 3934.5425,
+                            "close": 3941.89,
+                            "high": 3956.1441,
+                            "low": 3933.9693,
+                            "vol": 157738321.0
+                        },
+                        {
+                            "date": "20241217",
+                            "open": 3908.1263,
+                            "close": 3922.0334,
+                            "high": 3955.945,
+                            "low": 3908.1263,
+                            "vol": 160939090.0
+                        },
+                        {
+                            "date": "20241216",
+                            "open": 3930.7807,
+                            "close": 3911.8416,
+                            "high": 3938.7595,
+                            "low": 3901.6465,
+                            "vol": 178511251.0
+                        },
+                        {
+                            "date": "20241213",
+                            "open": 4000.9854,
+                            "close": 3933.1808,
+                            "high": 4000.9854,
+                            "low": 3931.7392,
+                            "vol": 230353079.0
+                        }
+                    ]
+                },
+                {
+                    "code": "000905.SH",
+                    "name": "中证500",
+                    "price": 5369.2811,
+                    "change": -1.6,
+                    "kline_data": [
+                        {
+                            "date": "20250110",
+                            "open": 5449.0014,
+                            "close": 5369.2811,
+                            "high": 5496.3833,
+                            "low": 5369.2811,
+                            "vol": 130179553.0
+                        },
+                        {
+                            "date": "20250109",
+                            "open": 5437.8128,
+                            "close": 5456.5863,
+                            "high": 5493.6799,
+                            "low": 5436.7036,
+                            "vol": 129832627.0
+                        },
+                        {
+                            "date": "20250108",
+                            "open": 5462.324,
+                            "close": 5461.5861,
+                            "high": 5501.6555,
+                            "low": 5326.9259,
+                            "vol": 163849915.0
+                        },
+                        {
+                            "date": "20250107",
+                            "open": 5429.1729,
+                            "close": 5484.6847,
+                            "high": 5485.5848,
+                            "low": 5405.1327,
+                            "vol": 145065278.0
+                        },
+                        {
+                            "date": "20250106",
+                            "open": 5421.0653,
+                            "close": 5427.1007,
+                            "high": 5482.6253,
+                            "low": 5384.3326,
+                            "vol": 146265658.0
+                        },
+                        {
+                            "date": "20250103",
+                            "open": 5552.75,
+                            "close": 5427.8041,
+                            "high": 5581.3978,
+                            "low": 5419.7429,
+                            "vol": 174077310.0
+                        },
+                        {
+                            "date": "20250102",
+                            "open": 5717.9157,
+                            "close": 5545.8174,
+                            "high": 5722.1107,
+                            "low": 5498.8216,
+                            "vol": 193763157.0
+                        },
+                        {
+                            "date": "20241231",
+                            "open": 5902.033,
+                            "close": 5725.7324,
+                            "high": 5905.463,
+                            "low": 5725.7324,
+                            "vol": 182158855.0
+                        },
+                        {
+                            "date": "20241230",
+                            "open": 5890.4633,
+                            "close": 5898.884,
+                            "high": 5928.5718,
+                            "low": 5867.8538,
+                            "vol": 155565586.0
+                        },
+                        {
+                            "date": "20241227",
+                            "open": 5892.6943,
+                            "close": 5899.1665,
+                            "high": 5975.7919,
+                            "low": 5881.7173,
+                            "vol": 179085498.0
+                        },
+                        {
+                            "date": "20241226",
+                            "open": 5830.7212,
+                            "close": 5887.0605,
+                            "high": 5897.4827,
+                            "low": 5830.7212,
+                            "vol": 145319444.0
+                        },
+                        {
+                            "date": "20241225",
+                            "open": 5896.4295,
+                            "close": 5840.2889,
+                            "high": 5897.5101,
+                            "low": 5796.6475,
+                            "vol": 157279132.0
+                        },
+                        {
+                            "date": "20241224",
+                            "open": 5827.1597,
+                            "close": 5895.2595,
+                            "high": 5897.1946,
+                            "low": 5827.1597,
+                            "vol": 167365824.0
+                        },
+                        {
+                            "date": "20241223",
+                            "open": 5917.6939,
+                            "close": 5818.551,
+                            "high": 5935.1523,
+                            "low": 5815.3415,
+                            "vol": 177315486.0
+                        },
+                        {
+                            "date": "20241220",
+                            "open": 5889.946,
+                            "close": 5917.1751,
+                            "high": 5962.4154,
+                            "low": 5889.946,
+                            "vol": 178090399.0
+                        },
+                        {
+                            "date": "20241219",
+                            "open": 5829.2631,
+                            "close": 5901.9155,
+                            "high": 5918.4895,
+                            "low": 5816.4729,
+                            "vol": 196531194.0
+                        },
+                        {
+                            "date": "20241218",
+                            "open": 5861.2624,
+                            "close": 5888.6162,
+                            "high": 5921.9798,
+                            "low": 5853.1628,
+                            "vol": 187996290.0
+                        },
+                        {
+                            "date": "20241217",
+                            "open": 5896.9676,
+                            "close": 5848.1628,
+                            "high": 5924.6244,
+                            "low": 5837.2514,
+                            "vol": 193108547.0
+                        },
+                        {
+                            "date": "20241216",
+                            "open": 5983.1598,
+                            "close": 5912.6014,
+                            "high": 5991.5772,
+                            "low": 5888.0426,
+                            "vol": 214647441.0
+                        },
+                        {
+                            "date": "20241213",
+                            "open": 6065.9542,
+                            "close": 5988.292,
+                            "high": 6065.9542,
+                            "low": 5988.292,
+                            "vol": 286328198.0
+                        }
+                    ]
+                },
+                {
+                    "code": "000852.SH",
+                    "name": "中证1000",
+                    "price": 5544.9158,
+                    "change": -2.254,
+                    "kline_data": [
+                        {
+                            "date": "20250110",
+                            "open": 5662.7667,
+                            "close": 5544.9158,
+                            "high": 5718.2122,
+                            "low": 5544.9158,
+                            "vol": 198014877.0
+                        },
+                        {
+                            "date": "20250109",
+                            "open": 5629.8952,
+                            "close": 5672.7796,
+                            "high": 5714.4606,
+                            "low": 5629.8239,
+                            "vol": 193320421.0
+                        },
+                        {
+                            "date": "20250108",
+                            "open": 5664.3121,
+                            "close": 5661.7793,
+                            "high": 5706.6593,
+                            "low": 5501.4918,
+                            "vol": 225800830.0
+                        },
+                        {
+                            "date": "20250107",
+                            "open": 5610.9462,
+                            "close": 5692.041,
+                            "high": 5694.0046,
+                            "low": 5580.8851,
+                            "vol": 193912450.0
+                        },
+                        {
+                            "date": "20250106",
+                            "open": 5614.0281,
+                            "close": 5608.0344,
+                            "high": 5688.9223,
+                            "low": 5561.898,
+                            "vol": 203047676.0
+                        },
+                        {
+                            "date": "20250103",
+                            "open": 5808.5424,
+                            "close": 5625.209,
+                            "high": 5826.0833,
+                            "low": 5609.7663,
+                            "vol": 237093211.0
+                        },
+                        {
+                            "date": "20250102",
+                            "open": 5948.6802,
+                            "close": 5797.089,
+                            "high": 5982.5535,
+                            "low": 5743.1785,
+                            "vol": 244125606.0
+                        },
+                        {
+                            "date": "20241231",
+                            "open": 6151.0339,
+                            "close": 5957.7172,
+                            "high": 6160.7327,
+                            "low": 5957.7172,
+                            "vol": 237990032.0
+                        },
+                        {
+                            "date": "20241230",
+                            "open": 6164.908,
+                            "close": 6145.928,
+                            "high": 6192.5845,
+                            "low": 6097.1031,
+                            "vol": 207712448.0
+                        },
+                        {
+                            "date": "20241227",
+                            "open": 6164.67,
+                            "close": 6171.5653,
+                            "high": 6250.2013,
+                            "low": 6135.4787,
+                            "vol": 237841554.0
+                        },
+                        {
+                            "date": "20241226",
+                            "open": 6083.8873,
+                            "close": 6160.4518,
+                            "high": 6185.8068,
+                            "low": 6083.8873,
+                            "vol": 206916739.0
+                        },
+                        {
+                            "date": "20241225",
+                            "open": 6158.6491,
+                            "close": 6094.6866,
+                            "high": 6159.5964,
+                            "low": 6037.7355,
+                            "vol": 219027032.0
+                        },
+                        {
+                            "date": "20241224",
+                            "open": 6110.7669,
+                            "close": 6164.3605,
+                            "high": 6165.2022,
+                            "low": 6066.226,
+                            "vol": 216010918.0
+                        },
+                        {
+                            "date": "20241223",
+                            "open": 6271.7634,
+                            "close": 6096.3813,
+                            "high": 6276.9712,
+                            "low": 6086.912,
+                            "vol": 258474975.0
+                        },
+                        {
+                            "date": "20241220",
+                            "open": 6195.6436,
+                            "close": 6271.7532,
+                            "high": 6320.9626,
+                            "low": 6191.0814,
+                            "vol": 243659085.0
+                        },
+                        {
+                            "date": "20241219",
+                            "open": 6127.2202,
+                            "close": 6207.1862,
+                            "high": 6223.8046,
+                            "low": 6108.3942,
+                            "vol": 251487924.0
+                        },
+                        {
+                            "date": "20241218",
+                            "open": 6156.6921,
+                            "close": 6195.8677,
+                            "high": 6242.5165,
+                            "low": 6121.0537,
+                            "vol": 248024122.0
+                        },
+                        {
+                            "date": "20241217",
+                            "open": 6262.4928,
+                            "close": 6143.9436,
+                            "high": 6269.1401,
+                            "low": 6133.1291,
+                            "vol": 274793959.0
+                        },
+                        {
+                            "date": "20241216",
+                            "open": 6355.6283,
+                            "close": 6277.5162,
+                            "high": 6367.8085,
+                            "low": 6248.1579,
+                            "vol": 310215173.0
+                        },
+                        {
+                            "date": "20241213",
+                            "open": 6447.2029,
+                            "close": 6354.9883,
+                            "high": 6460.9385,
+                            "low": 6351.3009,
+                            "vol": 361985513.0
+                        }
+                    ]
+                },
+                {
+                    "code": "899050.BJ",
+                    "name": "北证50",
+                    "price": 1024.259,
+                    "change": -2.7783,
+                    "kline_data": [
+                        {
+                            "date": "20250110",
+                            "open": 1050.5655,
+                            "close": 1024.259,
+                            "high": 1068.3807,
+                            "low": 1024.259,
+                            "vol": 8430121.72
+                        },
+                        {
+                            "date": "20250109",
+                            "open": 1033.4444,
+                            "close": 1053.529,
+                            "high": 1063.6647,
+                            "low": 1028.7234,
+                            "vol": 10081530.53
+                        },
+                        {
+                            "date": "20250108",
+                            "open": 1018.3275,
+                            "close": 1037.3981,
+                            "high": 1047.0022,
+                            "low": 999.111,
+                            "vol": 8772397.56
+                        },
+                        {
+                            "date": "20250107",
+                            "open": 1006.3205,
+                            "close": 1024.4156,
+                            "high": 1024.4156,
+                            "low": 988.2998,
+                            "vol": 7687642.52
+                        },
+                        {
+                            "date": "20250106",
+                            "open": 1017.0684,
+                            "close": 1003.6427,
+                            "high": 1030.2143,
+                            "low": 995.401,
+                            "vol": 7686193.04
+                        },
+                        {
+                            "date": "20250103",
+                            "open": 1026.3682,
+                            "close": 1018.1664,
+                            "high": 1049.3344,
+                            "low": 1011.6511,
+                            "vol": 8352396.17
+                        },
+                        {
+                            "date": "20250102",
+                            "open": 1034.7079,
+                            "close": 1019.8776,
+                            "high": 1047.6465,
+                            "low": 1009.8723,
+                            "vol": 7543876.8
+                        },
+                        {
+                            "date": "20241231",
+                            "open": 1049.6903,
+                            "close": 1037.8089,
+                            "high": 1072.333,
+                            "low": 1037.2628,
+                            "vol": 7807303.05
+                        },
+                        {
+                            "date": "20241230",
+                            "open": 1092.0436,
+                            "close": 1046.1662,
+                            "high": 1092.0436,
+                            "low": 1044.7641,
+                            "vol": 7390755.29
+                        },
+                        {
+                            "date": "20241227",
+                            "open": 1108.9413,
+                            "close": 1094.2393,
+                            "high": 1115.3085,
+                            "low": 1090.0353,
+                            "vol": 7700006.02
+                        },
+                        {
+                            "date": "20241226",
+                            "open": 1105.5626,
+                            "close": 1107.7839,
+                            "high": 1130.2294,
+                            "low": 1104.3358,
+                            "vol": 7499455.6
+                        },
+                        {
+                            "date": "20241225",
+                            "open": 1148.0414,
+                            "close": 1106.1983,
+                            "high": 1148.4815,
+                            "low": 1106.1983,
+                            "vol": 7681377.4
+                        },
+                        {
+                            "date": "20241224",
+                            "open": 1148.274,
+                            "close": 1149.776,
+                            "high": 1161.8042,
+                            "low": 1125.8246,
+                            "vol": 7348674.51
+                        },
+                        {
+                            "date": "20241223",
+                            "open": 1169.7814,
+                            "close": 1140.8764,
+                            "high": 1185.7544,
+                            "low": 1140.846,
+                            "vol": 8063638.57
+                        },
+                        {
+                            "date": "20241220",
+                            "open": 1156.3654,
+                            "close": 1171.7736,
+                            "high": 1197.9436,
+                            "low": 1153.6311,
+                            "vol": 9409865.85
+                        },
+                        {
+                            "date": "20241219",
+                            "open": 1116.1291,
+                            "close": 1169.7086,
+                            "high": 1174.2728,
+                            "low": 1091.6927,
+                            "vol": 11979102.42
+                        },
+                        {
+                            "date": "20241218",
+                            "open": 1144.941,
+                            "close": 1132.6112,
+                            "high": 1164.2948,
+                            "low": 1127.6974,
+                            "vol": 8281584.21
+                        },
+                        {
+                            "date": "20241217",
+                            "open": 1178.1043,
+                            "close": 1139.4107,
+                            "high": 1182.6161,
+                            "low": 1138.1503,
+                            "vol": 8478059.38
+                        },
+                        {
+                            "date": "20241216",
+                            "open": 1215.7327,
+                            "close": 1177.3635,
+                            "high": 1222.3319,
+                            "low": 1169.0697,
+                            "vol": 9263746.01
+                        },
+                        {
+                            "date": "20241213",
+                            "open": 1222.1633,
+                            "close": 1219.2972,
+                            "high": 1248.5568,
+                            "low": 1211.8177,
+                            "vol": 11252895.68
+                        }
+                    ]
+                }
+            ]
+        },
+        "timestamp": "2025-01-11"
+    },
+    "300009": {
+        "data": {
+            "stock_info": {
+                "code": "300009",
+                "name": "安科生物",
+                "market_value": 135.81,
+                "pe_ratio": 16.03,
+                "pb_ratio": 3.47,
+                "ps_ratio": 4.74,
+                "dividend_yield": 0.0308,
+                "price": 8.12,
+                "change_percent": 0.01,
+                "roe": 0.1537,
+                "gross_profit_margin": 0.7775,
+                "net_profit_margin": 0.3122,
+                "debt_to_assets": 0.172,
+                "revenue_yoy": 0,
+                "net_profit_yoy": -0.0989,
+                "bps": 2.349,
+                "ocfps": 0.251,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": null,
+                    "max": null
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "300743": {
+        "data": {
+            "stock_info": {
+                "code": "300743",
+                "name": "天地数码",
+                "market_value": 21.74,
+                "pe_ratio": 39.08,
+                "pb_ratio": 3.57,
+                "ps_ratio": 3.38,
+                "dividend_yield": 0.0241,
+                "price": 14.17,
+                "change_percent": 0.0093,
+                "roe": 0.1209,
+                "gross_profit_margin": 0.3493,
+                "net_profit_margin": 0.1335,
+                "debt_to_assets": 0.3786,
+                "revenue_yoy": 0,
+                "net_profit_yoy": 0.8549,
+                "bps": 3.972,
+                "ocfps": 0.327,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": null,
+                    "max": null
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "603511": {
+        "data": {
+            "stock_info": {
+                "code": "603511",
+                "name": "爱慕股份",
+                "market_value": 46.23,
+                "pe_ratio": 15.12,
+                "pb_ratio": 1.05,
+                "ps_ratio": 1.35,
+                "dividend_yield": 0.0662,
+                "price": 11.37,
+                "change_percent": -0.0026,
+                "roe": 0.0317,
+                "gross_profit_margin": 0.6597,
+                "net_profit_margin": 0.0615,
+                "debt_to_assets": 0.146,
+                "revenue_yoy": 0,
+                "net_profit_yoy": -0.3817,
+                "bps": 10.779,
+                "ocfps": 0.79,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": null,
+                    "max": null
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "688553": {
+        "data": {
+            "stock_info": {
+                "code": "688553",
+                "name": "汇宇制药-W",
+                "market_value": 58.37,
+                "pe_ratio": 41.76,
+                "pb_ratio": 1.5,
+                "ps_ratio": 6.3,
+                "dividend_yield": 0.0,
+                "price": 13.78,
+                "change_percent": 0.0117,
+                "roe": 0.0594,
+                "gross_profit_margin": 0.8315,
+                "net_profit_margin": 0.2592,
+                "debt_to_assets": 0.2321,
+                "revenue_yoy": 0,
+                "net_profit_yoy": 1.5562,
+                "bps": 9.16,
+                "ocfps": 0.383,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": null,
+                    "max": null
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    },
+    "600030": {
+        "data": {
+            "stock_info": {
+                "code": "600030",
+                "name": "中信证券",
+                "market_value": 3928.93,
+                "pe_ratio": 19.92,
+                "pb_ratio": 1.53,
+                "ps_ratio": 6.54,
+                "dividend_yield": 0.027,
+                "price": 26.51,
+                "change_percent": 0.0019,
+                "roe": 0.0605,
+                "gross_profit_margin": 0,
+                "net_profit_margin": 0.3782,
+                "debt_to_assets": 0.8314,
+                "revenue_yoy": 0,
+                "net_profit_yoy": 0.0235,
+                "bps": 17.594,
+                "ocfps": 7.666,
+                "from_cache": false
+            },
+            "targets": {
+                "target_market_value": {
+                    "min": null,
+                    "max": null
+                }
+            }
+        },
+        "timestamp": "2025-01-13"
+    }
+}
