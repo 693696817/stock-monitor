@@ -207,3 +207,32 @@ MIT License
 - 实现核心功能：实时行情、AI 分析、财务分析
 - 完成基础框架搭建
 - 优化 A 股特色分析逻辑 
+
+## 配置说明
+
+在运行系统之前，需要配置以下API密钥：
+
+1. **Tushare API Token**
+   - 访问 [Tushare官网](https://tushare.pro/)
+   - 注册并登录账号
+   - 在个人中心获取Token
+   - 将Token填入 `config.json` 的 `tushare_token` 字段
+
+2. **AI分析服务 API Key**
+   - 访问 [Volcengine智能对话](https://www.volcengine.com/product/intelligent-chat)
+   - 注册企业账号并开通服务
+   - 在控制台获取API Key和模型ID
+   - 将API Key填入 `config.json` 的 `ai_api_key` 字段
+   - 将模型ID填入 `config.json` 的 `ai_model_id` 字段
+
+配置文件示例 (`config.json`):
+```json
+{
+    "watchlist": {},
+    "tushare_token": "your_tushare_token_here",
+    "ai_api_key": "your_ai_api_key_here",
+    "ai_model_id": "your_ai_model_id_here"
+}
+```
+
+注意：请妥善保管你的API密钥，不要将其提交到代码仓库中。 
