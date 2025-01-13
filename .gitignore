@@ -35,4 +35,6 @@ ENV/
 config.json
 *.log
 .env
-.DS_Store 
+.DS_Store
+stock_cache.json
+watchlist.json 

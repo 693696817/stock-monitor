@@ -1,12 +1,10 @@
 import os
+import json
 
 # 基础配置
 class Config:
     # 项目根目录
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    
-    # Tushare API配置
-    TUSHARE_TOKEN = '90f8a141125e1decb952cd49032b7b8409a2d7fa370745f6c9f45c96'
     
     # 配置文件路径
     CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
@@ -16,6 +14,29 @@ class Config:
     
     # 静态文件目录
     STATIC_DIR = os.path.join(BASE_DIR, "app", "static")
+    
+    # API配置
+    @classmethod
+    def load_config(cls):
+        if os.path.exists(cls.CONFIG_FILE):
+            with open(cls.CONFIG_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return {"watchlist": {}}
+    
+    @classmethod
+    def get_tushare_token(cls):
+        config = cls.load_config()
+        return config.get('tushare_token')
+    
+    @classmethod
+    def get_ai_api_key(cls):
+        config = cls.load_config()
+        return config.get('ai_api_key')
+    
+    @classmethod
+    def get_ai_model_id(cls):
+        config = cls.load_config()
+        return config.get('ai_model_id')
     
     # 确保目录存在
     @classmethod

@@ -1,4 +1,6 @@
 {
     "watchlist": {},
-    "tushare_token": "your_tushare_token_here"
+    "tushare_token": "your_tushare_token_here",
+    "ai_api_key": "your_ai_api_key_here",
+    "ai_model_id": "your_ai_model_id_here"
 } 

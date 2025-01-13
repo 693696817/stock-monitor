@@ -2,12 +2,13 @@ import json
 import os
 import re
 from openai import OpenAI
+from app.config import Config
 
 class AIAnalysisService:
     def __init__(self):
-        self.model = "ep-20250111143839-vn8l8"  # endpoint ID
+        self.model = Config.get_ai_model_id()  # 从配置获取 model ID
         self.client = OpenAI(
-            api_key = "cf4edd4d-55cd-4e0f-82f6-49072660bdaf",  # 直接使用API Key
+            api_key = Config.get_ai_api_key(),  # 从配置获取 API Key
             base_url = "https://ark.cn-beijing.volces.com/api/v3"
         )
         
