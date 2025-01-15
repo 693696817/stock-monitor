@@ -61,7 +61,7 @@
 ### 1. 环境准备
 ```bash
 # 克隆项目
-git clone https://gitee.com/your-username/stock-monitor.git
+git clone https://gitee.com/zyj118/stock-monitor.git
 cd stock-monitor
 
 # 创建虚拟环境
@@ -81,9 +81,11 @@ pip install -r requirements.txt
 3. 可选：充值获取更高级别权限
 
 #### 豆包大模型API
-1. 访问 [豆包大模型控制台](https://ark.cn-beijing.volces.com/)
-2. 注册企业账号
-3. 创建API Key和Model ID
+1. 访问[火山引擎豆包大模型](https://www.volcengine.com/product/doubao)
+2. 注册账号（支持个人开发者注册）
+3. 进入控制台创建应用
+4. 获取API Key和Model ID
+5. 按量付费，支持免费额度体验
 
 ### 3. 环境配置
 1. 复制配置文件
@@ -134,7 +136,7 @@ python run.py
 
 1. API使用限制
    - Tushare免费账号有调用频率限制
-   - 豆包大模型API有Token限制
+   - 豆包大模型API提供免费额度，超出后按量计费
 
 2. 数据时效性
    - 行情数据实时更新
