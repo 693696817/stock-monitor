@@ -1,0 +1,178 @@
+{
+    "watchlist": {
+        "300059": {
+            "target_market_value": {
+                "min": 2500.0,
+                "max": 2800.0
+            }
+        },
+        "601318": {
+            "target_market_value": {
+                "min": 8000.0,
+                "max": 9500.0
+            }
+        },
+        "000963": {
+            "target_market_value": {
+                "min": 500.0,
+                "max": 650.0
+            }
+        },
+        "002415": {
+            "target_market_value": {
+                "min": 2000.0,
+                "max": 2200.0
+            }
+        },
+        "000423": {
+            "target_market_value": {
+                "min": 270.0,
+                "max": 330.0
+            }
+        },
+        "000538": {
+            "target_market_value": {
+                "min": 807.0,
+                "max": 1210.0
+            }
+        },
+        "600085": {
+            "target_market_value": {
+                "min": 336.0,
+                "max": 429.0
+            }
+        },
+        "002714": {
+            "target_market_value": {
+                "min": 1650.0,
+                "max": 2200.0
+            }
+        },
+        "002007": {
+            "target_market_value": {
+                "min": 240.0,
+                "max": 288.0
+            }
+        },
+        "600132": {
+            "target_market_value": {
+                "min": 220.0,
+                "max": 290.0
+            }
+        },
+        "002049": {
+            "target_market_value": {
+                "min": 360.0,
+                "max": 480.0
+            }
+        },
+        "600436": {
+            "target_market_value": {
+                "min": 960.0,
+                "max": 1080.0
+            }
+        },
+        "002216": {
+            "target_market_value": {
+                "min": 72.0,
+                "max": 97.0
+            }
+        },
+        "601966": {
+            "target_market_value": {
+                "min": 220.0,
+                "max": 280.0
+            }
+        },
+        "603195": {
+            "target_market_value": {
+                "min": 730.0,
+                "max": 950.0
+            }
+        },
+        "000001": {
+            "target_market_value": {
+                "min": 1800.0,
+                "max": 2500.0
+            }
+        },
+        "600867": {
+            "target_market_value": {
+                "min": 120.0,
+                "max": 160.0
+            }
+        },
+        "603087": {
+            "target_market_value": {
+                "min": 170.0,
+                "max": 283.0
+            }
+        },
+        "603290": {
+            "target_market_value": {
+                "min": 150.0,
+                "max": 200.0
+            }
+        },
+        "600332": {
+            "target_market_value": {
+                "min": 380.0,
+                "max": 460.0
+            }
+        },
+        "300124": {
+            "target_market_value": {
+                "min": 1200.0,
+                "max": 1400.0
+            }
+        },
+        "300146": {
+            "target_market_value": {
+                "min": 150.0,
+                "max": 200.0
+            }
+        },
+        "000999": {
+            "target_market_value": {
+                "min": 450.0,
+                "max": 580.0
+            }
+        },
+        "002466": {
+            "target_market_value": {
+                "min": 330.0,
+                "max": 415.0
+            }
+        },
+        "300009": {
+            "target_market_value": {
+                "min": 120.0,
+                "max": 160.0
+            }
+        },
+        "300743": {
+            "target_market_value": {
+                "min": null,
+                "max": null
+            }
+        },
+        "603511": {
+            "target_market_value": {
+                "min": null,
+                "max": null
+            }
+        },
+        "688553": {
+            "target_market_value": {
+                "min": null,
+                "max": null
+            }
+        },
+        "600030": {
+            "target_market_value": {
+                "min": 3200.0,
+                "max": 3600.0
+            }
+        }
+    }
+}

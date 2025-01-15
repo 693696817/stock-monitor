@@ -4,13 +4,13 @@
             "stock_info": {
                 "code": "300059",
                 "name": "东方财富",
-                "market_value": 3491.76,
-                "pe_ratio": 42.62,
-                "pb_ratio": 4.54,
-                "ps_ratio": 89.81,
-                "dividend_yield": 0.0018,
-                "price": 22.12,
-                "change_percent": 0.011,
+                "market_value": 3766.43,
+                "pe_ratio": 45.97,
+                "pb_ratio": 4.9,
+                "ps_ratio": 96.88,
+                "dividend_yield": 0.0017,
+                "price": 23.86,
+                "change_percent": 0.0787,
                 "roe": 0.0811,
                 "gross_profit_margin": 0.8372,
                 "net_profit_margin": 2.694,
@@ -28,20 +28,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "601318": {
         "data": {
             "stock_info": {
                 "code": "601318",
                 "name": "中国平安",
-                "market_value": 8848.35,
-                "pe_ratio": 10.33,
-                "pb_ratio": 0.99,
-                "ps_ratio": 0.97,
-                "dividend_yield": 0.0498,
-                "price": 48.59,
-                "change_percent": -0.0074,
+                "market_value": 8988.57,
+                "pe_ratio": 10.49,
+                "pb_ratio": 1.01,
+                "ps_ratio": 0.98,
+                "dividend_yield": 0.0491,
+                "price": 49.36,
+                "change_percent": 0.0158,
                 "roe": 0.1319,
                 "gross_profit_margin": 0,
                 "net_profit_margin": 0.1806,
@@ -59,20 +59,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "600085": {
         "data": {
             "stock_info": {
                 "code": "600085",
                 "name": "同仁堂",
-                "market_value": 507.86,
-                "pe_ratio": 30.43,
-                "pb_ratio": 4.13,
-                "ps_ratio": 2.84,
-                "dividend_yield": 0.027,
-                "price": 37.03,
-                "change_percent": 0.0082,
+                "market_value": 519.24,
+                "pe_ratio": 31.11,
+                "pb_ratio": 4.22,
+                "ps_ratio": 2.91,
+                "dividend_yield": 0.0264,
+                "price": 37.86,
+                "change_percent": 0.0224,
                 "roe": 0.1037,
                 "gross_profit_margin": 0.437,
                 "net_profit_margin": 0.1435,
@@ -90,20 +90,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "002714": {
         "data": {
             "stock_info": {
                 "code": "002714",
                 "name": "牧原股份",
-                "market_value": 1980.25,
+                "market_value": 2023.41,
                 "pe_ratio": 0,
-                "pb_ratio": 2.97,
-                "ps_ratio": 1.79,
-                "dividend_yield": 0.0227,
-                "price": 36.25,
-                "change_percent": 0.0014,
+                "pb_ratio": 3.04,
+                "ps_ratio": 1.83,
+                "dividend_yield": 0.0223,
+                "price": 37.04,
+                "change_percent": 0.0218,
                 "roe": 0.1552,
                 "gross_profit_margin": 0.1727,
                 "net_profit_margin": 0.1162,
@@ -121,20 +121,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "000538": {
         "data": {
             "stock_info": {
                 "code": "000538",
                 "name": "云南白药",
-                "market_value": 1001.86,
-                "pe_ratio": 24.47,
-                "pb_ratio": 2.61,
-                "ps_ratio": 2.56,
-                "dividend_yield": 0.0586,
-                "price": 56.15,
-                "change_percent": -0.0083,
+                "market_value": 1024.17,
+                "pe_ratio": 25.02,
+                "pb_ratio": 2.67,
+                "ps_ratio": 2.62,
+                "dividend_yield": 0.0573,
+                "price": 57.4,
+                "change_percent": 0.0223,
                 "roe": 0.1076,
                 "gross_profit_margin": 0.284,
                 "net_profit_margin": 0.1447,
@@ -152,20 +152,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "000423": {
         "data": {
             "stock_info": {
                 "code": "000423",
                 "name": "东阿阿胶",
-                "market_value": 391.86,
-                "pe_ratio": 34.05,
-                "pb_ratio": 3.95,
-                "ps_ratio": 8.31,
-                "dividend_yield": 0.0481,
-                "price": 60.85,
-                "change_percent": -0.0178,
+                "market_value": 398.75,
+                "pe_ratio": 34.65,
+                "pb_ratio": 4.02,
+                "ps_ratio": 8.46,
+                "dividend_yield": 0.0472,
+                "price": 61.92,
+                "change_percent": 0.0176,
                 "roe": 0.1117,
                 "gross_profit_margin": 0.7413,
                 "net_profit_margin": 0.2661,
@@ -183,20 +183,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "000963": {
         "data": {
             "stock_info": {
                 "code": "000963",
                 "name": "华东医药",
-                "market_value": 567.33,
-                "pe_ratio": 19.98,
-                "pb_ratio": 2.57,
-                "ps_ratio": 1.4,
-                "dividend_yield": 0.0288,
-                "price": 32.34,
-                "change_percent": -0.0089,
+                "market_value": 582.24,
+                "pe_ratio": 20.51,
+                "pb_ratio": 2.64,
+                "ps_ratio": 1.43,
+                "dividend_yield": 0.028,
+                "price": 33.19,
+                "change_percent": 0.0263,
                 "roe": 0.1189,
                 "gross_profit_margin": 0.3255,
                 "net_profit_margin": 0.0814,
@@ -214,20 +214,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "002415": {
         "data": {
             "stock_info": {
                 "code": "002415",
                 "name": "海康威视",
-                "market_value": 2554.83,
-                "pe_ratio": 18.11,
-                "pb_ratio": 3.33,
-                "ps_ratio": 2.86,
-                "dividend_yield": 0.0329,
-                "price": 27.67,
-                "change_percent": -0.0047,
+                "market_value": 2618.54,
+                "pe_ratio": 18.56,
+                "pb_ratio": 3.41,
+                "ps_ratio": 2.93,
+                "dividend_yield": 0.0321,
+                "price": 28.36,
+                "change_percent": 0.0249,
                 "roe": 0.1059,
                 "gross_profit_margin": 0.4476,
                 "net_profit_margin": 0.1371,
@@ -245,20 +245,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "002007": {
         "data": {
             "stock_info": {
                 "code": "002007",
                 "name": "华兰生物",
-                "market_value": 284.92,
-                "pe_ratio": 19.23,
-                "pb_ratio": 2.44,
-                "ps_ratio": 5.33,
-                "dividend_yield": 0.0193,
-                "price": 15.58,
-                "change_percent": -0.0133,
+                "market_value": 291.32,
+                "pe_ratio": 19.66,
+                "pb_ratio": 2.49,
+                "ps_ratio": 5.45,
+                "dividend_yield": 0.0188,
+                "price": 15.93,
+                "change_percent": 0.0225,
                 "roe": 0.0801,
                 "gross_profit_margin": 0.6177,
                 "net_profit_margin": 0.2897,
@@ -276,20 +276,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "600132": {
         "data": {
             "stock_info": {
                 "code": "600132",
                 "name": "重庆啤酒",
-                "market_value": 277.32,
-                "pe_ratio": 20.75,
-                "pb_ratio": 19.67,
-                "ps_ratio": 1.87,
-                "dividend_yield": 0.075,
-                "price": 57.3,
-                "change_percent": 0.0145,
+                "market_value": 281.28,
+                "pe_ratio": 21.04,
+                "pb_ratio": 19.95,
+                "ps_ratio": 1.9,
+                "dividend_yield": 0.074,
+                "price": 58.12,
+                "change_percent": 0.0143,
                 "roe": 0.623,
                 "gross_profit_margin": 0.492,
                 "net_profit_margin": 0.2041,
@@ -302,25 +302,25 @@
             },
             "targets": {
                 "target_market_value": {
-                    "min": 225.0,
-                    "max": 260.0
+                    "min": 220.0,
+                    "max": 290.0
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "002049": {
         "data": {
             "stock_info": {
                 "code": "002049",
                 "name": "紫光国微",
-                "market_value": 492.36,
-                "pe_ratio": 19.46,
-                "pb_ratio": 4.1,
-                "ps_ratio": 6.51,
-                "dividend_yield": 0.0116,
-                "price": 57.95,
-                "change_percent": -0.0113,
+                "market_value": 508.67,
+                "pe_ratio": 20.1,
+                "pb_ratio": 4.24,
+                "ps_ratio": 6.72,
+                "dividend_yield": 0.0113,
+                "price": 59.87,
+                "change_percent": 0.0331,
                 "roe": 0.0847,
                 "gross_profit_margin": 0.5681,
                 "net_profit_margin": 0.2383,
@@ -338,20 +338,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "600436": {
         "data": {
             "stock_info": {
                 "code": "600436",
                 "name": "片仔癀",
-                "market_value": 1236.8,
-                "pe_ratio": 44.21,
-                "pb_ratio": 9.28,
-                "ps_ratio": 12.3,
-                "dividend_yield": 0.0169,
-                "price": 205.0,
-                "change_percent": 0.0029,
+                "market_value": 1261.9,
+                "pe_ratio": 45.11,
+                "pb_ratio": 9.47,
+                "ps_ratio": 12.55,
+                "dividend_yield": 0.0166,
+                "price": 209.16,
+                "change_percent": 0.0203,
                 "roe": 0.1961,
                 "gross_profit_margin": 0.4544,
                 "net_profit_margin": 0.3216,
@@ -369,20 +369,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "002216": {
         "data": {
             "stock_info": {
                 "code": "002216",
                 "name": "三全食品",
-                "market_value": 97.77,
-                "pe_ratio": 13.05,
-                "pb_ratio": 2.28,
-                "ps_ratio": 1.39,
-                "dividend_yield": 0.045,
-                "price": 11.12,
-                "change_percent": 0.0091,
+                "market_value": 100.14,
+                "pe_ratio": 13.36,
+                "pb_ratio": 2.34,
+                "ps_ratio": 1.42,
+                "dividend_yield": 0.0439,
+                "price": 11.39,
+                "change_percent": 0.0243,
                 "roe": 0.0914,
                 "gross_profit_margin": 0.2503,
                 "net_profit_margin": 0.0769,
@@ -396,24 +396,24 @@
             "targets": {
                 "target_market_value": {
                     "min": 72.0,
-                    "max": 96.0
+                    "max": 97.0
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "601966": {
         "data": {
             "stock_info": {
                 "code": "601966",
                 "name": "玲珑轮胎",
-                "market_value": 251.87,
-                "pe_ratio": 18.11,
-                "pb_ratio": 1.18,
-                "ps_ratio": 1.25,
-                "dividend_yield": 0.0371,
-                "price": 17.21,
-                "change_percent": -0.0023,
+                "market_value": 257.87,
+                "pe_ratio": 18.54,
+                "pb_ratio": 1.2,
+                "ps_ratio": 1.28,
+                "dividend_yield": 0.0363,
+                "price": 17.62,
+                "change_percent": 0.0238,
                 "roe": 0.0801,
                 "gross_profit_margin": 0.2435,
                 "net_profit_margin": 0.1073,
@@ -431,20 +431,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "603195": {
         "data": {
             "stock_info": {
                 "code": "603195",
                 "name": "公牛集团",
-                "market_value": 861.35,
-                "pe_ratio": 22.26,
-                "pb_ratio": 5.8,
-                "ps_ratio": 5.49,
-                "dividend_yield": 0.0321,
-                "price": 66.66,
-                "change_percent": -0.0141,
+                "market_value": 875.57,
+                "pe_ratio": 22.62,
+                "pb_ratio": 5.9,
+                "ps_ratio": 5.58,
+                "dividend_yield": 0.0316,
+                "price": 67.76,
+                "change_percent": 0.0165,
                 "roe": 0.2228,
                 "gross_profit_margin": 0.4312,
                 "net_profit_margin": 0.2589,
@@ -462,20 +462,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "000001": {
         "data": {
             "stock_info": {
                 "code": "000001",
                 "name": "平安银行",
-                "market_value": 2173.46,
-                "pe_ratio": 4.68,
-                "pb_ratio": 0.52,
-                "ps_ratio": 1.32,
-                "dividend_yield": 0.0862,
-                "price": 11.2,
-                "change_percent": -0.0089,
+                "market_value": 2208.39,
+                "pe_ratio": 4.75,
+                "pb_ratio": 0.53,
+                "ps_ratio": 1.34,
+                "dividend_yield": 0.0848,
+                "price": 11.38,
+                "change_percent": 0.0161,
                 "roe": 0.0825,
                 "gross_profit_margin": 0,
                 "net_profit_margin": 0.3561,
@@ -488,25 +488,25 @@
             },
             "targets": {
                 "target_market_value": {
-                    "min": 2300.0,
-                    "max": 2800.0
+                    "min": 1800.0,
+                    "max": 2500.0
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "600867": {
         "data": {
             "stock_info": {
                 "code": "600867",
                 "name": "通化东宝",
-                "market_value": 145.52,
-                "pe_ratio": 12.46,
-                "pb_ratio": 2.33,
-                "ps_ratio": 4.73,
-                "dividend_yield": 0.034,
-                "price": 7.43,
-                "change_percent": 0.0095,
+                "market_value": 150.22,
+                "pe_ratio": 12.86,
+                "pb_ratio": 2.41,
+                "ps_ratio": 4.88,
+                "dividend_yield": 0.033,
+                "price": 7.67,
+                "change_percent": 0.0323,
                 "roe": -0.0097,
                 "gross_profit_margin": 0.7447,
                 "net_profit_margin": -0.0459,
@@ -524,20 +524,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "603087": {
         "data": {
             "stock_info": {
                 "code": "603087",
                 "name": "甘李药业",
-                "market_value": 250.34,
-                "pe_ratio": 73.62,
-                "pb_ratio": 2.3,
-                "ps_ratio": 9.6,
-                "dividend_yield": 0.0168,
-                "price": 41.65,
-                "change_percent": 0.0161,
+                "market_value": 258.16,
+                "pe_ratio": 75.91,
+                "pb_ratio": 2.37,
+                "ps_ratio": 9.9,
+                "dividend_yield": 0.0163,
+                "price": 42.95,
+                "change_percent": 0.0312,
                 "roe": 0.0462,
                 "gross_profit_margin": 0.7536,
                 "net_profit_margin": 0.226,
@@ -555,20 +555,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "603290": {
         "data": {
             "stock_info": {
                 "code": "603290",
                 "name": "斯达半导",
-                "market_value": 193.85,
-                "pe_ratio": 21.29,
-                "pb_ratio": 2.94,
-                "ps_ratio": 5.29,
-                "dividend_yield": 0.0141,
-                "price": 80.95,
-                "change_percent": 0.0021,
+                "market_value": 202.52,
+                "pe_ratio": 22.24,
+                "pb_ratio": 3.07,
+                "ps_ratio": 5.53,
+                "dividend_yield": 0.0135,
+                "price": 84.57,
+                "change_percent": 0.0447,
                 "roe": 0.065,
                 "gross_profit_margin": 0.3169,
                 "net_profit_margin": 0.1773,
@@ -586,20 +586,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "600332": {
         "data": {
             "stock_info": {
                 "code": "600332",
                 "name": "白云山",
-                "market_value": 433.11,
-                "pe_ratio": 10.68,
-                "pb_ratio": 1.22,
-                "ps_ratio": 0.57,
-                "dividend_yield": 0.0431,
-                "price": 26.64,
-                "change_percent": 0.0019,
+                "market_value": 442.54,
+                "pe_ratio": 10.91,
+                "pb_ratio": 1.24,
+                "ps_ratio": 0.59,
+                "dividend_yield": 0.0422,
+                "price": 27.22,
+                "change_percent": 0.0218,
                 "roe": 0.0888,
                 "gross_profit_margin": 0.177,
                 "net_profit_margin": 0.0557,
@@ -617,20 +617,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "300124": {
         "data": {
             "stock_info": {
                 "code": "300124",
                 "name": "汇川技术",
-                "market_value": 1570.93,
-                "pe_ratio": 33.13,
-                "pb_ratio": 5.86,
-                "ps_ratio": 5.16,
-                "dividend_yield": 0.0077,
-                "price": 58.35,
-                "change_percent": -0.0273,
+                "market_value": 1663.81,
+                "pe_ratio": 35.09,
+                "pb_ratio": 6.21,
+                "ps_ratio": 5.47,
+                "dividend_yield": 0.0072,
+                "price": 61.8,
+                "change_percent": 0.0591,
                 "roe": 0.1316,
                 "gross_profit_margin": 0.3102,
                 "net_profit_margin": 0.1345,
@@ -648,20 +648,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "300146": {
         "data": {
             "stock_info": {
                 "code": "300146",
                 "name": "汤臣倍健",
-                "market_value": 192.2,
-                "pe_ratio": 11.01,
-                "pb_ratio": 1.7,
-                "ps_ratio": 2.04,
-                "dividend_yield": 0.0789,
-                "price": 11.3,
-                "change_percent": 0.0116,
+                "market_value": 198.49,
+                "pe_ratio": 11.37,
+                "pb_ratio": 1.75,
+                "ps_ratio": 2.11,
+                "dividend_yield": 0.0764,
+                "price": 11.67,
+                "change_percent": 0.0327,
                 "roe": 0.074,
                 "gross_profit_margin": 0.6793,
                 "net_profit_margin": 0.1504,
@@ -679,20 +679,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "000999": {
         "data": {
             "stock_info": {
                 "code": "000999",
                 "name": "华润三九",
-                "market_value": 546.6,
-                "pe_ratio": 19.16,
-                "pb_ratio": 2.84,
-                "ps_ratio": 2.21,
-                "dividend_yield": 0.0506,
-                "price": 42.56,
-                "change_percent": -0.0014,
+                "market_value": 557.39,
+                "pe_ratio": 19.54,
+                "pb_ratio": 2.9,
+                "ps_ratio": 2.25,
+                "dividend_yield": 0.0496,
+                "price": 43.4,
+                "change_percent": 0.0197,
                 "roe": 0.1499,
                 "gross_profit_margin": 0.5268,
                 "net_profit_margin": 0.1644,
@@ -710,7 +710,7 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "000516": {
         "data": {
@@ -748,13 +748,13 @@
             "stock_info": {
                 "code": "002466",
                 "name": "天齐锂业",
-                "market_value": 529.95,
-                "pe_ratio": 7.26,
-                "pb_ratio": 1.22,
-                "ps_ratio": 1.31,
-                "dividend_yield": 0.0418,
-                "price": 32.29,
-                "change_percent": 0.0416,
+                "market_value": 541.44,
+                "pe_ratio": 7.42,
+                "pb_ratio": 1.24,
+                "ps_ratio": 1.34,
+                "dividend_yield": 0.0409,
+                "price": 32.99,
+                "change_percent": 0.0217,
                 "roe": -0.12,
                 "gross_profit_margin": 0.4903,
                 "net_profit_margin": 0.1723,
@@ -772,7 +772,7 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "index_data": {
         "data": {
@@ -2130,13 +2130,13 @@
             "stock_info": {
                 "code": "300009",
                 "name": "安科生物",
-                "market_value": 135.81,
-                "pe_ratio": 16.03,
-                "pb_ratio": 3.47,
-                "ps_ratio": 4.74,
-                "dividend_yield": 0.0308,
-                "price": 8.12,
-                "change_percent": 0.01,
+                "market_value": 139.66,
+                "pe_ratio": 16.48,
+                "pb_ratio": 3.56,
+                "ps_ratio": 4.87,
+                "dividend_yield": 0.0299,
+                "price": 8.35,
+                "change_percent": 0.0283,
                 "roe": 0.1537,
                 "gross_profit_margin": 0.7775,
                 "net_profit_margin": 0.3122,
@@ -2149,25 +2149,25 @@
             },
             "targets": {
                 "target_market_value": {
-                    "min": null,
-                    "max": null
+                    "min": 120.0,
+                    "max": 160.0
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "300743": {
         "data": {
             "stock_info": {
                 "code": "300743",
                 "name": "天地数码",
-                "market_value": 21.74,
-                "pe_ratio": 39.08,
-                "pb_ratio": 3.57,
-                "ps_ratio": 3.38,
-                "dividend_yield": 0.0241,
-                "price": 14.17,
-                "change_percent": 0.0093,
+                "market_value": 22.94,
+                "pe_ratio": 41.23,
+                "pb_ratio": 3.76,
+                "ps_ratio": 3.56,
+                "dividend_yield": 0.0229,
+                "price": 14.95,
+                "change_percent": 0.055,
                 "roe": 0.1209,
                 "gross_profit_margin": 0.3493,
                 "net_profit_margin": 0.1335,
@@ -2185,20 +2185,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "603511": {
         "data": {
             "stock_info": {
                 "code": "603511",
                 "name": "爱慕股份",
-                "market_value": 46.23,
-                "pe_ratio": 15.12,
-                "pb_ratio": 1.05,
-                "ps_ratio": 1.35,
-                "dividend_yield": 0.0662,
-                "price": 11.37,
-                "change_percent": -0.0026,
+                "market_value": 50.86,
+                "pe_ratio": 16.64,
+                "pb_ratio": 1.16,
+                "ps_ratio": 1.48,
+                "dividend_yield": 0.0602,
+                "price": 12.51,
+                "change_percent": 0.1003,
                 "roe": 0.0317,
                 "gross_profit_margin": 0.6597,
                 "net_profit_margin": 0.0615,
@@ -2216,20 +2216,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "688553": {
         "data": {
             "stock_info": {
                 "code": "688553",
                 "name": "汇宇制药-W",
-                "market_value": 58.37,
-                "pe_ratio": 41.76,
-                "pb_ratio": 1.5,
-                "ps_ratio": 6.3,
+                "market_value": 60.79,
+                "pe_ratio": 43.49,
+                "pb_ratio": 1.57,
+                "ps_ratio": 6.56,
                 "dividend_yield": 0.0,
-                "price": 13.78,
-                "change_percent": 0.0117,
+                "price": 14.35,
+                "change_percent": 0.0414,
                 "roe": 0.0594,
                 "gross_profit_margin": 0.8315,
                 "net_profit_margin": 0.2592,
@@ -2247,20 +2247,20 @@
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     },
     "600030": {
         "data": {
             "stock_info": {
                 "code": "600030",
                 "name": "中信证券",
-                "market_value": 3928.93,
-                "pe_ratio": 19.92,
-                "pb_ratio": 1.53,
-                "ps_ratio": 6.54,
-                "dividend_yield": 0.027,
-                "price": 26.51,
-                "change_percent": 0.0019,
+                "market_value": 4105.29,
+                "pe_ratio": 20.82,
+                "pb_ratio": 1.6,
+                "ps_ratio": 6.83,
+                "dividend_yield": 0.0258,
+                "price": 27.7,
+                "change_percent": 0.0449,
                 "roe": 0.0605,
                 "gross_profit_margin": 0,
                 "net_profit_margin": 0.3782,
@@ -2273,11 +2273,11 @@
             },
             "targets": {
                 "target_market_value": {
-                    "min": null,
-                    "max": null
+                    "min": 3200.0,
+                    "max": 3600.0
                 }
             }
         },
-        "timestamp": "2025-01-13"
+        "timestamp": "2025-01-15"
     }
 }

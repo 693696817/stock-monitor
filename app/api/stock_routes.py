@@ -68,7 +68,7 @@ async def get_value_analysis(stock_code: str):
     return stock_service.get_value_analysis_data(stock_code)
 
 @router.get("/api/ai_analysis/{stock_code}")
-async def get_ai_analysis(stock_code: str):
+async def get_ai_analysis(stock_code: str, force_refresh: bool = False):
     """获取AI价值投资分析结果"""
     try:
         # 首先获取价值分析数据
@@ -77,6 +77,47 @@ async def get_ai_analysis(stock_code: str):
             return analysis_data
             
         # 使用AI服务进行分析
-        return ai_service.analyze_value_investment(analysis_data)
+        return ai_service.analyze_value_investment(analysis_data, force_refresh)
     except Exception as e:
-        return {"error": f"AI分析失败: {str(e)}"} 
+        return {"error": f"AI分析失败: {str(e)}"}
+
+@router.post("/api/update_target")
+async def update_target(
+    stock_code: str = Form(...),
+    target_market_value_min: Optional[float] = Form(None),
+    target_market_value_max: Optional[float] = Form(None)
+):
+    """更新股票的目标市值"""
+    return stock_service.update_target(stock_code, target_market_value_min, target_market_value_max)
+
+@router.get("/api/tao_analysis/{stock_code}")
+async def get_tao_analysis(stock_code: str):
+    """获取基于道德经的公司分析"""
+    try:
+        # 首先获取公司详细信息
+        company_info = stock_service.get_company_detail(stock_code)
+        if "error" in company_info:
+            return company_info
+            
+        # 使用AI服务进行道德经分析
+        return ai_service.analyze_tao_philosophy(company_info)
+    except Exception as e:
+        return {"error": f"道德经分析失败: {str(e)}"}
+
+@router.get("/api/master_analysis/{stock_code}")
+async def get_master_analysis(stock_code: str):
+    """获取价值投资大咖的分析结果"""
+    try:
+        # 首先获取公司详细信息和财务数据
+        company_info = stock_service.get_company_detail(stock_code)
+        if "error" in company_info:
+            return company_info
+            
+        value_analysis = stock_service.get_value_analysis_data(stock_code)
+        if "error" in value_analysis:
+            return value_analysis
+            
+        # 使用AI服务进行大咖分析
+        return ai_service.analyze_by_masters(company_info, value_analysis)
+    except Exception as e:
+        return {"error": f"价值投资大咖分析失败: {str(e)}"} 

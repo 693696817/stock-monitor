@@ -1,238 +1,158 @@
-# 价值投资盯盘系统
+# AI价值投资盯盘系统
 
-一个专注于中国 A 股市场的智能股票分析与监控平台，基于 Python FastAPI 开发，集成实时行情监控、AI 智能分析和价值投资建议等功能，助力投资者进行理性的价值投资决策。
+一个基于Python的A股智能监控和AI分析系统，集成了多维度的投资分析功能，包括传统价值投资分析、道德经智慧分析以及知名投资大师的视角分析。
 
-## 功能特点
+## 系统界面预览
+![系统主界面](docs/images/main.png)
 
-### 1. A股实时监控
-- 支持所有 A 股上市公司的实时监控
-- 沪深两市实时价格和涨跌幅更新
-- 自定义市值目标区间预警
-- 个股交易状态实时提示
+## 🚀 核心功能
 
-### 2. AI 智能分析
-- 基于中国市场特点的智能投资建议
-- A股市场合理价格区间估算
-- 结合中国经济环境的目标市值评估
-- 多维度分析报告：
-  - A股市场估值分析
-  - 中国特色财务健康状况评估
-  - 行业对标成长潜力评估
-  - 系统性风险评估
+### 1. 股票监控
+- 实时股票数据监控
+- 自定义目标市值设置
+- 价格和市值预警
+- 多维度指标展示（PE、PB、ROE等）
 
-### 3. A股财务指标分析
-- 估值指标：PE（市盈率）、PB（市净率）、PS（市销率）等
-- 盈利能力：ROE（净资产收益率）、毛利率、净利率
-- 成长能力：营收增长、利润增长、研发投入
-- 运营效率：资产周转率、存货周转率等
-- 偿债能力：资产负债率、流动比率等
-- 现金流指标：经营现金流、自由现金流等
+### 2. 指数行情
+- 主要指数实时行情展示
+- K线图技术分析
+- 大盘趋势分析
 
-### 4. 中国市场行情
-- 上证指数、深证成指、创业板指等主要指数实时行情
-- 专业K线图技术分析
-- A股市场涨跌分布分析
-- 行业板块轮动分析
+### 3. AI智能分析
+- 基础价值投资分析
+  - 财务指标分析
+  - 估值分析
+  - 风险评估
+  - 投资建议
+- 道德经分析视角
+  - 企业道德评估
+  - 可持续发展分析
+  - 长期投资价值判断
+- 价值投资大咖分析
+  - 巴菲特视角
+  - 格雷厄姆视角
+  - 林园视角
+  - 李大霄视角
+  - 段永平视角
 
-### 5. 上市公司详情
-- 工商登记信息
-- 十大股东持股变动
-- A股特色财务报表分析
-- 公司公告与重大事项
-- 行业地位分析
+### 4. 数据管理
+- 本地数据缓存
+- 历史数据查询
+- 分析报告导出
+- 自动数据更新
 
-## 技术架构
+## 🛠️ 技术栈
 
-### 后端技术栈
-- Web框架：FastAPI
-- 数据处理：Pandas
-- A股数据源：Tushare API（提供专业的 A 股数据）
-- 服务器：Uvicorn
-- 数据存储：JSON文件
-
-### 前端技术栈
-- 框架：Bootstrap 5
-- 图表：ECharts
-- 交互：JavaScript
-- 样式：CSS3
-
-### 主要模块
-```
-项目结构
-├── app/
-│   ├── __init__.py
-│   ├── api/
-│   │   └── stock_routes.py    # API路由
-│   ├── models/
-│   │   └── stock.py          # 数据模型
-│   ├── services/
-│   │   ├── stock_service.py  # 股票服务
-│   │   └── ai_analysis_service.py  # AI分析服务
-│   ├── templates/
-│   │   ├── index.html       # 主页面
-│   │   └── market.html      # 市场页面
-│   └── config.py            # 配置文件
-├── run.py                   # 启动文件
-└── requirements.txt         # 依赖包
-```
-
-## 安装部署
-
-### 环境要求
+### 后端
 - Python 3.8+
-- pip 包管理器
-- 网络连接（访问 Tushare API）
+- FastAPI：高性能Web框架
+- Tushare：金融数据API
+- 豆包大模型：AI分析引擎
+- SQLite：本地数据存储
 
-### 安装步骤
+### 前端
+- Bootstrap 5：响应式UI框架
+- ECharts：数据可视化
+- jQuery：DOM操作
+- WebSocket：实时数据推送
 
-1. 克隆项目
+## 📦 安装部署
+
+### 1. 环境准备
 ```bash
-git clone https://github.com/693696817/stock-monitor.git
+# 克隆项目
+git clone https://gitee.com/your-username/stock-monitor.git
 cd stock-monitor
-```
 
-2. 创建虚拟环境（推荐）
-```bash
+# 创建虚拟环境
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
-```
+venv\\Scripts\\activate  # Windows
 
-3. 安装依赖
-```bash
+# 安装依赖
 pip install -r requirements.txt
 ```
 
-4. 配置
-- 复制 `config.json.example` 为 `config.json`
-- 在 `config.json` 中配置你的 Tushare Token
-```json
-{
-    "watchlist": {},
-    "tushare_token": "your_tushare_token_here"
-}
+### 2. API配置获取
+
+#### Tushare API
+1. 访问 [Tushare官网](https://tushare.pro/)
+2. 注册并获取Token
+3. 可选：充值获取更高级别权限
+
+#### 豆包大模型API
+1. 访问 [豆包大模型控制台](https://ark.cn-beijing.volces.com/)
+2. 注册企业账号
+3. 创建API Key和Model ID
+
+### 3. 环境配置
+1. 复制配置文件
+```bash
+cp .env.example .env
+cp config.template.py config.py
 ```
 
-5. 运行
+2. 修改配置文件
+```bash
+# 编辑.env文件，填入API密钥
+TUSHARE_TOKEN=your_token_here
+VOLCES_MODEL_ID=your_model_id_here
+VOLCES_API_KEY=your_api_key_here
+```
+
+### 4. 启动系统
 ```bash
 python run.py
 ```
+访问 http://localhost:8000 即可使用系统
 
-6. 访问
-- 打开浏览器访问 `http://localhost:8000`
-- 默认端口为 8000，可在 `run.py` 中修改
+## 🤝 联系作者
 
-## 使用指南
+如果您对系统有任何问题或建议，欢迎联系：
 
-### 添加监控股票
-1. 在主页面顶部输入 A 股股票代码（6位数字，如：000001）
-2. 可选择设置目标市值区间
-3. 点击"添加"按钮开始监控
+- 微信：zyj118
+- QQ：693696817
+- Email：693696817@qq.com
 
-### 查看股票详情
-1. 点击股票名称进入详情页
-2. 查看完整的 A 股特色财务指标
-3. 获取针对中国市场的 AI 投资建议
+## 📝 使用说明
 
-### 指数行情
-- 实时展示沪深主要指数行情
-- 提供大盘趋势分析
-- 行业板块表现对比
+### 1. 添加监控股票
+1. 在主界面输入股票代码
+2. 设置目标市值范围
+3. 点击添加即可
 
-### 数据更新频率
-- A股交易时段（9:30-11:30, 13:00-15:00）实时更新
-- 盘后自动更新财务数据
-- 可手动强制刷新最新数据
+### 2. 查看AI分析
+1. 点击股票行右侧的分析按钮
+2. 选择需要的分析维度（基础/道德经/大咖）
+3. 等待AI分析结果
 
-## 开发指南
+### 3. 指数行情查看
+1. 点击顶部导航栏的"指数行情"
+2. 查看实时指数数据和K线图
 
-### 代码规范
-- 遵循 PEP 8 编码规范
-- 使用类型注解
-- 保持代码简洁清晰
+## ⚠️ 注意事项
 
-### 目录结构说明
-- `api/`: API路由和接口定义
-- `models/`: 数据模型和结构定义
-- `services/`: 业务逻辑和服务实现
-- `templates/`: 前端页面模板
+1. API使用限制
+   - Tushare免费账号有调用频率限制
+   - 豆包大模型API有Token限制
 
-### 扩展开发
-1. 添加新的数据源
-   - 在 `services` 中添加新的服务类
-   - 实现数据获取和处理方法
+2. 数据时效性
+   - 行情数据实时更新
+   - AI分析结果默认缓存1小时
 
-2. 扩展AI分析
-   - 修改 `ai_analysis_service.py`
-   - 添加新的分析维度和方法
+3. 系统性能
+   - 建议监控股票数量不超过30只
+   - 定时刷新间隔建议60秒以上
 
-3. 自定义UI
-   - 修改 `templates` 中的HTML文件
-   - 更新样式和交互逻辑
-
-## 维护说明
-
-### 数据更新
-- A股交易时段实时行情更新
-- 每日收盘后自动更新财务数据
-- 定期同步公司公告信息
-- 可配置更新频率
-
-### 错误处理
-- 完善的错误提示
-- 异常捕获和处理
-- 日志记录
-
-## 贡献指南
-
-欢迎提交 Issue 和 Pull Request：
-1. Fork 本仓库
-2. 创建特性分支
-3. 提交变更
-4. 发起 Pull Request
-
-## 许可证
+## 📄 许可证
 
 MIT License
 
-## 联系方式
+## 🤝 贡献指南
 
-- 作者：ZYJ
-- 邮箱：693696817@qq.com
+1. Fork 本仓库
+2. 新建 feature_xxx 分支
+3. 提交代码
+4. 新建 Pull Request
 
-## 更新日志
-
-### v1.0.0 (2024-03)
-- 支持全部 A 股上市公司监控
-- 实现核心功能：实时行情、AI 分析、财务分析
-- 完成基础框架搭建
-- 优化 A 股特色分析逻辑 
-
-## 配置说明
-
-在运行系统之前，需要配置以下API密钥：
-
-1. **Tushare API Token**
-   - 访问 [Tushare官网](https://tushare.pro/)
-   - 注册并登录账号
-   - 在个人中心获取Token
-   - 将Token填入 `config.json` 的 `tushare_token` 字段
-
-2. **豆包大模型 API Key**
-   - 访问 [豆包大模型](https://www.doubao.com/)
-   - 注册并登录账号
-   - 在控制台获取API Key和模型ID
-   - 将API Key填入 `config.json` 的 `ai_api_key` 字段
-   - 将模型ID填入 `config.json` 的 `ai_model_id` 字段
-
-配置文件示例 (`config.json`):
-```json
-{
-    "watchlist": {},
-    "tushare_token": "your_tushare_token_here",
-    "ai_api_key": "your_ai_api_key_here",
-    "ai_model_id": "your_ai_model_id_here"
-}
-```
-
-注意：请妥善保管你的API密钥，不要将其提交到代码仓库中。 
+欢迎提交Issue和Pull Request！ 

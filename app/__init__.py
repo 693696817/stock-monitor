@@ -11,7 +11,7 @@ Config.ensure_directories()
 app = FastAPI()
 
 # 设置tushare token
-ts.set_token(Config.get_tushare_token())
+ts.set_token(Config.TUSHARE_TOKEN)
 pro = ts.pro_api()
 
 # Mount static files

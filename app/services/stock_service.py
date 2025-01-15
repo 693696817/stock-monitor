@@ -226,6 +226,20 @@ class StockService:
         self._save_watchlist()
         return {"status": "success"}
 
+    def update_target(self, stock_code: str, target_market_value_min: float = None, target_market_value_max: float = None):
+        """更新股票的目标市值"""
+        if stock_code not in self.watchlist:
+            return {"error": "股票不在监控列表中"}
+            
+        self.watchlist[stock_code] = {
+            "target_market_value": {
+                "min": target_market_value_min,
+                "max": target_market_value_max
+            }
+        }
+        self._save_watchlist()
+        return {"status": "success"}
+
     def get_index_info(self):
         """获取主要指数数据"""
         try:

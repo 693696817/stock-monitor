@@ -642,8 +642,13 @@
                         <!-- AI价值投资分析模块 -->
                         <div class="col-12">
                             <div class="card">
-                                <div class="card-header bg-light">
-                                    <i class="bi bi-robot"></i> AI价值投资分析
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="bi bi-robot"></i> AI价值投资分析
+                                    </div>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="refreshAIAnalysis()" id="refreshAIBtn">
+                                        <i class="bi bi-arrow-repeat"></i> 更新分析
+                                    </button>
                                 </div>
                                 <div class="card-body">
                                     <div id="aiAnalysisError" class="alert alert-danger d-none">
@@ -785,6 +790,203 @@
         </div>
     </footer>
 
+    <!-- 编辑目标市值弹窗 -->
+    <div class="modal fade" id="editTargetModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑监控目标</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editTargetForm">
+                        <input type="hidden" id="editStockCode" name="stock_code">
+                        <div class="mb-3">
+                            <label class="form-label">目标市值区间 (亿元)</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" class="form-control" id="editTargetMin" 
+                                       name="target_market_value_min" placeholder="最小值">
+                                <span class="input-group-text">-</span>
+                                <input type="number" step="0.01" class="form-control" id="editTargetMax" 
+                                       name="target_market_value_max" placeholder="最大值">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="updateTarget()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 道德经分析弹窗 -->
+    <div class="modal fade" id="taoAnalysisModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">道德经分析</h5>
+                    <div class="ms-auto me-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="refreshTaoAnalysis()">
+                            <i class="bi bi-arrow-clockwise"></i> 更新分析
+                        </button>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="taoAnalysisError" class="alert alert-danger d-none">
+                        <!-- 错误信息将在这里显示 -->
+                    </div>
+                    <div id="taoAnalysisLoading" class="text-center py-4 d-none">
+                        <div class="spinner-border text-success" role="status">
+                            <span class="visually-hidden">分析中...</span>
+                        </div>
+                        <div class="mt-2 text-muted">以道德经智慧分析中，请稍候...</div>
+                    </div>
+                    <div id="taoAnalysisContent">
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <i class="bi bi-book"></i> 道德经视角
+                            </div>
+                            <div class="card-body">
+                                <div id="taoPhilosophy" class="mb-4">
+                                    <!-- 道德经哲学分析将在这里显示 -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <i class="bi bi-building"></i> 企业道德评估
+                            </div>
+                            <div class="card-body">
+                                <div id="businessEthics" class="mb-4">
+                                    <!-- 企业道德评估将在这里显示 -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <i class="bi bi-lightbulb"></i> 投资建议
+                            </div>
+                            <div class="card-body">
+                                <div id="taoAdvice">
+                                    <!-- 基于道德经的投资建议将在这里显示 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 价值投资大咖分析弹窗 -->
+    <div class="modal fade" id="masterAnalysisModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">价值投资大咖分析</h5>
+                    <div class="ms-auto me-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="refreshMasterAnalysis()">
+                            <i class="bi bi-arrow-clockwise"></i> 更新分析
+                        </button>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="masterAnalysisError" class="alert alert-danger d-none">
+                        <!-- 错误信息将在这里显示 -->
+                    </div>
+                    <div id="masterAnalysisLoading" class="text-center py-4 d-none">
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="visually-hidden">分析中...</span>
+                        </div>
+                        <div class="mt-2 text-muted">大咖们正在分析，请稍候...</div>
+                    </div>
+                    <div id="masterAnalysisContent">
+                        <!-- 巴菲特分析 -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light d-flex align-items-center">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Warren_Buffett_KU_Visit.jpg/120px-Warren_Buffett_KU_Visit.jpg" 
+                                     class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;"
+                                     alt="Warren Buffett">
+                                <span>巴菲特视角</span>
+                            </div>
+                            <div class="card-body">
+                                <div id="buffettAnalysis" class="mb-4">
+                                    <!-- 巴菲特分析将在这里显示 -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 格雷厄姆分析 -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light d-flex align-items-center">
+                                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/5/5e/Benjamin_Graham.jpg/120px-Benjamin_Graham.jpg" 
+                                     class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;"
+                                     alt="Benjamin Graham">
+                                <span>格雷厄姆视角</span>
+                            </div>
+                            <div class="card-body">
+                                <div id="grahamAnalysis" class="mb-4">
+                                    <!-- 格雷厄姆分析将在这里显示 -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 林园分析 -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light d-flex align-items-center">
+                                <img src="https://pic3.zhimg.com/v2-f6a12dbc2d5f6e7f9c4f2e4e5c9c9c9c_720w.jpg" 
+                                     class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;"
+                                     alt="林园">
+                                <span>林园视角</span>
+                            </div>
+                            <div class="card-body">
+                                <div id="linYuanAnalysis" class="mb-4">
+                                    <!-- 林园分析将在这里显示 -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 李大霄分析 -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light d-flex align-items-center">
+                                <img src="https://img.gelonghui.com/apply/column/20200410/column_20200410112754895_31795.jpg" 
+                                     class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;"
+                                     alt="李大霄">
+                                <span>李大霄视角</span>
+                            </div>
+                            <div class="card-body">
+                                <div id="liDaxiaoAnalysis" class="mb-4">
+                                    <!-- 李大霄分析将在这里显示 -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 段永平分析 -->
+                        <div class="card">
+                            <div class="card-header bg-light d-flex align-items-center">
+                                <img src="https://img.caixin.com/2011-05-17/1305626275743167_840_560.jpg" 
+                                     class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;"
+                                     alt="段永平">
+                                <span>段永平视角</span>
+                            </div>
+                            <div class="card-body">
+                                <div id="duanYongpingAnalysis">
+                                    <!-- 段永平分析将在这里显示 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <script>
@@ -792,6 +994,42 @@
         let currentSortDirection = 'asc';
         let stockData = [];
         let loadingStocks = new Set();
+
+        // 显示编辑目标市值弹窗
+        function showEditTargetModal(btn) {
+            const stockCode = btn.dataset.stockCode;
+            const targetMin = btn.dataset.targetMin;
+            const targetMax = btn.dataset.targetMax;
+            
+            document.getElementById('editStockCode').value = stockCode;
+            document.getElementById('editTargetMin').value = targetMin;
+            document.getElementById('editTargetMax').value = targetMax;
+            
+            new bootstrap.Modal(document.getElementById('editTargetModal')).show();
+        }
+
+        // 更新监控目标
+        async function updateTarget() {
+            const form = document.getElementById('editTargetForm');
+            const formData = new FormData(form);
+            
+            try {
+                const response = await fetch('/api/update_target', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(await response.text() || '更新失败');
+                }
+                
+                bootstrap.Modal.getInstance(document.getElementById('editTargetModal')).hide();
+                await refreshWatchlist(true);
+            } catch (error) {
+                console.error('更新目标失败：', error);
+                alert('更新目标失败：' + error.message);
+            }
+        }
 
         // 添加排序功能
         document.querySelectorAll('.sortable').forEach(header => {
@@ -910,9 +1148,12 @@
         function renderStockList(data) {
             const stockTableBody = document.getElementById('stockTableBody');
             if (!stockTableBody) return;
+            
+            // 清空现有内容
             stockTableBody.innerHTML = '';
             
-            if (!data || data.length === 0) {
+            // 检查数据是否为空
+            if (!data || !Array.isArray(data) || data.length === 0) {
                 const emptyRow = document.createElement('tr');
                 emptyRow.innerHTML = '<td colspan="18" class="text-center text-muted py-4">暂无监控的股票</td>';
                 stockTableBody.appendChild(emptyRow);
@@ -921,14 +1162,15 @@
             }
 
             // 排序数据
+            let sortedData = [...data];
             if (currentSortField) {
-                data.sort((a, b) => {
+                sortedData.sort((a, b) => {
                     let aValue = parseFloat(a.stock_info[currentSortField]);
                     let bValue = parseFloat(b.stock_info[currentSortField]);
                     
                     // 处理无效值
-                    if (aValue === null || aValue === undefined || isNaN(aValue)) aValue = -Infinity;
-                    if (bValue === null || bValue === undefined || isNaN(bValue)) bValue = -Infinity;
+                    if (isNaN(aValue)) aValue = -Infinity;
+                    if (isNaN(bValue)) bValue = -Infinity;
                     
                     // 数值比较
                     const comparison = aValue - bValue;
@@ -936,8 +1178,11 @@
                 });
             }
             
-            data.forEach(item => {
+            // 渲染每一行
+            sortedData.forEach(item => {
                 const { stock_info, targets } = item;
+                if (!stock_info) return;  // 跳过无效数据
+                
                 const row = document.createElement('tr');
                 row.setAttribute('data-stock-code', stock_info.code);
                 
@@ -951,10 +1196,29 @@
                         <a href="javascript:void(0)" onclick="showCompanyDetail('${stock_info.code}')" class="text-primary">
                             ${stock_info.name || '-'}
                         </a>
+                        <button class="btn btn-link btn-sm p-0 ms-2 text-danger" 
+                                onclick="showTaoAnalysis('${stock_info.code}')"
+                                title="道德经分析">
+                            <i class="bi bi-yin-yang"></i>
+                        </button>
+                        <button class="btn btn-link btn-sm p-0 ms-2 text-dark" 
+                                onclick="showMasterAnalysis('${stock_info.code}')"
+                                title="价值投资大咖分析">
+                            <i class="bi bi-person-fill"></i>
+                        </button>
                     </td>
                     <td>${formatNumber(stock_info.price)}</td>
                     <td>${formatPercent(stock_info.change_percent)}</td>
-                    <td>${formatTargetRange(targets.target_market_value)}</td>
+                    <td>${formatTargetRange(targets.target_market_value)}
+                        <button class="btn btn-link btn-sm p-0 ms-2 text-primary edit-target-btn" 
+                                data-stock-code="${stock_info.code}"
+                                data-target-min="${targets.target_market_value?.min || ''}"
+                                data-target-max="${targets.target_market_value?.max || ''}"
+                                onclick="showEditTargetModal(this)"
+                                title="编辑目标市值">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </td>
                     <td>${formatNumber(stock_info.market_value, true)}</td>
                     <td>${formatNumber(stock_info.pe_ratio, true)}</td>
                     <td>${formatNumber(stock_info.pb_ratio, true)}</td>
@@ -981,47 +1245,6 @@
             document.getElementById('stockCount').textContent = data.length;
         }
 
-        // 更新单个股票数据
-        function updateStockData(stockData) {
-            const row = document.querySelector(`tr[data-stock-code="${stockData.stock_info.code}"]`);
-            if (!row) return;
-            
-            const { stock_info, targets } = stockData;
-            
-            // 检查市值状态
-            const marketValueStatus = checkMarketValueStatus(stock_info.market_value, targets.target_market_value);
-            const marketValueIcon = getMarketValueIcon(marketValueStatus);
-            
-            row.innerHTML = `
-                <td>${stock_info.code}${marketValueIcon}</td>
-                <td>
-                    <a href="javascript:void(0)" onclick="showCompanyDetail('${stock_info.code}')" class="text-primary">
-                        ${stock_info.name || '-'}
-                    </a>
-                </td>
-                <td>${formatNumber(stock_info.price)}</td>
-                <td>${formatPercent(stock_info.change_percent)}</td>
-                <td>${formatTargetRange(stockData.targets.target_market_value)}</td>
-                <td>${formatNumber(stock_info.market_value, true)}</td>
-                <td>${formatNumber(stock_info.pe_ratio, true)}</td>
-                <td>${formatNumber(stock_info.pb_ratio, true)}</td>
-                <td>${formatNumber(stock_info.ps_ratio, true)}</td>
-                <td>${formatPercent(stock_info.dividend_yield)}</td>
-                <td>${formatPercent(stock_info.roe)}</td>
-                <td>${formatPercent(stock_info.gross_profit_margin)}</td>
-                <td>${formatPercent(stock_info.net_profit_margin)}</td>
-                <td>${formatPercent(stock_info.debt_to_assets, false, true)}</td>
-                <td>${formatPercent(stock_info.net_profit_yoy)}</td>
-                <td>${formatNumber(stock_info.bps, true)}</td>
-                <td>${formatNumber(stock_info.ocfps)}</td>
-                <td>
-                    <button class="btn btn-sm btn-danger remove-btn" data-stock-code="${stock_info.code}">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </td>
-            `;
-        }
-
         // 刷新监控列表
         async function refreshWatchlist(forceRefresh = false) {
             try {
@@ -1029,32 +1252,72 @@
                 if (!response.ok) throw new Error('获取监控列表失败');
                 
                 const data = await response.json();
+                if (!Array.isArray(data)) {
+                    throw new Error('返回数据格式错误');
+                }
+                
                 stockData = data;  // 更新全局数据
                 renderStockList(data);
                 
                 // 异步加载每个股票的详细数据
                 data.forEach(item => {
-                    loadStockData(item.stock_info.code, forceRefresh);
+                    if (item && item.stock_info && item.stock_info.code) {
+                        loadStockData(item.stock_info.code, forceRefresh);
+                    }
                 });
             } catch (error) {
                 console.error('刷新数据失败：', error);
-                alert('刷新数据失败：' + error.message);
+                // 显示错误信息
+                const stockTableBody = document.getElementById('stockTableBody');
+                if (stockTableBody) {
+                    stockTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="18" class="text-center text-danger">
+                                <i class="bi bi-exclamation-triangle"></i> 
+                                加载数据失败：${error.message}
+                            </td>
+                        </tr>
+                    `;
+                }
             }
         }
 
-        // 异步加载股票数据
+        // 更新单个股票数据
         async function loadStockData(stockCode, forceRefresh = false) {
+            if (!stockCode || loadingStocks.has(stockCode)) return;
+            
             try {
+                loadingStocks.add(stockCode);
                 const url = `/api/stock_info/${stockCode}${forceRefresh ? '?force_refresh=true' : ''}`;
                 const response = await fetch(url);
-                if (!response.ok) throw new Error('获取股票数据失败');
+                
+                if (!response.ok) {
+                    throw new Error('获取股票数据失败');
+                }
                 
                 const data = await response.json();
-                if (data.error) throw new Error(data.error);
+                if (data.error) {
+                    throw new Error(data.error);
+                }
                 
-                updateStockData(data);
+                // 更新全局数据中的股票信息
+                const index = stockData.findIndex(item => item.stock_info.code === stockCode);
+                if (index !== -1) {
+                    stockData[index] = data;
+                    renderStockList(stockData);
+                }
             } catch (error) {
                 console.error(`加载股票 ${stockCode} 数据失败:`, error);
+                // 在界面上显示错误状态
+                const row = document.querySelector(`tr[data-stock-code="${stockCode}"]`);
+                if (row) {
+                    const cells = row.getElementsByTagName('td');
+                    for (let i = 2; i < cells.length - 1; i++) {
+                        cells[i].innerHTML = '<span class="text-danger">加载失败</span>';
+                    }
+                }
+            } finally {
+                loadingStocks.delete(stockCode);
             }
         }
 
@@ -1116,6 +1379,12 @@
                     removeStock(stockCode);
                 }
             });
+            
+            // 移除DataTable初始化代码，因为我们使用原生表格排序
+            
+            // 初始化指数数据
+            refreshIndexData();
+            setInterval(refreshIndexData, 60000); // 每分钟更新一次
         });
 
         // 获取指数数据
@@ -1217,6 +1486,7 @@
         // 显示公司详情弹窗
         async function showCompanyDetail(stockCode) {
             const modal = new bootstrap.Modal(document.getElementById('companyModal'));
+            document.getElementById('companyModal').setAttribute('data-stock-code', stockCode);
             modal.show();
             
             // 显示加载状态
@@ -1509,6 +1779,235 @@
                 zeroRecords: "暂无数据"
             }
         });
+
+        // 刷新AI分析
+        async function refreshAIAnalysis() {
+            const stockCode = document.querySelector('#companyModal').getAttribute('data-stock-code');
+            if (!stockCode) return;
+            
+            const refreshBtn = document.getElementById('refreshAIBtn');
+            const originalText = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> 分析中...';
+            refreshBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`/api/ai_analysis/${stockCode}?force_refresh=true`);
+                if (!response.ok) {
+                    throw new Error(await response.text() || '更新失败');
+                }
+                
+                const result = await response.json();
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+                
+                // 更新AI分析显示
+                document.getElementById('investmentSuggestion').innerHTML = `
+                    <div class="mb-2"><strong>总体建议：</strong>${result.investment_suggestion.summary || '-'}</div>
+                    <div class="mb-2"><strong>建议操作：</strong>${result.investment_suggestion.action || '-'}</div>
+                    <div><strong>关注重点：</strong>
+                        <p class="mb-0">${result.investment_suggestion.key_points || '-'}</p>
+                    </div>
+                `;
+                
+                const priceRange = result.price_analysis?.合理价格区间 || [];
+                document.getElementById('reasonablePriceRange').innerHTML = `
+                    <div class="mb-2">${priceRange[0] || '-'} - ${priceRange[1] || '-'} 元</div>
+                `;
+                
+                const marketValue = result.price_analysis?.目标市值区间 || [];
+                document.getElementById('targetMarketValue').innerHTML = `
+                    <div class="mb-2">${marketValue[0] || '-'} - ${marketValue[1] || '-'} 亿元</div>
+                `;
+                
+                document.getElementById('valuationAnalysis').innerHTML = `
+                    <div class="mb-2">${result.analysis?.估值分析 || '-'}</div>
+                `;
+                
+                document.getElementById('financialHealth').innerHTML = `
+                    <div>${result.analysis?.财务健康状况 || '-'}</div>
+                `;
+                
+                document.getElementById('growthPotential').innerHTML = `
+                    <div>${result.analysis?.成长潜力 || '-'}</div>
+                `;
+                
+                document.getElementById('riskAssessment').innerHTML = `
+                    <div>${result.analysis?.风险评估 || '-'}</div>
+                `;
+                
+            } catch (error) {
+                console.error('更新AI分析失败：', error);
+                alert('更新AI分析失败：' + error.message);
+            } finally {
+                refreshBtn.innerHTML = originalText;
+                refreshBtn.disabled = false;
+            }
+        }
+
+        // 显示道德经分析弹窗
+        async function showTaoAnalysis(stockCode) {
+            const modal = new bootstrap.Modal(document.getElementById('taoAnalysisModal'));
+            document.getElementById('taoAnalysisModal').setAttribute('data-stock-code', stockCode);
+            modal.show();
+            
+            // 显示加载状态
+            document.getElementById('taoAnalysisError').classList.add('d-none');
+            document.getElementById('taoAnalysisLoading').classList.remove('d-none');
+            document.getElementById('taoAnalysisContent').classList.add('d-none');
+            
+            try {
+                // 获取道德经分析数据
+                const response = await fetch(`/api/tao_analysis/${stockCode}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    document.getElementById('taoAnalysisError').textContent = data.error;
+                    document.getElementById('taoAnalysisError').classList.remove('d-none');
+                    document.getElementById('taoAnalysisLoading').classList.add('d-none');
+                    return;
+                }
+                
+                // 更新道德经分析显示
+                const formatContent = (content) => {
+                    if (typeof content === 'string') {
+                        return content.replace(/\n/g, '<br>');
+                    } else if (content && typeof content === 'object') {
+                        return JSON.stringify(content, null, 2).replace(/\n/g, '<br>');
+                    }
+                    return String(content || '-');
+                };
+
+                document.getElementById('taoPhilosophy').innerHTML = formatContent(data.tao_philosophy);
+                document.getElementById('businessEthics').innerHTML = formatContent(data.business_ethics);
+                document.getElementById('taoAdvice').innerHTML = formatContent(data.investment_advice);
+                
+                document.getElementById('taoAnalysisLoading').classList.add('d-none');
+                document.getElementById('taoAnalysisContent').classList.remove('d-none');
+            } catch (error) {
+                console.error('获取道德经分析失败:', error);
+                document.getElementById('taoAnalysisError').textContent = error.message || '获取道德经分析失败，请稍后重试';
+                document.getElementById('taoAnalysisError').classList.remove('d-none');
+                document.getElementById('taoAnalysisLoading').classList.add('d-none');
+                document.getElementById('taoAnalysisContent').classList.add('d-none');
+            }
+        }
+
+        // 显示价值投资大咖分析弹窗
+        async function showMasterAnalysis(stockCode) {
+            const modal = new bootstrap.Modal(document.getElementById('masterAnalysisModal'));
+            document.getElementById('masterAnalysisModal').setAttribute('data-stock-code', stockCode);
+            modal.show();
+            
+            // 显示加载状态
+            document.getElementById('masterAnalysisError').classList.add('d-none');
+            document.getElementById('masterAnalysisLoading').classList.remove('d-none');
+            document.getElementById('masterAnalysisContent').classList.add('d-none');
+            
+            try {
+                // 获取价值投资大咖分析数据
+                const response = await fetch(`/api/master_analysis/${stockCode}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    document.getElementById('masterAnalysisError').textContent = data.error;
+                    document.getElementById('masterAnalysisError').classList.remove('d-none');
+                    document.getElementById('masterAnalysisLoading').classList.add('d-none');
+                    return;
+                }
+                
+                // 更新各个大咖的分析显示
+                const formatContent = (content) => {
+                    if (typeof content === 'string') {
+                        return content.replace(/\n/g, '<br>');
+                    } else if (content && typeof content === 'object') {
+                        return JSON.stringify(content, null, 2).replace(/\n/g, '<br>');
+                    }
+                    return String(content || '-');
+                };
+
+                document.getElementById('buffettAnalysis').innerHTML = formatContent(data.buffett_analysis);
+                document.getElementById('grahamAnalysis').innerHTML = formatContent(data.graham_analysis);
+                document.getElementById('linYuanAnalysis').innerHTML = formatContent(data.lin_yuan_analysis);
+                document.getElementById('liDaxiaoAnalysis').innerHTML = formatContent(data.li_daxiao_analysis);
+                document.getElementById('duanYongpingAnalysis').innerHTML = formatContent(data.duan_yongping_analysis);
+                
+                document.getElementById('masterAnalysisLoading').classList.add('d-none');
+                document.getElementById('masterAnalysisContent').classList.remove('d-none');
+            } catch (error) {
+                console.error('获取价值投资大咖分析失败:', error);
+                document.getElementById('masterAnalysisError').textContent = error.message || '获取价值投资大咖分析失败，请稍后重试';
+                document.getElementById('masterAnalysisError').classList.remove('d-none');
+                document.getElementById('masterAnalysisLoading').classList.add('d-none');
+                document.getElementById('masterAnalysisContent').classList.add('d-none');
+            }
+        }
+
+        async function refreshTaoAnalysis() {
+            const stockCode = document.querySelector('#taoAnalysisModal').getAttribute('data-stock-code');
+            if (!stockCode) return;
+            
+            // 显示加载状态
+            document.querySelector('#taoAnalysisLoading').classList.remove('d-none');
+            document.querySelector('#taoAnalysisContent').classList.add('d-none');
+            document.querySelector('#taoAnalysisError').classList.add('d-none');
+            
+            try {
+                const response = await fetch(`/api/tao_analysis/${stockCode}?force_refresh=true`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // 更新内容
+                document.querySelector('#taoPhilosophy').innerHTML = formatContent(data.tao_philosophy);
+                document.querySelector('#businessEthics').innerHTML = formatContent(data.business_ethics);
+                document.querySelector('#investmentAdvice').innerHTML = formatContent(data.investment_advice);
+                
+                // 显示内容
+                document.querySelector('#taoAnalysisContent').classList.remove('d-none');
+            } catch (error) {
+                document.querySelector('#taoAnalysisError').textContent = `分析失败: ${error.message}`;
+                document.querySelector('#taoAnalysisError').classList.remove('d-none');
+            } finally {
+                document.querySelector('#taoAnalysisLoading').classList.add('d-none');
+            }
+        }
+
+        async function refreshMasterAnalysis() {
+            const stockCode = document.querySelector('#masterAnalysisModal').getAttribute('data-stock-code');
+            if (!stockCode) return;
+            
+            // 显示加载状态
+            document.querySelector('#masterAnalysisLoading').classList.remove('d-none');
+            document.querySelector('#masterAnalysisContent').classList.add('d-none');
+            document.querySelector('#masterAnalysisError').classList.add('d-none');
+            
+            try {
+                const response = await fetch(`/api/master_analysis/${stockCode}?force_refresh=true`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // 更新内容
+                document.querySelector('#buffettAnalysis').innerHTML = formatContent(data.buffett_analysis);
+                document.querySelector('#grahamAnalysis').innerHTML = formatContent(data.graham_analysis);
+                document.querySelector('#linYuanAnalysis').innerHTML = formatContent(data.lin_yuan_analysis);
+                document.querySelector('#liDaxiaoAnalysis').innerHTML = formatContent(data.li_daxiao_analysis);
+                document.querySelector('#duanYongpingAnalysis').innerHTML = formatContent(data.duan_yongping_analysis);
+                
+                // 显示内容
+                document.querySelector('#masterAnalysisContent').classList.remove('d-none');
+            } catch (error) {
+                document.querySelector('#masterAnalysisError').textContent = `分析失败: ${error.message}`;
+                document.querySelector('#masterAnalysisError').classList.remove('d-none');
+            } finally {
+                document.querySelector('#masterAnalysisLoading').classList.add('d-none');
+            }
+        }
     </script>
 </body>
 </html> 
