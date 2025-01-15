@@ -76,7 +76,7 @@ pip install -r requirements.txt
 ### 2. API配置获取
 
 #### Tushare API
-1. 访问 [Tushare官网](https://tushare.pro/)
+1. 访问 [Tushare官网](https://tushare.pro/register?reg=431380)
 2. 注册并获取Token
 3. 可选：充值获取更高级别权限
 
