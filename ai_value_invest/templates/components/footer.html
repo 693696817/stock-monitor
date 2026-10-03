@@ -189,11 +189,13 @@
                 开发者：ZYJ
                 Copyright © 2026 <span class="text-light">{{ site_name }}</span> All rights reserved.
             </div>
+            {% if site.get('ICP_NUMBER') or site_name %}
             <div class="footer-beian" style="text-align: center; padding: 20px 0; font-size: 14px; color: #666;">
                 <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color: #666; text-decoration: none;">
-                    {{ site.get('ICP_NUMBER') or '豫ICP备2024045985号-1' }}
+                    {{ site.get('ICP_NUMBER') or ('豫ICP备' + site_name + '号-1') }}
                 </a>
             </div>
+            {% endif %}
         </div>
     </div>
 </footer>

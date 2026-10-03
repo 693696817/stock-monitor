@@ -5,7 +5,7 @@ UPDATED_AT = "2026-09-04"
 
 OPERATOR_DEFAULTS = {
     "entity": "A股棱镜",
-    "icp": "豫ICP备2024045985号-1",
+    "icp": "",
     "email": "暂未公开（请通过站内「意见反馈」提交）",
     "wechat": "",
     "address": "暂未公开",
