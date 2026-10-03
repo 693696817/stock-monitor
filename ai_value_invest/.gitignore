@@ -9,7 +9,10 @@ __pycache__/
 
 # 环境变量 / 密钥
 .env
-.env.*
+.env.local
+.env.production
+.env.*.local
+!.env.example
 
 # PDF 导出产物
 static/pdfs/*.pdf
