@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}A股财报披露日历 - 预约披露时间表{% endblock %}
+{% block seo_description %}A股财报披露日历：按预约披露时间查询上市公司季报、中报、年报披露安排，提前规划财报前调仓与观察窗口。{% endblock %}
+{% block seo_keywords %}财报披露日历,预约披露时间,季报披露,年报披露,A股财报{% endblock %}
+
+{% block extra_css %}
+<style>
+.cal-wrap { padding-top: 92px; padding-bottom: 48px; max-width: 1100px; margin: 0 auto; }
+.cal-card {
+    background: rgba(30, 41, 59, 0.68);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 22px 24px;
+    backdrop-filter: blur(12px);
+    margin-bottom: 20px;
+}
+.cal-title { font-size: 1.45rem; font-weight: 700; color: #fff; }
+.cal-sub { color: #94a3b8; font-size: 0.88rem; margin-top: 6px; }
+.cal-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+.cal-toolbar .btn { padding: 4px 14px; font-size: 0.82rem; border-radius: 20px; }
+.cal-day { display: flex; gap: 16px; padding: 14px 4px; border-bottom: 1px solid rgba(148,163,184,0.12); }
+.cal-day:last-child { border-bottom: none; }
+.cal-date-box { min-width: 108px; text-align: center; }
+.cal-date-main { font-weight: 700; color: #e2e8f0; font-size: 0.98rem; }
+.cal-date-wd { color: #94a3b8; font-size: 0.76rem; }
+.cal-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.cal-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.18);
+    border-radius: 10px;
+    padding: 5px 10px; font-size: 0.82rem; color: #e2e8f0;
+    text-decoration: none;
+    transition: background .15s, border-color .15s;
+}
+.cal-chip:hover { background: rgba(56, 189, 248, 0.16); border-color: rgba(56,189,248,0.4); color: #fff; text-decoration: none; }
+.cal-chip .cal-code { color: #94a3b8; font-size: 0.74rem; }
+.cal-chip .cal-type { color: #38bdf8; font-size: 0.74rem; }
+.cal-chip.cal-done { opacity: 0.62; }
+.cal-done-tag { color: #34d399; font-size: 0.72rem; }
+.cal-empty { text-align: center; color: #94a3b8; padding: 42px 0; }
+.cal-note { color: #94a3b8; font-size: 0.78rem; margin-top: 14px; line-height: 1.7; }
+@media (max-width: 640px) {
+    .cal-day { flex-direction: column; gap: 8px; }
+    .cal-date-box { min-width: 0; text-align: left; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cal-wrap">
+    <div class="cal-card">
+        <div class="cal-title"><i class="fa-regular fa-calendar-check me-2 text-info"></i>A股财报披露日历</div>
+        <div class="cal-sub">过去 {{ days }} 天已披露 + 未来 {{ days }} 天预约披露安排（季报 / 中报 / 年报），数据每日定时同步。</div>
+        <div class="cal-toolbar">
+            {% for d in (30, 45, 60, 90) %}
+            <a class="btn {{ 'btn-info' if d == days else 'btn-outline-info' }}" href="/calendar?days={{ d }}">前后 {{ d }} 天</a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="cal-card">
+        {% if groups %}
+            {% for g in groups %}
+            <div class="cal-day">
+                <div class="cal-date-box">
+                    <div class="cal-date-main">{{ g['date_cn'] }}</div>
+                    <div class="cal-date-wd">{{ g['weekday'] or '' }}</div>
+                </div>
+                <div class="cal-chips">
+                    {% for it in g['items'] %}
+                    {% set ed = it.get('end_date') or '' %}
+                    {% set done = it.get('actual_date') %}
+                    <a class="cal-chip {{ 'cal-done' if done else '' }}" href="/stock/{{ it.get('ts_code') }}">
+                        <span>{{ it.get('stock_name') or it.get('ts_code') }}</span>
+                        {% if ed %}
+                        <span class="cal-type">{{ ed[:4] }}年{{ { '0331': '一季报', '0630': '中报', '0930': '三季报', '1231': '年报' }.get(ed[4:], '') }}</span>
+                        {% endif %}
+                        <span class="cal-code">{{ it.get('ts_code') }}</span>
+                        {% if done %}<span class="cal-done-tag">已披露</span>{% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="cal-empty">
+                <i class="fa-regular fa-calendar me-2"></i>前后 {{ days }} 天内暂无披露计划。
+                <div class="mt-2">上市公司一般提前 1 个月左右发布预约披露公告，届时日历会自动更新。</div>
+            </div>
+        {% endif %}
+        <div class="cal-note">
+            说明：日期为交易所披露的「预约披露时间」，公司可申请变更，实际披露日以公司公告为准；
+            <span style="color:#34d399;">已披露</span> = 已按计划披露完毕，灰显条目为历史记录。
+            把股票加入自选后，可在个人中心设置「财报前 N 天提醒」。
+        </div>
+    </div>
+
+    {% if not is_logged_in %}
+    <div class="cal-card text-center">
+        <div style="color:#e2e8f0;font-size:1.02rem;font-weight:600;">
+            <i class="fa-regular fa-bell me-2 text-warning"></i>想在财报披露前收到提醒？
+        </div>
+        <div class="cal-sub mb-3">注册后把股票加入自选，即可设置「财报前 N 天提醒」，不再错过关键观察窗口。</div>
+        <a href="/register" class="btn btn-info btn-sm px-4">免费注册</a>
+        <a href="/login?next=/calendar" class="btn btn-outline-info btn-sm px-4 ms-2">登录</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

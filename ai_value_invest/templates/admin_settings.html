@@ -1,0 +1,2266 @@
+{% extends "base.html" %}
+{% block seo_description %}系统设置 · 管理后台 - A股棱镜（仅限管理员访问）{% endblock %}
+{% block seo_keywords %}A股棱镜,管理后台,系统管理{% endblock %}
+
+
+{% block robots %}noindex, nofollow{% endblock %}
+
+
+
+{% block title %}系统设置 - A股棱镜 后台{% endblock %}
+
+{% block content %}
+<style>
+    .admin-tabs {
+        border-bottom: 1px solid #1e293b;
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+    .admin-tabs .nav-link {
+        color: #94a3b8;
+        background: transparent;
+        border: 1px solid transparent;
+        border-bottom: none;
+        border-radius: 8px 8px 0 0;
+        padding: 9px 16px;
+        font-size: .9rem;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .admin-tabs .nav-link:hover { color: #cbd5e1; background: #0f172a; }
+    .admin-tabs .nav-link.active {
+        color: #fff;
+        background: #0f172a;
+        border-color: #1e293b;
+        border-bottom: 1px solid #0f172a;
+        position: relative;
+        top: 1px;
+    }
+    .tab-pane { padding-top: 18px; }
+    .admin-channel {
+        background: #0f172a; border: 1px solid #1e293b; border-radius: 10px;
+        padding: 14px 16px; margin-bottom: 12px;
+    }
+    .admin-sub {
+        color: #64748b; font-size: .8rem; letter-spacing: .5px;
+        margin: 14px 0 8px; text-transform: uppercase;
+    }
+    .admin-radio {
+        color: #94a3b8; font-size: .85rem; font-weight: 400; margin: 0;
+        display: inline-flex; align-items: center; gap: 4px; cursor: pointer;
+    }
+    .ai-models {
+        background: #0b1220; border: 1px dashed #243449; border-radius: 8px;
+        padding: 10px 12px; margin-top: 10px;
+    }
+    .ai-models .admin-sub { margin-top: 2px; }
+    .ai-model-row {
+        background: #0f172a; border: 1px solid #1e293b; border-radius: 8px;
+        padding: 10px 12px; margin-bottom: 8px;
+    }
+    .ai-model-row:last-of-type { margin-bottom: 10px; }
+    /* Logo 上传预览：URL/静态图片 → 缩略图；emoji/空 → 展示字符 */
+    .mlogo-preview {
+        width: 30px; height: 30px; flex-shrink: 0;
+        border-radius: 8px; border: 1px solid #334155;
+        background: rgba(56,189,248,.08) center/cover no-repeat;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 16px; line-height: 1; color: #f8fafc;
+        overflow: hidden; text-indent: 0;
+    }
+    .mlogo-preview[style*="background-image"] { text-indent: -9999px; }
+    .ai-health-bar {
+        display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        background: #0b1220; border: 1px dashed #243449; border-radius: 8px;
+        padding: 10px 12px; margin-bottom: 4px;
+    }
+    .hbadge {
+        display: inline-block; font-size: 11px; padding: 2px 8px;
+        border-radius: 999px; border: 1px solid #334155; color: #94a3b8;
+    }
+    .hbadge.ok   { color: #34d399; border-color: rgba(52,211,153,.45); background: rgba(52,211,153,.10); }
+    .hbadge.fail { color: #f87171; border-color: rgba(248,113,113,.45); background: rgba(248,113,113,.10); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hbadge.none { color: #64748b; }
+    /* 上游繁忙：地址密钥都正常，只是排队超时 —— 跟「真的坏了」必须分开显示，
+       否则管理员看到一片红就顺手把好模型关掉。 */
+    .hbadge.busy { color: #fbbf24; border-color: rgba(251,191,36,.45); background: rgba(251,191,36,.10); }
+    .pg-list { display: flex; flex-direction: column; gap: 8px; }
+    .pg-item { background: #0b1220; border: 1px solid #1e293b; border-radius: 8px; padding: 9px 12px; }
+    .pg-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    .pg-id { font-family: ui-monospace, monospace; font-size: 12px; color: #38bdf8; }
+    .pg-title { color: #e2e8f0; font-size: 13px; }
+    .pg-meta { color: #64748b; font-size: 11px; }
+    .pg-fields { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+    .pg-fields code {
+        background: #0f172a; border: 1px solid #1e293b; border-radius: 4px;
+        padding: 1px 6px; font-size: 11px; color: #94a3b8;
+    }
+    .pg-pref-list { display: flex; flex-direction: column; gap: 10px; }
+    .pg-pref-row { background: #0b1220; border: 1px solid #1e293b; border-radius: 8px; padding: 10px 12px; }
+    .pg-pref-name { color: #e2e8f0; font-size: 13px; margin-bottom: 8px; }
+    .pg-pref-boxes { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+    .pg-chk {
+        display: inline-flex; align-items: center; gap: 4px; cursor: pointer;
+        font-size: 12px; color: #94a3b8; margin: 0;
+    }
+    .pg-chk.base { color: #64748b; cursor: not-allowed; }
+    .pg-out {
+        background: #0b1220; border: 1px solid #1e293b; border-radius: 8px;
+        padding: 12px 14px; color: #cbd5e1; font-size: 12px; line-height: 1.65;
+        max-height: 460px; overflow: auto; white-space: pre-wrap; margin: 0;
+    }
+    .eye-btn {
+        background: #1e293b; border: 1px solid #334155; color: #94a3b8;
+        border-radius: 0 8px 8px 0; padding: 0 12px; cursor: pointer;
+        display: flex; align-items: center;
+    }
+    .eye-btn:hover { color: #38bdf8; border-color: #38bdf8; }
+    .input-group .admin-input { border-radius: 8px 0 0 8px; }
+    .tab-help {
+        color: #64748b; font-size: .82rem; line-height: 1.5;
+        background: #0f172a; border: 1px solid #1e293b; border-radius: 8px;
+        padding: 10px 14px; margin-bottom: 14px;
+    }
+</style>
+<div class="admin-shell" data-page-node-id="hSEqBAIs2E1ZcCtrJ47CNN">
+    {% include 'components/admin_sidebar.html' %}
+    <main class="admin-main" data-page-node-id="RDHskaFz4DQfE8RRFwSJl7">
+        <div class="d-flex justify-content-between align-items-center mb-4" data-page-node-id="arHgeZhxoihY3mOBqapz9i">
+            <h3 class="font-tech mb-0" style="color:#fff;" data-page-node-id="PrhQggLUDgfof9AvIYCy4z"><i class="fa-solid fa-gear text-info me-2" data-page-node-id="xH8HSdA7wZSiENj1IJ9WZE"></i>系统设置</h3>
+        </div>
+
+        <div id="settingsArea" data-page-node-id="aJL18NHKtcWI4LmhJPlSBs">
+            <div class="text-center py-5" data-page-node-id="z4dYoidg1xToNs8mJ5Fkuy"><div class="spinner-border text-info" data-page-node-id="7Pmu6o1fBbvOCwUWvqCBeg"></div></div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 状态：金融数据源 / AI 大模型 / 投资偏好 / 价格方案（模块级，render 不重置）
+    // savedModelIds：服务端配置里真实存在的模型条目 id 集合。
+    // 页面新增的模型行在保存之前不在这个集合里 —— 检测时必须走「草稿模式」，
+    // 否则后端查不到这个 id，会（曾经真的会）拿默认模型顶替，导致报错张冠李戴。
+    let state = { dataActive: '', dataChannels: [], aiActive: '', aiChannels: [], tushareToken: '', plans: [], preferences: [], aiHealth: {}, savedModelIds: new Set(), fuyaoApiKey: '', fuyaoEnabled: true };
+
+    function refreshSavedIds() {
+        const s = new Set();
+        (state.aiChannels || []).forEach(c => (c.models || []).forEach(m => { if (m.id) s.add(m.id); }));
+        state.savedModelIds = s;
+    }
+
+    function parseJson(v, d) {
+        if (v == null) return d;
+        if (typeof v === 'object') return v;
+        try { return JSON.parse(v); } catch (e) { return d; }
+    }
+    function esc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function uid(prefix) { return prefix + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000); }
+    function val(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+
+    // 连通性状态徽标：ok=可用 / fail=不可用 / 未检测=不显示
+    // rowModelId = 这一行当前填写的模型 ID。自检结果里带回了"实际请求的是哪个模型"，
+    // 两者不一致就显式标出来 —— 这是防止「测的是 A，报的是 B」的自证机制。
+    function healthBadge(mid, rowModelId) {
+        const h = state.aiHealth[mid];
+        if (!h) return '<span class="hbadge none" title="尚未检测">未检测</span>';
+        const when = esc(h.checked_at || '');
+        const hit = h.model_id || '';
+        const mismatch = hit && rowModelId && hit !== rowModelId;
+        const tip = `${when}｜实际请求模型：${esc(hit || '未知')}${mismatch ? '（与当前填写不一致，请重新检测）' : ''}`;
+        if (h.ok) return `<span class="hbadge ok" title="${tip}">可用 ${h.ms || 0}ms</span>`;
+        const draftTag = h.draft ? '<span class="hbadge none ms-1" title="该行尚未保存到后台，按页面草稿检测">草稿</span>' : '';
+        // ⚠️ 纯超时 ≠ 模型坏了：实测 gpt-5.5 渠道 /models 1.7s 返回 200（密钥正常、
+        //    模型在列），只是 chat 请求排队。标成红色「不可用」会误导管理员关掉它。
+        if (h.timeout_only) return `<span class="hbadge busy" title="${tip}">上游繁忙 · ${esc(h.error || '响应超时')}</span>${draftTag}`;
+        return `<span class="hbadge fail" title="${tip}">不可用 · ${esc(h.error || '未知错误')}</span>${draftTag}`;
+    }
+
+    // 判断 logo 是否是「图片 URL」（http(s) 或站内 /static）——是 → 走缩略图预览
+    function isImgLogo(logo) {
+        const s = (logo || '').trim();
+        return /^https?:\/\//i.test(s) || /^\/static\//i.test(s);
+    }
+
+    // 单个模型行（AI 渠道下可挂多个模型；alias=前台展示名，model_id=接口真实标识）
+    // ⭐ 2026-09-06 新增三字段：featured / tagline / logo，前台模型下拉用 ——
+    //    featured 决定是否置顶，tagline 是条目下方的一句话特色，logo 是左侧头像（URL 或 emoji）。
+    // ⭐ 2026-09-07 模型差异化：profile（temperature/max_out/tokens/kind/instruction/spec）
+    //    同样必须透传，否则「页面快照保存」会把 DB 里的差异化配置整段抹空。
+    //    parseProfileJson / normProfile 定义在 normalizeAiChannels 正上方，
+    //    便于 node 回归按函数切片抽取（见 test_model_panel.py [G]）。
+    function profChips(p) {
+        p = p || {};
+        const bits = [];
+        if (p.kind) bits.push('<span class="badge text-bg-secondary">' + esc(p.kind) + '</span>');
+        if (p.temperature) bits.push('<span class="badge text-bg-info">温度 ' + esc(String(p.temperature)) + '</span>');
+        if (p.max_out) bits.push('<span class="badge text-bg-light">输出上限 ' + esc(String(p.max_out)) + '</span>');
+        if (p.tokens && (p.tokens.normal || p.tokens.deep)) {
+            const tn = p.tokens.normal || '-', td = p.tokens.deep || '-';
+            bits.push('<span class="badge text-bg-light">预算 普' + esc(String(tn)) + '/深' + esc(String(td)) + '</span>');
+        }
+        if (p.spec) bits.push('<span class="badge text-bg-warning" title="' + esc(p.spec) + '">规格</span>');
+        return bits.length ? bits.join(' ') : '<span class="text-secondary" style="font-size:12px;">未配置（沿用统一默认参数）</span>';
+    }
+    function modelRowHtml(c, m, i) {
+        const isDefault = state.aiActive === m.id;
+        return `<div class="ai-model-row" data-mid="${esc(m.id)}">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="admin-form-label">模型别名（前台展示）</label>
+                    <input class="admin-input" data-mfield="alias" value="${esc(m.alias)}" placeholder="如 豆包大模型 / deepseek-v4-pro">
+                </div>
+                <div class="col-md-4">
+                    <label class="admin-form-label">模型 ID（接口实际标识）</label>
+                    <input class="admin-input" data-mfield="model_id" value="${esc(m.model_id)}" placeholder="如 deepseek-v4-pro">
+                </div>
+                <div class="col-md-4 d-flex flex-wrap gap-3 align-items-center pb-1">
+                    <label class="admin-radio" title="新会话默认使用此模型"><input type="radio" name="aiActive" value="${esc(m.id)}" ${isDefault ? 'checked' : ''}> 默认</label>
+                    <label class="admin-radio" title="仅 VIP 可用"><input type="checkbox" data-mfield="vip_only" ${m.vip_only ? 'checked' : ''}> VIP</label>
+                    <label class="admin-radio" title="用户在前台会优先看到这个模型（置顶 + 星标）"><input type="checkbox" data-mfield="featured" ${m.featured ? 'checked' : ''}> <i class="fa-solid fa-star text-warning"></i> 推荐</label>
+                    <label class="admin-radio"><input type="checkbox" data-mfield="enabled" ${m.enabled !== false ? 'checked' : ''}> 启用</label>
+                    <button class="btn btn-sm btn-outline-info test-model-btn" type="button" title="发一条极短请求，确认该模型现在可用"><i class="fa-solid fa-stethoscope"></i></button>
+                    <button class="btn btn-sm btn-outline-danger del-model-btn" type="button" title="删除该模型"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+            <div class="row g-2 mt-1">
+                <div class="col-md-7">
+                    <label class="admin-form-label">一句话特色<span class="text-secondary fw-normal" style="font-size:11px;"> · 在前台模型列表显示，可写它擅长什么、速度如何</span></label>
+                    <input class="admin-input" data-mfield="tagline" value="${esc(m.tagline || '')}" placeholder="如：综合能力标杆，复杂估值表现出色" maxlength="40">
+                </div>
+                <div class="col-md-5">
+                    <label class="admin-form-label">Logo<span class="text-secondary fw-normal" style="font-size:11px;"> · 可上传图片 / 填 URL / 用 emoji</span></label>
+                    <div class="d-flex gap-2 align-items-center">
+                        <input class="admin-input flex-grow-1" data-mfield="logo" value="${esc(m.logo || '')}"
+                               placeholder="如 🚀 或 https://…/qwen.png" maxlength="120">
+                        <button type="button" class="btn btn-sm btn-outline-info upload-logo-btn flex-shrink-0"
+                                title="上传本地图片作为 Logo"><i class="fa-solid fa-cloud-arrow-up me-1"></i>上传</button>
+                        <span class="mlogo-preview" data-role="logo-preview"
+                              style="${isImgLogo(m.logo) ? 'background-image:url(\'' + esc(m.logo || '') + '\')' : ''}"
+                              title="当前 Logo 预览">${isImgLogo(m.logo) ? '' : esc((m.logo || '').trim() ? m.logo : '')}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-1">${healthBadge(m.id, m.model_id)}</div>
+            <details class="mt-1">
+                <summary class="text-secondary" style="font-size:12px;cursor:pointer;">⚙ 高级参数（模型差异化：temperature / max_out / tokens{normal,deep} / kind / instruction / spec）</summary>
+                <div class="mt-1 d-flex flex-wrap gap-2 align-items-center">${profChips(m.profile)}</div>
+                <textarea rows="2" class="admin-input mt-1" data-mfield="profile_json" spellcheck="false"
+                    style="font-family:ui-monospace,Consolas,monospace;font-size:12px;white-space:pre-wrap;"
+                    placeholder='{"kind":"reasoning","temperature":1.0,"max_out":131072,"tokens":{"normal":16000,"deep":24000},"spec":"1M ctx · ¥8/¥28/M"}'>${esc(JSON.stringify(m.profile || {}, null, 0))}</textarea>
+                <div class="text-secondary" style="font-size:11px;">留空或填 {} 即用统一默认；键不合法会在保存时被丢弃。</div>
+            </details>
+        </div>`;
+    }
+
+    // 单个渠道卡片
+    function channelCard(group, c) {
+        const active = group === 'data' ? state.dataActive : state.aiActive;
+        const isActive = active === c.id;
+        const keyId = group + '_key_' + c.id;
+        const aiModel = group === 'ai'
+            ? `<div class="col-md-12">
+                 <div class="ai-models">
+                   <div class="admin-sub">模型列表（同一接口地址可挂多个模型）
+                     <span class="text-secondary fw-normal" style="font-size:11px;">· 别名=前台下拉里显示的名字，模型 ID=真正发给接口的标识</span>
+                   </div>
+                   ${(c.models || []).map((m, i) => modelRowHtml(c, m, i)).join('') || '<div class="text-secondary small mb-2">该渠道下还没有模型，点下方按钮新增。</div>'}
+                   <button class="btn btn-sm btn-outline-info mt-1 add-model-btn" type="button"><i class="fa-solid fa-plus me-1"></i>添加模型</button>
+                 </div>
+               </div>` : '';
+        const aiExtra = group === 'ai'
+            ? `<div class="col-md-12 d-flex gap-4 mt-1">
+                 <label class="admin-radio"><input type="checkbox" data-field="enabled" ${c.enabled !== false ? 'checked' : ''}> 启用该渠道</label>
+                 <span class="text-secondary" style="font-size:11px;align-self:center;">渠道停用后，其下所有模型在前台都不可选</span>
+               </div>` : '';
+        return `<div class="admin-channel" data-group="${group}" data-id="${esc(c.id)}">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <input class="admin-input" data-field="name" value="${esc(c.name)}" placeholder="渠道名称（如 火山引擎 / 七牛云）" style="max-width:260px;">
+                <div class="d-flex align-items-center gap-3">
+                    ${group === 'data' ? `<label class="admin-radio"><input type="radio" name="${group}Active" value="${esc(c.id)}" ${isActive ? 'checked' : ''}> 默认生效</label>` : ''}
+                    <button class="btn btn-sm btn-outline-danger del-btn" type="button" title="删除渠道"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <label class="admin-form-label">接口地址 (Base URL)</label>
+                    <input class="admin-input" data-field="base_url" value="${esc(c.base_url)}" placeholder="https://...">
+                </div>
+                <div class="col-md-6">
+                    <label class="admin-form-label">API Key</label>
+                    <div class="input-group">
+                        <input class="admin-input" data-field="api_key" id="${keyId}" type="password" value="${esc(c.api_key)}" autocomplete="off">
+                        <button class="eye-btn" type="button" data-target="${keyId}" title="显示 / 隐藏"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                </div>
+                ${aiModel}
+                ${aiExtra}
+            </div>
+        </div>`;
+    }
+
+    function dataTabHtml() {
+        const dataCards = state.dataChannels.map(c => channelCard('data', c)).join('');
+        const dataActiveTushare = state.dataActive === 'tushare' ? 'checked' : '';
+        return `<div class="tab-pane" data-pane="data">
+            <div class="tab-help">「金融数据源」支持添加多个代理渠道（不同 API 地址与密钥），并指定其中一个为<strong>默认生效</strong>渠道；也可切回官方 Tushare（填入 Token）。保存即生效，无需重启。</div>
+            <div class="admin-card">
+                <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-database text-warning me-2"></i>官方 Tushare（可选）</h5>
+                <div class="admin-channel">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="input-group" style="max-width:560px;">
+                            <input class="admin-input" id="f_TUSHARE_TOKEN" type="password" value="${esc(state.tushareToken)}" placeholder="Tushare Token" autocomplete="off">
+                            <button class="eye-btn" type="button" data-target="f_TUSHARE_TOKEN" title="显示 / 隐藏"><i class="fa-solid fa-eye"></i></button>
+                        </div>
+                        <label class="admin-radio"><input type="radio" name="dataActive" value="tushare" ${dataActiveTushare}> 默认生效</label>
+                    </div>
+                </div>
+                
+            <div class="admin-card">
+                <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-bolt text-warning me-2"></i>伏尧 · 同花顺金融数据（龙虎榜 / 热榜 / 异动 / 涨跌停）</h5>
+                <div class="tab-help mb-2">用于 <strong>龙虎榜</strong>（含涨跌幅 · 买卖额 · 上榜原因 · 游资净额 · 概念标签）、<strong>热榜与飙升榜</strong>、个股异动原因、涨跌停/炸板池、连板天梯、财务指标、行情快照与历史 K 线。
+                    与上面「代理渠道」是<strong>并列</strong>的独立数据源，互不影响：留空即回落到 <code>.env</code> 里的 <code>FUYAO_API_KEY</code>。
+                    <br>⚠️ 该源 <code>HTTP 状态码恒为 200</code>，成败只看响应信封的 <code>code</code>；日期格式各接口不统一（龙虎榜 <code>yyyyMMdd</code>，历史热榜只收 <code>yyyy-MM-dd</code>，财务指标是 <code>{yyyy}-{1|2|3|4}</code>）。</div>
+                <div class="admin-channel">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="input-group" style="max-width:560px;">
+                            <input class="admin-input" id="f_FUYAO_API_KEY" type="password" value="${esc(state.fuyaoApiKey || '')}" placeholder="X-api-key（留空则回落到 .env 配置）" autocomplete="off">
+                            <button class="eye-btn" type="button" data-target="f_FUYAO_API_KEY" title="显示 / 隐藏"><i class="fa-solid fa-eye"></i></button>
+                        </div>
+                        <label class="admin-radio"><input type="checkbox" id="f_FUYAO_ENABLED" ${state.fuyaoEnabled ? 'checked' : ''}> 启用</label>
+                        <button class="btn btn-sm btn-outline-success" id="testFuyaoBtn" type="button"><i class="fa-solid fa-plug-circle-check me-1"></i>测试连接</button>
+                    </div>
+                    <div class="mt-2"><span id="fuyaoTestResult" class="small text-secondary"></span></div>
+                </div>
+            </div>
+<div class="admin-sub">代理渠道（可添加多个）</div>
+                <div id="dataCards">${dataCards || '<div class="text-secondary mb-2">尚未添加代理渠道，点击下方按钮新增。</div>'}</div>
+                <button class="btn btn-sm btn-outline-info mt-2" id="addData" type="button"><i class="fa-solid fa-plus me-1"></i>添加代理渠道</button>
+                <div class="mt-3 d-flex align-items-center gap-3 flex-wrap">
+                    <button class="btn btn-analyze" id="saveDataBtn"><i class="fa-solid fa-floppy-disk me-2"></i>保存数据源</button>
+                    <button class="btn btn-outline-success" id="testDatasourceBtn" type="button"><i class="fa-solid fa-plug-circle-check me-2"></i>测试连接</button>
+                    <span id="dataTestResult" class="small"></span>
+                </div>
+            </div>
+            <div class="admin-card">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0" style="color:#fff;"><i class="fa-solid fa-book-open text-warning me-2"></i>DATAHUB 接口能力目录</h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <input class="admin-input" id="catalogSearch" type="text" placeholder="搜索接口名 / 中文名…" style="max-width:260px;">
+                        <span id="catalogMeta" style="color:#94a3b8;font-size:12px;">加载中…</span>
+                    </div>
+                </div>
+                <div class="tab-help mb-2">当前 DATAHUB 渠道（datahubco.com，Tushare 兼容中转）可调用的全部接口。参数口径以 Tushare 官方文档为准；点击「测」可单接口连通性实测。</div>
+                <div id="catalogArea" style="max-height:520px; overflow-y:auto; border:1px solid #334155; border-radius:10px; padding:10px;">
+                    <div class="text-secondary small">加载中…</div>
+                </div>
+            </div>
+            <div class="admin-card">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0" style="color:#fff;"><i class="fa-solid fa-book-open text-info me-2"></i>Lixinger（理杏仁）接口能力目录</h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <input class="admin-input" id="lixCatalogSearch" type="text" placeholder="搜索接口名 / 中文名…" style="max-width:260px;">
+                        <span id="lixCatalogMeta" style="color:#94a3b8;font-size:12px;">加载中…</span>
+                    </div>
+                </div>
+                <div class="tab-help mb-2">Lixinger（理杏仁）开放平台可调用的<strong>全部接口</strong>（大陆 / 香港 / 美国 / 宏观）。通用约定：所有接口均为 <code>POST</code> JSON（<code>Content-Type: application/json</code>），请求头 <code>Accept-Encoding</code> 须含 <code>gzip</code>；限频 <code>1000 次/分</code>、<code>36 次/秒</code>（超限返回 <code>429</code>），调用方需具备重试机制。点击「测」用当前 <code>LIXINGER_TOKEN</code> 单接口实测。</div>
+                <div id="lixCatalogArea" style="max-height:520px; overflow-y:auto; border:1px solid #334155; border-radius:10px; padding:10px;">
+                    <div class="text-secondary small">加载中…</div>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0" style="color:#fff;"><i class="fa-solid fa-book-open text-success me-2"></i>伏尧（同花顺）接口能力目录</h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <input class="admin-input" id="fuyCatalogSearch" type="text" placeholder="搜索接口名 / 中文名…" style="max-width:260px;">
+                        <span id="fuyCatalogMeta" style="color:#94a3b8;font-size:12px;">加载中…</span>
+                    </div>
+                </div>
+                <div class="tab-help mb-2">伏尧（同花顺金融数据 API）可调用的接口，<strong>全部为实测通过</strong>的端点。
+                    通用约定：全部 <code>GET</code> + 请求头 <code>X-api-key</code>；<code>HTTP 状态码恒为 200</code>，业务结果看信封 <code>code</code>（<code>0</code>=成功）；
+                    标的用完整 <code>thscode</code>（如 <code>600519.SH</code>），不接受纯代码。点击「测」用当前伏尧 Key 单接口实测。
+                    <br>⚠️ 未收录：财务报表三表 / 除复权因子 / 指数成分股 / 基金 / Market Dumps —— 文档中只给了分组前缀，真实子路径未探明，避免「测」按钮点一个挂一个。</div>
+                <div id="fuyCatalogArea" style="max-height:520px; overflow-y:auto; border:1px solid #334155; border-radius:10px; padding:10px;">
+                    <div class="text-secondary small">加载中…</div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function aiTabHtml() {
+        const aiCards = state.aiChannels.map(c => channelCard('ai', c)).join('');
+        return `<div class="tab-pane d-none" data-pane="ai">
+            <div class="tab-help">每个<strong>模型渠道</strong> = 一个接口地址(Base URL) + 一份密钥，其下可挂<strong>多个模型</strong>（同一个接口地址通常能调用多个不同模型）。
+                每个模型可单独设<strong>别名</strong>（前台下拉里显示的名字，如「豆包大模型 / deepseek-v4-pro」）与<strong>模型 ID</strong>（真正发给接口的标识），并可单独设 VIP 专属 / 启停。
+                <br><strong>前台分析页按别名选择模型</strong>，用户看不到渠道概念；标记为「默认」的模型会作为新会话的初始选中项。</div>
+            <div class="admin-card">
+                <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-robot text-warning me-2"></i>模型渠道（可添加多个）</h5>
+                <div class="ai-health-bar">
+                    <button class="btn btn-sm btn-outline-info" id="testAllModelsBtn" type="button"><i class="fa-solid fa-stethoscope me-1"></i>一键体检</button>
+                    <span class="text-secondary" style="font-size:12px;">对所有启用模型各发一条极短请求（约 1-2 个 token），确认当前是否真的可用。</span>
+                    <span id="healthSummary" class="ms-2"></span>
+                </div>
+                <div class="admin-sub">模型渠道</div>
+                <div id="aiCards">${aiCards || '<div class="text-secondary mb-2">尚未添加模型渠道，点击下方按钮新增。</div>'}</div>
+                <button class="btn btn-sm btn-outline-info mt-2" id="addAi" type="button"><i class="fa-solid fa-plus me-1"></i>添加模型渠道</button>
+                <div class="mt-3"><button class="btn btn-analyze" id="saveAiBtn"><i class="fa-solid fa-floppy-disk me-2"></i>保存模型</button></div>
+            </div>
+        </div>`;
+    }
+
+    function stockTabHtml() {
+        return `<div class="tab-pane d-none" data-pane="stock">
+            <div class="tab-help">同步全市场已上市股票的名称与代码，供分析页搜索框自动补全。点击同步后从 Tushare / AKShare 拉取并写入数据库（约数千只，耗时数十秒，可重复执行）。</div>
+            <div class="admin-card">
+                <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-database text-warning me-2"></i>股票数据库（A股 + 港股）</h5>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <span style="display:inline-block;padding:4px 10px;border:1px solid #334155;border-radius:8px;color:#cbd5e1;font-size:12px;">已录入：<b id="stockTotal" style="color:#38bdf8;">--</b> 只（A股 <b id="stockA" style="color:#7dd3fc;">--</b> / 港股 <b id="stockHK" style="color:#fbbf24;">--</b>）</span>
+                    <span style="display:inline-block;padding:4px 10px;border:1px solid #334155;border-radius:8px;color:#cbd5e1;font-size:12px;">最近同步：<span id="stockSyncAt">尚未同步</span></span>
+                </div>
+                <div class="mt-2"><span id="stockSyncMsg" class="small text-info"></span></div>
+                <button class="btn btn-analyze mt-3" id="syncStocksBtn"><i class="fa-solid fa-rotate me-2"></i>同步股票数据库</button>
+            </div>
+            <div class="admin-card">
+                <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-list text-warning me-2"></i>已同步数据列表</h5>
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+                    <select id="stockListMarket" class="admin-input" style="max-width:140px;">
+                        <option value="">全部市场</option>
+                        <option value="A">A股</option>
+                        <option value="HK">港股</option>
+                    </select>
+                    <select id="stockListStatus" class="admin-input" style="max-width:140px;">
+                        <option value="L">上市</option>
+                        <option value="D">退市</option>
+                        <option value="P">暂停上市</option>
+                        <option value="ALL">全部状态</option>
+                    </select>
+                    <input id="stockListSearch" class="admin-input" type="text" placeholder="搜索名称 / 代码…" style="max-width:240px;">
+                    <button class="btn btn-sm btn-outline-info" id="stockListRefresh" type="button"><i class="fa-solid fa-refresh me-1"></i>刷新</button>
+                    <span id="stockListMeta" class="small" style="color:#94a3b8;"></span>
+                </div>
+                <div style="overflow-x:auto; border:1px solid #334155; border-radius:10px;">
+                    <table class="table table-dark table-sm mb-0" style="font-size:13px;">
+                        <thead><tr style="color:#94a3b8;">
+                            <th style="padding:8px 10px;">代码</th>
+                            <th style="padding:8px 10px;">TS代码</th>
+                            <th style="padding:8px 10px;">名称</th>
+                            <th style="padding:8px 10px;">市场</th>
+                            <th style="padding:8px 10px;">交易所</th>
+                            <th style="padding:8px 10px;">状态</th>
+                            <th style="padding:8px 10px;">更新时间</th>
+                        </tr></thead>
+                        <tbody id="stockListBody"><tr><td colspan="7" style="padding:14px;color:#64748b;">加载中…</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
+                    <span id="stockPageInfo" class="small" style="color:#94a3b8;"></span>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-secondary" id="stockPrevBtn" type="button"><i class="fa-solid fa-chevron-left me-1"></i>上一页</button>
+                        <button class="btn btn-sm btn-outline-secondary" id="stockNextBtn" type="button">下一页<i class="fa-solid fa-chevron-right ms-1"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // 单个方案卡片
+    function planCard(p, idx) {
+        const prices = (p.prices || []).map(function (pr, i) {
+            return `<div class="admin-channel plan-price" data-pi="${i}">
+                <div class="row g-2">
+                    <div class="col-md-3"><label class="admin-form-label">名称</label><input class="admin-input" data-pf="label" value="${esc(pr.label)}"></div>
+                    <div class="col-md-3"><label class="admin-form-label">价格</label><input class="admin-input" data-pf="price" value="${esc(pr.price)}"></div>
+                    <div class="col-md-3"><label class="admin-form-label">单位</label><input class="admin-input" data-pf="unit" value="${esc(pr.unit)}"></div>
+                    <div class="col-md-2"><label class="admin-form-label">备注</label><input class="admin-input" data-pf="note" value="${esc(pr.note)}"></div>
+                    <div class="col-md-1 d-flex align-items-end"><button class="btn btn-sm btn-outline-danger plan-del-price" type="button" title="删除价格"><i class="fa-solid fa-trash"></i></button></div>
+                </div>
+            </div>`;
+        }).join('');
+        const feats = (p.features || []).map(function (f, i) {
+            return `<div class="d-flex align-items-center gap-2 mb-2 plan-feature" data-fi="${i}">
+                <input type="checkbox" class="plan-feat-on" ${f.on ? 'checked' : ''} title="是否包含">
+                <input class="admin-input flex-grow-1" data-ff="text" value="${esc(f.text)}" placeholder="权益描述">
+                <button class="btn btn-sm btn-outline-danger plan-del-feature" type="button" title="删除权益"><i class="fa-solid fa-trash"></i></button>
+            </div>`;
+        }).join('');
+        const popularChk = p.popular ? 'checked' : '';
+        const typeOpts = [['free','免费'],['subscription','周期订阅'],['payg','按量付费']]
+            .map(function (t) { return `<option value="${t[0]}" ${p.type === t[0] ? 'selected' : ''}>${t[1]}</option>`; }).join('');
+        return `<div class="admin-channel plan-card" data-idx="${idx}">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex align-items-center gap-2 flex-grow-1">
+                    <input class="admin-input" data-f="name" value="${esc(p.name)}" placeholder="方案名称" style="max-width:240px;">
+                    <select class="admin-input" data-f="type" style="max-width:160px;">
+                        ${typeOpts}
+                    </select>
+                    <label class="admin-radio"><input type="checkbox" data-f="popular" ${popularChk}> 推荐角标</label>
+                </div>
+                <button class="btn btn-sm btn-outline-danger plan-del-plan" type="button" title="删除方案"><i class="fa-solid fa-trash"></i></button>
+            </div>
+            <div class="row g-2">
+                <div class="col-md-6"><label class="admin-form-label">副标题 / 卖点</label><input class="admin-input" data-f="tagline" value="${esc(p.tagline)}"></div>
+                <div class="col-md-3"><label class="admin-form-label">主打价（如 ¥0 / ¥66 / 按量）</label><input class="admin-input" data-f="price_from" value="${esc(p.price_from)}"></div>
+                <div class="col-md-3"><label class="admin-form-label">价格单位（如 /月 /永久）</label><input class="admin-input" data-f="period" value="${esc(p.period)}"></div>
+                <div class="col-md-6"><label class="admin-form-label">按钮文字</label><input class="admin-input" data-f="btn_text" value="${esc((p.button||{}).text)}"></div>
+                <div class="col-md-6"><label class="admin-form-label">按钮动作（空/当前版本 · vip1/vip2升级 · contact联系）</label><input class="admin-input" data-f="btn_action" value="${esc((p.button||{}).action)}"></div>
+            </div>
+            <div class="admin-sub">价格 / 套餐包（订阅卡规格即前台周期切换项，当前为月卡 / 年卡；按量卡列各打包）
+                <span class="text-warning ms-1" style="font-size:.75rem;">注意：删除规格会让历史 sku 序号失效，旧批次回显会回落到最后一档</span>
+            </div>
+            <div class="plan-prices">${prices || '<div class="text-secondary small">暂无，点击下方新增。</div>'}</div>
+            <button class="btn btn-sm btn-outline-secondary mt-1 plan-add-price" type="button"><i class="fa-solid fa-plus me-1"></i>新增价格项</button>
+            <div class="admin-sub">权益列表</div>
+            <div class="plan-features">${feats || ''}</div>
+            <button class="btn btn-sm btn-outline-secondary mt-1 plan-add-feature" type="button"><i class="fa-solid fa-plus me-1"></i>新增权益</button>
+        </div>`;
+    }
+
+    function planSectionHtml() {
+        return (state.plans || []).map(function (p, i) { return planCard(p, i); }).join('')
+            || '<div class="text-secondary">暂无方案，点击下方「新增方案」。</div>';
+    }
+
+    function prefTabHtml() {
+        return `<div class="tab-pane d-none" data-pane="pref">
+            <div class="tab-help">在此编辑分析页可选的 6 种投资风格。前 4 项为普通分析，后 2 项为深度分析并需 VIP。每个偏好可独立配置系统提示词（支持 <code>{stock_name}</code> / <code>{stock_code}</code> / <code>{current_date}</code> 占位符）。</div>
+            <div class="admin-card">
+                <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-compass text-warning me-2"></i>投资偏好与提示词</h5>
+                <div id="preferenceCards">${preferenceSectionHtml()}</div>
+                <button class="btn btn-sm btn-outline-info mt-2" id="addPreference" type="button"><i class="fa-solid fa-plus me-1"></i>新增偏好</button>
+                <div class="mt-3"><button class="btn btn-analyze" id="savePreferencesBtn"><i class="fa-solid fa-floppy-disk me-2"></i>保存投资偏好</button></div>
+            </div>
+        </div>`;
+    }
+
+    function planTabHtml() {
+        const q = state.quotaRules || {};
+        return `<div class="tab-pane d-none" data-pane="plan">
+            <div class="tab-help">在此编辑各套餐的名称、价格、权益与说明；保存后立即在 <a href="/pricing" target="_blank" rel="noopener" class="text-info">价格方案页</a> 生效。type 可选：free（免费）/ subscription（周期订阅）/ payg（按量付费）。</div>
+            <div class="admin-card">
+                <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-tags text-warning me-2"></i>价格方案（会员套餐 / 按量包）</h5>
+                <div id="planCards">${planSectionHtml()}</div>
+                <button class="btn btn-sm btn-outline-info mt-2" id="addPlan" type="button"><i class="fa-solid fa-plus me-1"></i>新增方案</button>
+                <div class="mt-3"><button class="btn btn-analyze" id="savePlansBtn"><i class="fa-solid fa-floppy-disk me-2"></i>保存价格方案</button></div>
+            </div>
+            <div class="admin-card">
+                <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-gauge-high text-warning me-2"></i>会员与配额规则</h5>
+                <div class="tab-help mb-2">各会员档位的每日分析额度（覆盖系统内置档位；0=该档不开放）。修改后「个人中心」与分析页的配额提示同口径生效。注册赠送的一次性额度在「账号与风控」选项卡配置。</div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-dark table-borderless mb-2" style="max-width:560px;">
+                        <thead><tr><th>档位</th><th>每日普通分析</th><th>每日深度分析</th><th>每月深度体验</th></tr></thead>
+                        <tbody>
+                            <tr><td>免费版</td>
+                                <td><input class="admin-input" style="max-width:100px;" id="q_free_daily_normal" value="${esc(q.free_daily_normal != null ? q.free_daily_normal : 2)}"></td>
+                                <td><input class="admin-input" style="max-width:100px;" id="q_free_daily_deep" value="${esc(q.free_daily_deep != null ? q.free_daily_deep : 0)}"></td>
+                                <td><input class="admin-input" style="max-width:100px;" id="q_free_monthly_deep" value="${esc(q.free_monthly_deep != null ? q.free_monthly_deep : 1)}"></td></tr>
+                            <tr><td>VIP-1</td>
+                                <td><input class="admin-input" style="max-width:100px;" id="q_vip1_daily_normal" value="${esc(q.vip1_daily_normal != null ? q.vip1_daily_normal : 5)}"></td>
+                                <td><input class="admin-input" style="max-width:100px;" id="q_vip1_daily_deep" value="${esc(q.vip1_daily_deep != null ? q.vip1_daily_deep : 2)}"></td>
+                                <td><input class="admin-input" style="max-width:100px;" id="q_vip1_monthly_deep" value="${esc(q.vip1_monthly_deep != null ? q.vip1_monthly_deep : 0)}"></td></tr>
+                            <tr><td>VIP-2</td>
+                                <td><input class="admin-input" style="max-width:100px;" id="q_vip2_daily_normal" value="${esc(q.vip2_daily_normal != null ? q.vip2_daily_normal : 10)}"></td>
+                                <td><input class="admin-input" style="max-width:100px;" id="q_vip2_daily_deep" value="${esc(q.vip2_daily_deep != null ? q.vip2_daily_deep : 5)}"></td>
+                                <td><input class="admin-input" style="max-width:100px;" id="q_vip2_monthly_deep" value="${esc(q.vip2_monthly_deep != null ? q.vip2_monthly_deep : 0)}"></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mb-2">
+                    <label class="admin-form-label">配额豁免白名单（用户 ID，逗号分隔；与管理员同享无限次分析，不授予后台权限）</label>
+                    <input class="admin-input" id="q_admin_uid_whitelist" value="${esc(q.admin_uid_whitelist || '')}" placeholder="例如：2,7,15（留空=仅 is_admin 管理员）">
+                </div>
+                <button class="btn btn-analyze mt-2" id="saveQuotaBtn"><i class="fa-solid fa-floppy-disk me-2"></i>保存配额规则</button>
+            </div>
+        </div>`;
+    }
+
+    function siteTabHtml() {
+        const op = state.operatorInfo || {};
+        const ann = state.announcement || {};
+        return `<div class="tab-pane d-none" data-pane="site">
+            <div class="tab-help">设置网站名称、域名、Logo、首页 SEO、法务运营者信息与全站公告条。保存即生效。</div>
+            <div class="admin-card">
+                <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-globe text-warning me-2"></i>站点设置（网站名 / 域名 / Logo / 首页 SEO）</h5>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="admin-form-label">网站名称</label>
+                        <input class="admin-input" id="f_SITE_NAME" placeholder="A股棱镜股票智能分析平台">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="admin-form-label">域名（含 https://）</label>
+                        <input class="admin-input" id="f_SITE_DOMAIN" placeholder="https://yourdomain.com">
+                    </div>
+                    <div class="col-md-12">
+                        <label class="admin-form-label">Logo 图片 URL</label>
+                        <input class="admin-input" id="f_SITE_LOGO_URL" placeholder="https://.../logo.png（留空则用默认图标）">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="admin-form-label">SEO 标题</label>
+                        <input class="admin-input" id="f_SEO_TITLE" placeholder="留空则用网站名称">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="admin-form-label">SEO 关键词（逗号分隔）</label>
+                        <input class="admin-input" id="f_SEO_KEYWORDS" placeholder="股票分析,价值投资,AI研报">
+                    </div>
+                    <div class="col-md-12">
+                        <label class="admin-form-label">SEO 描述</label>
+                        <textarea class="admin-input" id="f_SEO_DESCRIPTION" rows="2" placeholder="一句话描述站点，用于搜索引擎摘要"></textarea>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="admin-form-label">OG 分享图 URL（微信/社交分享卡片）</label>
+                        <input class="admin-input" id="f_SEO_OG_IMAGE" placeholder="https://.../og.png（留空则用默认）">
+                    </div>
+                </div>
+                <button class="btn btn-analyze mt-3" id="saveSiteBtn"><i class="fa-solid fa-floppy-disk me-2"></i>保存站点设置</button>
+            </div>
+            <div class="admin-card">
+                <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-scale-balanced text-warning me-2"></i>法务运营者信息（隐私政策 / 条款 / 关于我们等 8 个法务页联动）</h5>
+                <div class="tab-help mb-2">留空的字段沿用系统内置默认文案。⚠️ 任一字段填成带「【待填写」的值，about/contact/help 会自动降级 noindex，robots / sitemap 同步收缩；填回真实值后自动恢复索引。</div>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="admin-form-label">运营主体</label>
+                        <input class="admin-input" id="f_OP_entity" value="${esc(op.entity || '')}" placeholder="个人备案填姓名 / 企业填公司全称（留空=站名署名）">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="admin-form-label">ICP 备案号（页脚 + 法务页署名）</label>
+                        <input class="admin-input" id="f_ICP_NUMBER" value="${esc(state.icpNumber || '')}" placeholder="留空=用内置备案号">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="admin-form-label">对外联系邮箱</label>
+                        <input class="admin-input" id="f_OP_email" value="${esc(op.email || '')}" placeholder="用于隐私请求 / 投诉 / 商务合作">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="admin-form-label">客服微信（可空）</label>
+                        <input class="admin-input" id="f_OP_wechat" value="${esc(op.wechat || '')}" placeholder="留空则法务页自动隐藏该项">
+                    </div>
+                    <div class="col-md-12">
+                        <label class="admin-form-label">通信地址（仅用于法律文书送达）</label>
+                        <input class="admin-input" id="f_OP_address" value="${esc(op.address || '')}" placeholder="可填备案所在地">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="admin-form-label">个人信息保护负责人 / 受理入口</label>
+                        <input class="admin-input" id="f_OP_dpo" value="${esc(op.dpo || '')}" placeholder="留空=用内置文案">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="admin-form-label">响应时效承诺</label>
+                        <input class="admin-input" id="f_OP_sla" value="${esc(op.sla || '')}" placeholder="例如：工作日 48 小时内首次响应">
+                    </div>
+                </div>
+                <button class="btn btn-analyze mt-3" id="saveLegalBtn"><i class="fa-solid fa-floppy-disk me-2"></i>保存法务信息</button>
+            </div>
+            <div class="admin-card">
+                <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-bullhorn text-warning me-2"></i>全站公告条（所有页面顶部横幅）</h5>
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-8">
+                        <label class="admin-form-label">公告文案（纯文本，自动 HTML 转义）</label>
+                        <input class="admin-input" id="f_ANN_TEXT" value="${esc(ann.text || '')}" placeholder="例如：系统将于周日凌晨 2:00-4:00 例行维护">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="admin-form-label">级别（配色）</label>
+                        <select class="admin-input" id="f_ANN_LEVEL">
+                            <option value="info" ${ann.level !== 'warning' && ann.level !== 'danger' ? 'selected' : ''}>info（蓝 · 通知）</option>
+                            <option value="warning" ${ann.level === 'warning' ? 'selected' : ''}>warning（黄 · 提醒）</option>
+                            <option value="danger" ${ann.level === 'danger' ? 'selected' : ''}>danger（红 · 紧急）</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="admin-form-label">生效开始（YYYY-MM-DD HH:MM，空=立即）</label>
+                        <input class="admin-input" id="f_ANN_START" value="${esc(ann.start_at || '')}" placeholder="2026-09-10 02:00">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="admin-form-label">生效结束（空=永久）</label>
+                        <input class="admin-input" id="f_ANN_END" value="${esc(ann.end_at || '')}" placeholder="2026-09-10 04:00">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="admin-radio d-block"><input type="checkbox" id="f_ANN_ENABLED" ${ann.enabled ? 'checked' : ''}> 启用公告条</label>
+                    </div>
+                </div>
+                <button class="btn btn-analyze mt-3" id="saveAnnounceBtn"><i class="fa-solid fa-floppy-disk me-2"></i>保存公告条</button>
+            </div>
+            <div class="admin-card">
+                <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-cloud-arrow-down text-warning me-2"></i>设置备份与迁移（导出 / 导入 JSON）</h5>
+                <div class="tab-help mb-2">导出包含全部系统设置（含 AI / 数据源 API Key 等敏感信息），请妥善保管导入文件。导入按「键」逐项覆盖并即时生效；未知键会被拒绝。</div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-outline-info" id="exportSettingsBtn"><i class="fa-solid fa-download me-2"></i>导出全部设置</button>
+                    <label class="btn btn-outline-info mb-0" style="cursor:pointer;">
+                        <i class="fa-solid fa-upload me-2"></i>导入设置 JSON
+                        <input type="file" id="importSettingsFile" accept=".json,application/json" style="display:none;">
+                    </label>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function acctTabHtml() {
+        const p = state.registerPolicy || {};
+        const r = state.rateLimits || {};
+        const num = (id, val, ph) => `<input class="admin-input" style="max-width:110px;" id="${id}" value="${esc(val != null ? val : ph)}">`;
+        return `<div class="tab-pane d-none" data-pane="acct">
+            <div class="tab-help">注册方式、密码强度与各类风控限流阈值。所有改动保存后立即生效，无需重启。</div>
+            <div class="admin-card">
+                <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-user-plus text-warning me-2"></i>注册与登录策略</h5>
+                <div class="mb-2">
+                    <label class="admin-radio d-block"><input type="checkbox" id="f_REG_SMS" ${p.sms_required !== false ? 'checked' : ''}> 注册必须短信验证码</label>
+                    <div class="tab-help" style="margin-top:2px;">⚠️ 关闭后注册走「仅邀请码」通道：页面不再显示短信验证码行，邀请码强制必填（防止无验证码开放批量注册白嫖额度）。</div>
+                </div>
+                <div class="mb-2">
+                    <label class="admin-radio d-block"><input type="checkbox" id="f_REG_INVITE" ${p.invite_required ? 'checked' : ''}> 注册必须有效邀请码</label>
+                </div>
+                <div class="mb-2">
+                    <label class="admin-form-label">密码最小长度（4-20，默认 6）</label>
+                    <input class="admin-input" style="max-width:110px;" id="f_REG_PWD_MIN" value="${esc(p.password_min_len != null ? p.password_min_len : 6)}">
+                </div>
+                <div class="mb-2">
+                    <label class="admin-form-label">注册赠送额度（一次性，普通 / 深度；首页 CTA 与注册逻辑同口径）</label>
+                    <div class="d-flex gap-2">
+                        <input class="admin-input" style="max-width:110px;" id="f_REG_BONUS_NORMAL" value="${esc(state.regBonusNormal != null ? state.regBonusNormal : 5)}">
+                        <input class="admin-input" style="max-width:110px;" id="f_REG_BONUS_DEEP" value="${esc(state.regBonusDeep != null ? state.regBonusDeep : 1)}">
+                    </div>
+                </div>
+                <button class="btn btn-analyze mt-2" id="saveRegisterBtn"><i class="fa-solid fa-floppy-disk me-2"></i>保存注册策略</button>
+            </div>
+            <div class="admin-card">
+                <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-shield-halved text-warning me-2"></i>风控与限流阈值（次 / 时间窗；0=不限）</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm table-dark table-borderless">
+                        <thead><tr><th>维度</th><th style="width:130px;">阈值</th><th>说明</th></tr></thead>
+                        <tbody>
+                            <tr><td>注册 · 单 IP</td><td>${num('f_RL_register_ip_per_hour', r.register_ip_per_hour, 10)} <span class="text-secondary">次/小时</span></td><td class="text-secondary">防批量注册白嫖赠送配额</td></tr>
+                            <tr><td>登录 · 单 IP</td><td>${num('f_RL_login_ip_per_min', r.login_ip_per_min, 10)} <span class="text-secondary">次/分钟</span></td><td class="text-secondary">防撞库 / 爆破</td></tr>
+                            <tr><td>登录 · 单账号</td><td>${num('f_RL_login_acct_per_min', r.login_acct_per_min, 5)} <span class="text-secondary">次/分钟</span></td><td class="text-secondary">防定向爆破</td></tr>
+                            <tr><td>发短信 · 单 IP</td><td>${num('f_RL_sms_ip_per_hour', r.sms_ip_per_hour, 20)} <span class="text-secondary">条/小时</span></td><td class="text-secondary">防刷短信通道烧钱</td></tr>
+                            <tr><td>验证码校验 · 单 IP</td><td>${num('f_RL_smsverify_ip_per_min', r.smsverify_ip_per_min, 20)} <span class="text-secondary">次/分钟</span></td><td class="text-secondary">挡扫 IP</td></tr>
+                            <tr><td>验证码校验 · 单账号</td><td>${num('f_RL_smsverify_acct_per_600s', r.smsverify_acct_per_600s, 20)} <span class="text-secondary">次/10分钟</span></td><td class="text-secondary">挡分布式试码</td></tr>
+                            <tr><td>单验证码试错上限</td><td>${num('f_RL_sms_code_max_fail', r.sms_code_max_fail, 5)} <span class="text-secondary">次</span></td><td class="text-secondary">超限验证码作废，需重新获取</td></tr>
+                            <tr><td>找回密码 · 单 IP</td><td>${num('f_RL_pwdreset_ip_per_hour', r.pwdreset_ip_per_hour, 10)} <span class="text-secondary">次/小时</span></td><td class="text-secondary">防短信轰炸</td></tr>
+                            <tr><td>找回密码确认 · 单 IP</td><td>${num('f_RL_pwdreset_confirm_per_min', r.pwdreset_confirm_per_min, 5)} <span class="text-secondary">次/分钟</span></td><td class="text-secondary">防验证码穷举</td></tr>
+                            <tr><td>分析 · 单 IP</td><td>${num('f_RL_analyze_ip_per_day', r.analyze_ip_per_day, 0)} <span class="text-secondary">次/日</span></td><td class="text-secondary">0=不限；管理员 / 白名单不受约束</td></tr>
+                            <tr><td>个股免费层接口 · 单 IP</td><td>${num('f_RL_stock_api_ip_per_min', r.stock_api_ip_per_min, 20)} <span class="text-secondary">次/分钟</span></td><td class="text-secondary">游客访问 /api/stock/* 限流（保护数据源配额）；登录用户不受限</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mb-2">
+                    <label class="admin-form-label">IP 黑名单（逗号分隔，命中直接 403；管理员 IP 误加仍可进后台解禁）</label>
+                    <textarea class="admin-input" id="f_RL_ip_blacklist" rows="2" placeholder="例如：1.2.3.4, 5.6.7.8">${esc(r.ip_blacklist || '')}</textarea>
+                </div>
+                <button class="btn btn-analyze mt-2" id="saveRateLimitsBtn"><i class="fa-solid fa-floppy-disk me-2"></i>保存风控阈值</button>
+            </div>
+        </div>`;
+    }
+
+    function preferenceCard(p, idx) {
+        const deepChk = p.is_deep ? 'checked' : '';
+        const vipChk = p.vip_only ? 'checked' : '';
+        return `<div class="admin-channel preference-card" data-idx="${idx}">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex align-items-center gap-2 flex-grow-1">
+                    <input class="admin-input" data-f="id" value="${esc(p.id)}" placeholder="标识（英文）" style="max-width:160px;">
+                    <input class="admin-input" data-f="name" value="${esc(p.name)}" placeholder="展示名称" style="max-width:180px;">
+                    <label class="admin-radio"><input type="checkbox" data-f="is_deep" ${deepChk}> 深度分析（消耗 deep 配额）</label>
+                    <label class="admin-radio"><input type="checkbox" data-f="vip_only" ${vipChk}> VIP 专属</label>
+                </div>
+                <button class="btn btn-sm btn-outline-danger pref-del" type="button" title="删除偏好"><i class="fa-solid fa-trash"></i></button>
+            </div>
+            <div class="mb-2">
+                <label class="admin-form-label">一句话说明（分析页卡片副标题）</label>
+                <input class="admin-input" data-f="tagline" value="${esc(p.tagline)}" placeholder="例如：关注短期波动、热点与技术信号">
+            </div>
+            <div>
+                <label class="admin-form-label">系统提示词（System Prompt）</label>
+                <textarea class="admin-input" data-f="system_prompt" rows="6" placeholder="输入该偏好的系统提示词...">${esc(p.system_prompt || '')}</textarea>
+            </div>
+        </div>`;
+    }
+
+    // ===== 数据面板选项卡 =====
+    function panelTabHtml() {
+        const groups = state.panelGroups || [];
+        const groupCards = groups.map(function (g) {
+            return `<div class="pg-item">
+                <div class="pg-head">
+                    <span class="pg-id">${esc(g.id)}</span>
+                    <span class="pg-title">${esc(g.title)}</span>
+                    <span class="pg-meta">${g.field_count ? g.field_count + ' 字段' : '动态字段'} · 来源 ${esc(g.source_api)}</span>
+                </div>
+                ${g.field_count ? `<div class="pg-fields">${g.fields.map(f => '<code>' + esc(f) + '</code>').join('')}</div>` : ''}
+            </div>`;
+        }).join('') || '<div class="text-secondary">加载中…</div>';
+
+        // 每个偏好的数据组勾选区
+        const prefRows = (state.preferences || []).map(function (p) {
+            const picked = (p.data_groups && p.data_groups.length)
+                ? p.data_groups
+                : ((state.panelDefaults || {})[p.id] || []);
+            const boxes = groups.map(function (g) {
+                const on = picked.indexOf(g.id) >= 0;
+                const isBase = (state.panelBase || []).indexOf(g.id) >= 0;
+                return `<label class="pg-chk${isBase ? ' base' : ''}" title="${isBase ? '基础组：任何偏好都会附带' : ''}">
+                    <input type="checkbox" data-pref="${esc(p.id)}" data-group="${esc(g.id)}" ${on ? 'checked' : ''} ${isBase ? 'disabled' : ''}> ${esc(g.id)}
+                </label>`;
+            }).join('');
+            return `<div class="pg-pref-row">
+                <div class="pg-pref-name">${esc(p.name)}<span class="text-secondary fw-normal ms-2" style="font-size:11px;">${esc(p.id)}</span></div>
+                <div class="pg-pref-boxes">${boxes}</div>
+            </div>`;
+        }).join('') || '<div class="text-secondary">暂无投资偏好</div>';
+
+        return `<div class="tab-pane d-none" data-pane="panel">
+            <div class="tab-help">数据面板决定了「喂给大模型的是什么数据」。
+                不同投资偏好会取不同的数据组：短线吃资金流与技术面，长线吃多年财务与分红。
+                <strong>行情速览 / 估值指标为基础组，任何偏好都会附带</strong>（不可取消）。修改后到「投资偏好」选项卡保存。</div>
+
+            <div class="admin-card">
+                <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-table-cells-large text-warning me-2"></i>数据组清单</h5>
+                <div class="pg-list">${groupCards}</div>
+            </div>
+
+            <div class="admin-card">
+                <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-diagram-project text-warning me-2"></i>偏好 × 数据组</h5>
+                <div class="pg-pref-list">${prefRows}</div>
+                <div class="mt-3">
+                    <button class="btn btn-analyze" id="savePanelBtn"><i class="fa-solid fa-floppy-disk me-2"></i>保存数据面板配置</button>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-magnifying-glass-chart text-warning me-2"></i>面板预览</h5>
+                <div class="tab-help">选一只股票和一个偏好，实时生成该偏好实际会喂给模型的数据，用来核对字段够不够。</div>
+                <div class="d-flex gap-2 flex-wrap align-items-end mb-2">
+                    <div>
+                        <label class="admin-form-label">股票代码</label>
+                        <input class="admin-input" id="panelCode" value="600519.SH" style="width:150px;">
+                    </div>
+                    <div>
+                        <label class="admin-form-label">投资偏好</label>
+                        <select class="admin-input" id="panelPref" style="width:220px;">
+                            ${(state.preferences || []).map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}
+                        </select>
+                    </div>
+                    <button class="btn btn-sm btn-outline-info" id="panelPreviewBtn" type="button"><i class="fa-solid fa-play me-1"></i>生成预览</button>
+                    <span id="panelMeta" class="text-secondary" style="font-size:12px;"></span>
+                </div>
+                <pre id="panelOut" class="pg-out">点击「生成预览」查看该偏好的数据面板</pre>
+            </div>
+        </div>`;
+    }
+
+    function preferenceSectionHtml() {
+        return (state.preferences || []).map(function (p, i) { return preferenceCard(p, i); }).join('')
+            || '<div class="text-secondary">暂无投资偏好，点击下方「新增偏好」。</div>';
+    }
+
+    function render() {
+        // ⚠️ 修复（2026-09-02）：render 会重建整个 tab 栏，原实现把「金融数据源」写死为 active，
+        //    导致任何删除/添加操作（删模型、加模型、删渠道、加数据源、加 AI 渠道、体检等）
+        //    都会把页面弹回金融数据源 tab。重建前记住当前激活 tab，重建后还原。
+        const cur = document.querySelector('.admin-tabs .nav-link.active');
+        const curName = cur ? cur.getAttribute('data-tab') : 'data';
+        const tabs = `
+            <ul class="nav nav-tabs admin-tabs" role="tablist">
+                <li class="nav-item"><button class="nav-link active" data-tab="data" type="button">金融数据源</button></li>
+                <li class="nav-item"><button class="nav-link" data-tab="ai" type="button">AI 大模型</button></li>
+                <li class="nav-item"><button class="nav-link" data-tab="stock" type="button">股票数据库</button></li>
+                <li class="nav-item"><button class="nav-link" data-tab="pref" type="button">投资偏好</button></li>
+                <li class="nav-item"><button class="nav-link" data-tab="panel" type="button">数据面板</button></li>
+                <li class="nav-item"><button class="nav-link" data-tab="plan" type="button">价格方案</button></li>
+                <li class="nav-item"><button class="nav-link" data-tab="acct" type="button">账号与风控</button></li>
+                <li class="nav-item"><button class="nav-link" data-tab="site" type="button">站点设置</button></li>
+            </ul>`;
+        document.getElementById('settingsArea').innerHTML =
+            tabs + dataTabHtml() + aiTabHtml() + stockTabHtml() + prefTabHtml()
+            + panelTabHtml() + planTabHtml() + acctTabHtml() + siteTabHtml();
+        // render 会重建 catalogArea：数据已就绪则直接重绘，未就绪则触发加载
+        if (catalogLoaded) paintCatalog();
+        else loadCatalog();
+        // Lixinger 目录同理
+        if (lixCatalogLoaded) paintLixCatalog();
+        else loadLixCatalog();
+        // 伏尧目录同理
+        if (fuyCatalogLoaded) paintFuyCatalog();
+        else loadFuyCatalog();
+        // 还原当前激活选项卡（curName==='data' 时模板已正确，无需处理）
+        if (curName !== 'data') {
+            document.querySelectorAll('.admin-tabs .nav-link').forEach(b => b.classList.remove('active'));
+            const btn = document.querySelector('.admin-tabs .nav-link[data-tab="' + curName + '"]');
+            if (btn) btn.classList.add('active');
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('d-none'));
+            const pane = document.querySelector('.tab-pane[data-pane="' + curName + '"]');
+            if (pane) pane.classList.remove('d-none');
+        }
+    }
+
+    function readPreferences() {
+        const out = [];
+        document.querySelectorAll('#preferenceCards .preference-card').forEach(function (card) {
+            const get = f => card.querySelector('[data-f="' + f + '"]');
+            const id = get('id').value.trim() || ('pref' + (out.length + 1));
+            // ⚠️ data_groups 必须从 state 合并，不能丢弃：
+            //    它只在「数据面板」选项卡里可编辑，偏好卡片 DOM 里没有对应控件。
+            //    以前直接丢掉，导致任何一次保存（投资偏好/数据面板）都会把
+            //    DB 里已保存的「偏好×数据组」配置抹成缺失，刷新后回退内置默认，
+            //    看起来就是「保存没生效」（真实 bug，2026-09-01 修复）。
+            //    「保存数据面板配置」会先更新 state.preferences 再走这里，
+            //    所以此刻从 state 按 id 取到的就是用户刚勾选的新配置。
+            const prev = (state.preferences || []).find(function (p) { return p.id === id; }) || {};
+            out.push({
+                id: id,
+                name: get('name').value,
+                tagline: get('tagline').value,
+                is_deep: get('is_deep').checked,
+                vip_only: get('vip_only').checked,
+                system_prompt: get('system_prompt').value,
+                data_groups: Array.isArray(prev.data_groups) ? prev.data_groups.slice() : [],
+            });
+        });
+        return out;
+    }
+
+    function readPlans() {
+        const out = [];
+        document.querySelectorAll('#planCards .plan-card').forEach(function (card) {
+            const get = f => card.querySelector('[data-f="' + f + '"]');
+            const prices = [];
+            card.querySelectorAll('.plan-price').forEach(function (pc) {
+                const g = f => pc.querySelector('[data-pf="' + f + '"]');
+                prices.push({ label: g('label').value, price: g('price').value, unit: g('unit').value, note: g('note').value });
+            });
+            const feats = [];
+            card.querySelectorAll('.plan-feature').forEach(function (fc) {
+                feats.push({ text: fc.querySelector('[data-ff="text"]').value, on: fc.querySelector('.plan-feat-on').checked });
+            });
+            out.push({
+                key: (get('name').value || 'plan').replace(/\s+/g, '').toLowerCase() || ('plan' + (out.length + 1)),
+                name: get('name').value,
+                tagline: get('tagline').value,
+                type: get('type').value,
+                popular: get('popular').checked,
+                price_from: get('price_from').value,
+                period: get('period').value,
+                prices: prices,
+                button: { text: get('btn_text').value, action: get('btn_action').value },
+                features: feats,
+            });
+        });
+        return out;
+    }
+
+    // 旧配置（渠道只有单个 model 标量，没有 models 数组）在前端补成一条模型记录，
+    // 这样后台打开就能直接看到并编辑，保存后即写入新结构。
+    // —— parseProfileJson / normProfile 放这里（紧邻 normalizeAiChannels）——
+    function parseProfileJson(s) {
+        if (s == null || s === '') return {};
+        if (typeof s === 'object') return s || {};
+        try { const o = JSON.parse(String(s)); return (o && typeof o === 'object') ? o : {}; }
+        catch (e) { return {}; }
+    }
+    function normProfile(raw) {
+        const p = parseProfileJson(raw);
+        const out = {};
+        if (p.kind === 'reasoning' || p.kind === 'direct') out.kind = p.kind;
+        const t = parseFloat(p.temperature);
+        if (isFinite(t) && t > 0 && t <= 2) out.temperature = Math.round(t * 100) / 100;
+        const mo = parseInt(p.max_out, 10);
+        if (isFinite(mo) && mo > 0) out.max_out = mo;
+        // ⚠️ 不要加 ctx：Ollama 的 /v1/chat/completions 不认 num_ctx，
+        //    配了也不生效，只会让后台显示一个假象（显存仍按标称 262144 分配）。
+        if (p.tokens && typeof p.tokens === 'object') {
+            const tk = {};
+            ['normal', 'deep'].forEach(k => {
+                const v = parseInt((p.tokens || {})[k], 10);
+                if (isFinite(v) && v > 0) tk[k] = v;
+            });
+            if (Object.keys(tk).length) out.tokens = tk;
+        }
+        if (p.instruction) out.instruction = String(p.instruction).slice(0, 200);
+        if (p.spec) out.spec = String(p.spec).slice(0, 120);
+        return out;
+    }
+    function normalizeAiChannels(list) {
+        return (list || []).map(function (c) {
+            c = c || {};
+            if (Array.isArray(c.models) && c.models.length) {
+                c.models = c.models.map(function (m, i) {
+                    m = m || {};
+                    // ⚠️ 2026-09-07 修复：featured / tagline / logo 必须透传！
+                    //    之前只回 id/alias/model_id/enabled/vip_only 四个键，导致页面每次加载
+                    //    都把这 3 个新字段丢掉 —— 用户勾的「推荐」刷新即消失；
+                    //    更糟的是此时再点「保存模型」= 用空值整段覆盖 DB，tagline/logo 全被抹空。
+                    return {
+                        id: m.id || ((c.id || 'ch') + '__m' + i),
+                        alias: m.alias || m.model_id || '',
+                        model_id: m.model_id || m.model || '',
+                        enabled: m.enabled !== false,
+                        vip_only: !!m.vip_only,
+                        featured: !!m.featured,
+                        tagline: (m.tagline != null ? String(m.tagline) : '').slice(0, 40),
+                        logo: (m.logo != null ? String(m.logo) : '').slice(0, 120),
+                        // ⭐ 2026-09-07 模型差异化：profile 必须透传（白名单规范化）
+                        profile: normProfile(m.profile),
+                    };
+                });
+            } else {
+                c.models = [{
+                    id: (c.id || 'ch') + '__default',
+                    alias: c.name || c.model || '默认模型',
+                    model_id: c.model || '',
+                    enabled: true,
+                    vip_only: c.vip_only != null ? !!c.vip_only : ((c.id || '') !== 'volcano'),
+                    featured: false,
+                    tagline: '',
+                    logo: '',
+                    profile: {},
+                }];
+            }
+            return c;
+        });
+    }
+
+    function newModelId() { return 'm_' + Date.now() + '_' + Math.floor(Math.random() * 1000); }
+
+    function readChannels(group) {
+        const root = document.getElementById(group === 'data' ? 'dataCards' : 'aiCards');
+        const out = [];
+        root.querySelectorAll('.admin-channel').forEach(card => {
+            // 只用 data-field（模型行用的是 data-mfield，不会串）
+            const get = f => card.querySelector('[data-field="' + f + '"]');
+            const nameEl = get('name');
+            const item = {
+                id: card.getAttribute('data-id'),
+                name: nameEl ? nameEl.value : '',
+                base_url: (get('base_url') || {}).value || '',
+                api_key: (get('api_key') || {}).value || '',
+                enabled: true,
+            };
+            if (group === 'ai') {
+                const enCb = get('enabled');
+                item.enabled = enCb ? enCb.checked : true;
+                // 模型子列表：按 DOM 顺序读回，保持 id 稳定（行被删过也不会串）
+                const models = [];
+                card.querySelectorAll('.ai-model-row').forEach(row => {
+                    const mg = f => row.querySelector('[data-mfield="' + f + '"]');
+                    models.push({
+                        id: row.getAttribute('data-mid') || newModelId(),
+                        alias: (mg('alias') || {}).value || '',
+                        model_id: (mg('model_id') || {}).value || '',
+                        vip_only: (mg('vip_only') || {}).checked || false,
+                        enabled: (mg('enabled') || {}).checked !== false,
+                        // ⭐ 2026-09-06 新增：推荐 / 特色 / Logo 与模型行编辑同步
+                        featured: ((mg('featured') || {}).checked === true),
+                        tagline: ((mg('tagline') || {}).value || '').slice(0, 40),
+                        logo: ((mg('logo') || {}).value || '').slice(0, 120),
+                        // ⭐ 2026-09-07 模型差异化：高级参数 JSON 读回（白名单在保存端归一化）
+                        profile: normProfile((mg('profile_json') || {}).value),
+                    });
+                });
+                item.models = models;
+            }
+            out.push(item);
+        });
+        return out;
+    }
+
+    // 改动 AI 渠道（删模型 / 加模型）前先把 DOM 里的编辑同步回 state，避免未保存的输入被 render 冲掉
+    function syncAiFromDom() {
+        const root = document.getElementById('aiCards');
+        if (!root) return;
+        state.aiChannels = readChannels('ai');
+        state.aiActive = activeOf('aiActive') || state.aiActive;
+    }
+
+    function activeOf(name) {
+        const el = document.querySelector('input[name="' + name + '"]:checked');
+        return el ? el.value : '';
+    }
+
+    function showToast(msg, ok) {
+        let t = document.getElementById('adminToast');
+        if (!t) {
+            t = document.createElement('div');
+            t.id = 'adminToast';
+            t.className = 'toast position-fixed bottom-0 end-0 p-3';
+            t.style.cssText = 'z-index:1090; background:#1e293b; border:1px solid #38bdf8; color:#fff; border-radius:10px;';
+            document.body.appendChild(t);
+        }
+        t.innerHTML = `<div>${ok ? '✅ ' : '❌ '}${msg}</div>`;
+        t.style.display = 'block';
+        setTimeout(() => { t.style.display = 'none'; }, 3000);
+    }
+
+    // 通用保存：payload -> POST /api/admin/settings；btnId 用于复位按钮（reload 后 DOM 会被替换）
+    async function postSettings(payload, btnId, btnText, okMsg, reload) {
+        const btn = document.getElementById(btnId);
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i>保存中'; }
+        try {
+            const res = await fetch('/api/admin/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ settings: payload })
+            });
+            const data = await res.json();
+            // ⚠️ 第二个参数必须传 true：showToast(msg, ok) 里 ok 为 falsy 会显示 ❌，
+            //    以前漏传导致「保存成功」提示却带个红叉，看起来像失败。
+            if (data.status === 'success') showToast(okMsg, true);
+            else if (data.status === 'partial') showToast((data.warning || okMsg) + '（部分生效）', false);
+            else showToast('保存失败：' + (data.detail || '未知错误'), false);
+            if (reload) await loadSettings();
+            // 保存成功但没重新加载时，也要把「新保存的模型 id」纳入已保存集合，
+            // 否则刚保存的行再点检测仍会走草稿模式（能测通，但结果标成草稿）。
+            else if (payload && payload.AI_MODEL_CHANNELS) { syncAiFromDom(); refreshSavedIds(); }
+        } catch (e) {
+            showToast('网络错误', false);
+        } finally {
+            const b = document.getElementById(btnId);
+            if (b) { b.disabled = false; b.innerHTML = btnText; }
+        }
+    }
+
+    function saveData() {
+        postSettings({
+            DATA_SOURCE_CHANNELS: JSON.stringify(readChannels('data')),
+            DATA_SOURCE_ACTIVE: activeOf('dataActive'),
+            TUSHARE_TOKEN: val('f_TUSHARE_TOKEN'),
+            // 伏尧：DOM 不存在时回落到已加载的 state，避免把已保存的 Key 抹成空
+            FUYAO_API_KEY: (document.getElementById('f_FUYAO_API_KEY') ? val('f_FUYAO_API_KEY') : (state.fuyaoApiKey || '')),
+            FUYAO_ENABLED: (function () {
+                const el = document.getElementById('f_FUYAO_ENABLED');
+                return el ? (el.checked ? '1' : '0') : (state.fuyaoEnabled ? '1' : '0');
+            })(),
+        }, 'saveDataBtn', '<i class="fa-solid fa-floppy-disk me-2"></i>保存数据源', '数据源已保存并即时生效', true);
+    }
+    function testDatasource() {
+        const btn = document.getElementById('testDatasourceBtn');
+        const out = document.getElementById('dataTestResult');
+        if (!btn || !out) return;
+        const old = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>正在测试…';
+        out.className = 'small text-info';
+        out.innerText = '连接中…';
+        fetch('/api/admin/test-datasource', { method: 'POST' })
+            .then(r => r.json())
+            .then(d => {
+                if (d && d.ok) {
+                    out.className = 'small text-success';
+                    out.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i>' + (d.msg || '连接正常');
+                } else {
+                    out.className = 'small text-danger';
+                    out.innerHTML = '<i class="fa-solid fa-circle-xmark me-1"></i>' + ((d && d.msg) || '连接异常');
+                }
+            })
+            .catch(e => { out.className = 'small text-danger'; out.innerText = '请求失败：' + e.message; })
+            .finally(() => { btn.disabled = false; btn.innerHTML = old; });
+    }
+    function saveAi() {
+        postSettings({
+            AI_MODEL_CHANNELS: JSON.stringify(readChannels('ai')),
+            AI_MODEL_ACTIVE: activeOf('aiActive'),
+        }, 'saveAiBtn', '<i class="fa-solid fa-floppy-disk me-2"></i>保存模型', '模型已保存并即时生效', true);
+    }
+    function savePreferences() {
+        postSettings({ ANALYSIS_PREFERENCES: JSON.stringify(readPreferences()) },
+            'savePreferencesBtn', '<i class="fa-solid fa-floppy-disk me-2"></i>保存投资偏好', '投资偏好已保存并即时生效', true);
+    }
+    function savePlans() {
+        postSettings({ PRICING_PLANS: JSON.stringify(readPlans()) },
+            'savePlansBtn', '<i class="fa-solid fa-floppy-disk me-2"></i>保存价格方案', '价格方案已保存并即时生效', true);
+    }
+    // ---- 会员与配额规则（QUOTA_RULES） ----
+    function saveQuota() {
+        const num = (id, def) => {
+            const n = parseInt(val(id), 10);
+            return isNaN(n) || n < 0 ? def : n;
+        };
+        postSettings({
+            QUOTA_RULES: JSON.stringify({
+                free_daily_normal: num('q_free_daily_normal', 2),
+                free_daily_deep: num('q_free_daily_deep', 0),
+                free_monthly_deep: num('q_free_monthly_deep', 1),
+                vip1_daily_normal: num('q_vip1_daily_normal', 5),
+                vip1_daily_deep: num('q_vip1_daily_deep', 2),
+                vip1_monthly_deep: num('q_vip1_monthly_deep', 0),
+                vip2_daily_normal: num('q_vip2_daily_normal', 10),
+                vip2_daily_deep: num('q_vip2_daily_deep', 5),
+                vip2_monthly_deep: num('q_vip2_monthly_deep', 0),
+                admin_uid_whitelist: (val('q_admin_uid_whitelist') || '').trim(),
+            }),
+        }, 'saveQuotaBtn', '<i class="fa-solid fa-floppy-disk me-2"></i>保存配额规则', '配额规则已保存并即时生效', false);
+    }
+    // ---- 注册与登录策略（REGISTER_POLICY） ----
+    function saveRegister() {
+        const minLen = parseInt(val('f_REG_PWD_MIN'), 10);
+        const bonusN = parseInt(val('f_REG_BONUS_NORMAL'), 10);
+        const bonusD = parseInt(val('f_REG_BONUS_DEEP'), 10);
+        const payload = {
+            REGISTER_POLICY: JSON.stringify({
+                sms_required: document.getElementById('f_REG_SMS').checked,
+                invite_required: document.getElementById('f_REG_INVITE').checked,
+                password_min_len: (isNaN(minLen) || minLen < 4 || minLen > 20) ? 6 : minLen,
+            }),
+        };
+        // 注册赠送额度：改了才提交（与 REGISTER_BONUS_* 同键，后台改动即时同步注册逻辑与首页 CTA）
+        if (!isNaN(bonusN)) payload.REGISTER_BONUS_NORMAL = String(bonusN);
+        if (!isNaN(bonusD)) payload.REGISTER_BONUS_DEEP = String(bonusD);
+        postSettings(payload, 'saveRegisterBtn', '<i class="fa-solid fa-floppy-disk me-2"></i>保存注册策略', '注册策略已保存并即时生效', false);
+    }
+    // ---- 风控与限流阈值（RATE_LIMITS） ----
+    function saveRateLimits() {
+        const keys = ['register_ip_per_hour','login_ip_per_min','login_acct_per_min','sms_ip_per_hour',
+                      'smsverify_ip_per_min','smsverify_acct_per_600s','sms_code_max_fail',
+                      'pwdreset_ip_per_hour','pwdreset_confirm_per_min','analyze_ip_per_day',
+                      'stock_api_ip_per_min'];
+        const out = {};
+        keys.forEach(function (k) {
+            const n = parseInt(val('f_RL_' + k), 10);
+            out[k] = isNaN(n) || n < 0 ? 0 : n;
+        });
+        out.ip_blacklist = (val('f_RL_ip_blacklist') || '').trim();
+        postSettings({ RATE_LIMITS: JSON.stringify(out) },
+            'saveRateLimitsBtn', '<i class="fa-solid fa-floppy-disk me-2"></i>保存风控阈值', '风控阈值已保存并即时生效', false);
+    }
+    // ---- 法务运营者信息（OPERATOR_INFO + ICP_NUMBER） ----
+    function saveLegal() {
+        postSettings({
+            OPERATOR_INFO: JSON.stringify({
+                entity: val('f_OP_entity') || '',
+                email: val('f_OP_email') || '',
+                wechat: val('f_OP_wechat') || '',
+                address: val('f_OP_address') || '',
+                dpo: val('f_OP_dpo') || '',
+                sla: val('f_OP_sla') || '',
+            }),
+            ICP_NUMBER: val('f_ICP_NUMBER') || '',
+        }, 'saveLegalBtn', '<i class="fa-solid fa-floppy-disk me-2"></i>保存法务信息', '法务信息已保存（法务页 / 页脚 / 索引判定即时联动）', false);
+    }
+    // ---- 全站公告条（SITE_ANNOUNCEMENT） ----
+    function saveAnnouncement() {
+        postSettings({
+            SITE_ANNOUNCEMENT: JSON.stringify({
+                enabled: document.getElementById('f_ANN_ENABLED').checked,
+                text: val('f_ANN_TEXT') || '',
+                level: val('f_ANN_LEVEL') || 'info',
+                start_at: (val('f_ANN_START') || '').trim(),
+                end_at: (val('f_ANN_END') || '').trim(),
+            }),
+        }, 'saveAnnounceBtn', '<i class="fa-solid fa-floppy-disk me-2"></i>保存公告条', '公告条已保存并即时生效', false);
+    }
+    // ---- 设置导出 / 导入 ----
+    function exportSettings() {
+        fetch('/api/admin/settings/export')
+            .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+            .then(d => {
+                const blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'settings-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+                document.body.appendChild(a); a.click(); a.remove();
+                showToast('设置已导出为 JSON 文件', true);
+            })
+            .catch(e => showToast('导出失败：' + e.message, false));
+    }
+    function importSettings(file) {
+        if (!file) return;
+        if (!confirm('导入将按「键」覆盖当前同名设置，且不可撤销。确定继续？')) return;
+        const reader = new FileReader();
+        reader.onload = function () {
+            let body;
+            try { body = JSON.parse(reader.result); }
+            catch (e) { showToast('文件不是合法 JSON：' + e.message, false); return; }
+            if (!body || typeof body.settings !== 'object') {
+                showToast('格式不正确：应为 {settings: {...}} 的导出文件', false); return;
+            }
+            fetch('/api/admin/settings/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success') { showToast(d.msg || '导入成功', true); loadSettings(); }
+                else showToast('导入失败：' + (d.detail || d.warning || '未知错误'), false);
+            })
+            .catch(() => showToast('网络错误', false));
+        };
+        reader.readAsText(file);
+    }
+    function saveSiteSettings() {
+        const keys = ['SITE_NAME','SITE_DOMAIN','SITE_LOGO_URL','SEO_TITLE','SEO_KEYWORDS','SEO_DESCRIPTION','SEO_OG_IMAGE'];
+        const payload = {};
+        keys.forEach(function (k) { payload[k] = val('f_' + k) || ''; });
+        postSettings(payload, 'saveSiteBtn', '<i class="fa-solid fa-floppy-disk me-2"></i>保存站点设置', '站点设置已保存并即时生效', false);
+    }
+
+    async function loadStockStatus() {
+        try {
+            const r = await (await fetch('/api/admin/stocks/status')).json();
+            const c = r.counts || {};
+            const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.textContent = v; };
+            set('stockTotal', c.total); set('stockA', c.A); set('stockHK', c.HK);
+            const st = r.sync || {};
+            const at = document.getElementById('stockSyncAt'); if (at) at.textContent = st.updated_at || (st.message || '尚未同步');
+            const msg = document.getElementById('stockSyncMsg'); if (msg) msg.textContent = st.message || '';
+        } catch (e) {}
+    }
+
+    // ---- 股票数据库：已同步数据列表（分页 + 筛选 + 搜索） ----
+    let stockListState = { page: 1, perPage: 20, pages: 1, total: 0 };
+
+    async function loadStockList(page) {
+        const body = document.getElementById('stockListBody');
+        if (!body) return;
+        const market = (document.getElementById('stockListMarket') || {}).value || '';
+        const status = (document.getElementById('stockListStatus') || {}).value || 'L';
+        let q = (document.getElementById('stockListSearch') || {}).value || '';
+        q = q.trim();
+        // 搜索词变化时回到第 1 页
+        if (page) stockListState.page = page;
+        const params = new URLSearchParams({
+            page: stockListState.page, per_page: stockListState.perPage,
+            market: market, status: status, q: q,
+        });
+        body.innerHTML = '<tr><td colspan="7" style="padding:14px;color:#64748b;">加载中…</td></tr>';
+        try {
+            const r = await (await fetch('/api/admin/stocks/list?' + params)).json();
+            if (r.status !== 'success') throw new Error(r.detail || '查询失败');
+            stockListState.total = r.total;
+            stockListState.pages = Math.max(1, r.pages);
+            const rows = r.rows || [];
+            document.getElementById('stockListMeta').textContent =
+                '共 ' + r.total.toLocaleString() + ' 条记录';
+            document.getElementById('stockPageInfo').textContent =
+                '第 ' + r.page + ' / ' + Math.max(1, r.pages) + ' 页';
+            document.getElementById('stockPrevBtn').disabled = r.page <= 1;
+            document.getElementById('stockNextBtn').disabled = r.page >= r.pages;
+            if (!rows.length) {
+                body.innerHTML = '<tr><td colspan="7" style="padding:14px;color:#64748b;">没有匹配的记录。</td></tr>';
+                return;
+            }
+            const esc2 = esc;
+            const stMap = { L: ['上市', 'text-success'], D: ['退市', 'text-danger'], P: ['暂停', 'text-warning'] };
+            body.innerHTML = rows.map(function (s) {
+                const st = stMap[s.list_status] || [s.list_status || '-', ''];
+                return '<tr>'
+                    + '<td style="padding:7px 10px;color:#38bdf8;">' + esc2(s.code || '') + '</td>'
+                    + '<td style="padding:7px 10px;color:#94a3b8;">' + esc2(s.ts_code || '-') + '</td>'
+                    + '<td style="padding:7px 10px;color:#e2e8f0;">' + esc2(s.name || '') + '</td>'
+                    + '<td style="padding:7px 10px;">' + (s.market === 'A' ? '<span class="badge bg-primary">A股</span>' : '<span class="badge bg-warning text-dark">港股</span>') + '</td>'
+                    + '<td style="padding:7px 10px;color:#94a3b8;">' + esc2(s.exchange || '-') + '</td>'
+                    + '<td style="padding:7px 10px;" class="' + st[1] + '">' + st[0] + '</td>'
+                    + '<td style="padding:7px 10px;color:#64748b;">' + esc2(String(s.updated_at || '').slice(0, 19)) + '</td>'
+                    + '</tr>';
+            }).join('');
+        } catch (e) {
+            body.innerHTML = '<tr><td colspan="7" style="padding:14px;color:#f87171;">加载失败：' + esc(String(e && e.message || e)) + '</td></tr>';
+        }
+    }
+
+    function bindStockListEvents() {
+        // 用事件委托绑定（表格区域由 render 动态重建）
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('#stockPrevBtn')) { loadStockList(stockListState.page - 1); }
+            else if (e.target.closest('#stockNextBtn')) { loadStockList(stockListState.page + 1); }
+            else if (e.target.closest('#stockListRefresh')) { loadStockList(1); }
+        });
+        document.addEventListener('change', function (e) {
+            if (e.target.id === 'stockListMarket' || e.target.id === 'stockListStatus') loadStockList(1);
+        });
+        // 搜索防抖
+        let searchTimer = null;
+        document.addEventListener('input', function (e) {
+            if (e.target && e.target.id === 'stockListSearch') {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(function () { loadStockList(1); }, 400);
+            }
+        });
+    }
+    bindStockListEvents();  // 全局委托只绑一次
+
+    // ---- DATAHUB 接口能力目录 ----
+    let catalogLoaded = false;   // 数据已拉取成功
+    let catalogLoading = false;  // 防并发重复请求
+    let catalogItems = [];       // 平铺条目 [{category,sub,api,name,params,note}]
+
+    async function loadCatalog() {
+        if (catalogLoaded || catalogLoading) return;
+        const area = document.getElementById('catalogArea');
+        if (!area) {
+            // 容器尚未由 render() 创建（初始竞态），稍等后重试
+            setTimeout(loadCatalog, 300);
+            return;
+        }
+        catalogLoading = true;
+        try {
+            const res = await fetch('/api/admin/datahub-catalog');
+            const r = await res.json();
+            if (r.status !== 'success') throw new Error(r.detail || ('HTTP ' + res.status));
+            catalogLoaded = true;
+            // 平铺
+            catalogItems = [];
+            Object.keys(r.categories).forEach(function (cat) {
+                r.categories[cat].forEach(function (sub) {
+                    sub.apis.forEach(function (a) {
+                        catalogItems.push(Object.assign({ category: cat, sub: sub.sub }, a));
+                    });
+                });
+            });
+            paintCatalog();
+        } catch (e) {
+            const meta2 = document.getElementById('catalogMeta');
+            if (meta2) meta2.textContent = '';
+            area.innerHTML = '<div class="text-danger small">接口目录加载失败：' + esc(String(e && e.message || e)) + '</div>';
+        } finally {
+            catalogLoading = false;
+        }
+    }
+
+    // 绘制目录（统计行 + 内容区）；仅当数据就绪时操作
+    function paintCatalog() {
+        const area = document.getElementById('catalogArea');
+        if (!area) return;
+        if (!catalogLoaded) { area.innerHTML = '<div class="text-secondary small">加载中…</div>'; return; }
+        const total = catalogItems.length;
+        const cats = new Set(catalogItems.map(i => i.category));
+        const meta = document.getElementById('catalogMeta');
+        if (meta) meta.textContent = '共 ' + total + ' 个接口 / ' + cats.size + ' 大类';
+        renderCatalog();
+    }
+
+    function catalogApiHtml(a) {
+        const params = Object.entries(a.params || {});
+        const paramStr = params.length
+            ? params.map(p => '<code style="color:#7dd3fc;">' + esc(p[0]) + '</code><span style="color:#94a3b8;">(' + esc(p[1]) + ')</span>').join('，')
+            : '<span style="color:#64748b;">无参数</span>';
+        const note = a.note ? '<div style="color:#fbbf24;font-size:12px;margin-top:2px;">备注：' + esc(a.note) + '</div>' : '';
+        return '<div class="catalog-item" data-api="' + esc(a.api) + '" style="border-top:1px dashed #1e293b;padding:8px 4px;">'
+            + '<div class="d-flex align-items-center gap-2 flex-wrap">'
+            + '<code style="color:#38bdf8;font-size:13px;">' + esc(a.api) + '</code>'
+            + '<span style="color:#e2e8f0;font-size:13px;">' + esc(a.name || '') + '</span>'
+            + '<button class="btn btn-sm btn-outline-info py-0 px-2 catalog-test" type="button" title="用当前生效数据源实测该接口">测</button>'
+            + '<span class="catalog-result small"></span>'
+            + '</div>'
+            + '<div style="font-size:12px;color:#94a3b8;margin-top:2px;">参数：' + paramStr + '</div>'
+            + note
+            + '</div>';
+    }
+
+    function renderCatalog() {
+        const kw = (document.getElementById('catalogSearch') || {}).value || '';
+        const k = kw.trim().toLowerCase();
+        const items = k
+            ? catalogItems.filter(i => i.api.toLowerCase().includes(k) || String(i.name || '').toLowerCase().includes(k))
+            : catalogItems;
+        const area = document.getElementById('catalogArea');
+        if (!area) return;
+        if (!items.length) {
+            area.innerHTML = '<div class="text-secondary small">没有匹配的接口。</div>';
+            return;
+        }
+        // 按 分类→子分类 分组渲染
+        const groups = {};
+        items.forEach(function (i) {
+            (groups[i.category] = groups[i.category] || {})[i.sub] = (groups[i.category][i.sub] || []).concat([i]);
+        });
+        let html = '';
+        Object.keys(groups).sort().forEach(function (cat) {
+            html += '<details open style="margin-bottom:6px;">'
+                + '<summary style="color:#fff;cursor:pointer;padding:4px 2px;"><span style="color:#fbbf24;">▶</span> ' + esc(cat)
+                + ' <span style="color:#64748b;font-size:12px;">(' + Object.values(groups[cat]).reduce((s, x) => s + x.length, 0) + ')</span></summary>';
+            Object.keys(groups[cat]).sort().forEach(function (sub) {
+                html += '<div style="margin:4px 0 0 14px;">'
+                    + '<div style="color:#7dd3fc;font-size:12px;margin-bottom:2px;">· ' + esc(sub) + '</div>'
+                    + groups[cat][sub].map(catalogApiHtml).join('')
+                    + '</div>';
+            });
+            html += '</details>';
+        });
+        area.innerHTML = html;
+    }
+
+    async function testCatalogApi(btn) {
+        const item = btn.closest('.catalog-item');
+        if (!item) return;
+        const apiName = item.getAttribute('data-api') || '';
+        const out = item.querySelector('.catalog-result');
+        const old = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '…';
+        if (out) { out.className = 'catalog-result small text-info'; out.textContent = '测试中'; }
+        try {
+            const res = await fetch('/api/admin/test-datahub-api/' + encodeURIComponent(apiName), { method: 'POST' });
+            const d = await res.json();
+            if (out) {
+                out.className = 'catalog-result small ' + ((d && d.ok) ? 'text-success' : 'text-danger');
+                out.innerHTML = '<i class="fa-solid fa-' + ((d && d.ok) ? 'circle-check' : 'circle-xmark') + ' me-1"></i>' + esc((d && d.msg) || '失败').slice(0, 160);
+            }
+        } catch (e) {
+            if (out) { out.className = 'catalog-result small text-danger'; out.textContent = '请求失败'; }
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = old;
+        }
+    }
+
+    // ---- Lixinger（理杏仁）接口能力目录 ----
+    let lixCatalogLoaded = false;
+    let lixCatalogLoading = false;
+    let lixCatalogItems = [];   // 平铺条目 [{region,category,api,name,params,doc}]
+    let lixUsage = null;
+    let lixBaseUrl = '';
+
+    async function loadLixCatalog() {
+        if (lixCatalogLoaded || lixCatalogLoading) return;
+        const area = document.getElementById('lixCatalogArea');
+        if (!area) {
+            // 容器尚未由 render() 创建（初始竞态），稍等后重试
+            setTimeout(loadLixCatalog, 300);
+            return;
+        }
+        lixCatalogLoading = true;
+        try {
+            const res = await fetch('/api/admin/lixinger-catalog');
+            const r = await res.json();
+            if (r.status !== 'success') throw new Error(r.detail || ('HTTP ' + res.status));
+            lixCatalogLoaded = true;
+            lixUsage = r.usage || null;
+            lixBaseUrl = r.base_url || '';
+            // 平铺：region -> category -> apis
+            lixCatalogItems = [];
+            Object.keys(r.regions || {}).forEach(function (region) {
+                const reg = r.regions[region];
+                (reg.categories || []).forEach(function (cat) {
+                    cat.apis.forEach(function (a) {
+                        lixCatalogItems.push(Object.assign({ region: region, category: cat.category }, a));
+                    });
+                });
+            });
+            paintLixCatalog();
+        } catch (e) {
+            const meta2 = document.getElementById('lixCatalogMeta');
+            if (meta2) meta2.textContent = '';
+            area.innerHTML = '<div class="text-danger small">接口目录加载失败：' + esc(String(e && e.message || e)) + '</div>';
+        } finally {
+            lixCatalogLoading = false;
+        }
+    }
+
+    function paintLixCatalog() {
+        const area = document.getElementById('lixCatalogArea');
+        if (!area) return;
+        if (!lixCatalogLoaded) { area.innerHTML = '<div class="text-secondary small">加载中…</div>'; return; }
+        const total = lixCatalogItems.length;
+        const regions = new Set(lixCatalogItems.map(i => i.region));
+        const cats = new Set(lixCatalogItems.map(i => i.category));
+        const meta = document.getElementById('lixCatalogMeta');
+        if (meta) meta.textContent = '共 ' + total + ' 个接口 / ' + regions.size + ' 区域 / ' + cats.size + ' 大类';
+        renderLixCatalog();
+    }
+
+    function lixCatalogApiHtml(a) {
+        const params = Object.entries(a.params || {});
+        const paramStr = params.length
+            ? params.map(p => '<code style="color:#7dd3fc;">' + esc(p[0]) + '</code><span style="color:#94a3b8;">(' + esc(p[1]) + ')</span>').join('，')
+            : '<span style="color:#64748b;">仅 token 必填</span>';
+        const doc = a.doc ? '<a href="' + esc(a.doc) + '" target="_blank" rel="noopener noreferrer" style="color:#a78bfa;font-size:12px;">文档 ↗</a>' : '';
+        return '<div class="catalog-item" data-api="' + esc(a.api) + '" style="border-top:1px dashed #1e293b;padding:8px 4px;">'
+            + '<div class="d-flex align-items-center gap-2 flex-wrap">'
+            + '<code style="color:#38bdf8;font-size:13px;">' + esc(a.api) + '</code>'
+            + '<span style="color:#e2e8f0;font-size:13px;">' + esc(a.name || '') + '</span>'
+            + doc
+            + '<button class="btn btn-sm btn-outline-info py-0 px-2 lix-catalog-test" type="button" title="用当前 LIXINGER_TOKEN 实测该接口">测</button>'
+            + '<span class="catalog-result small"></span>'
+            + '</div>'
+            + '<div style="font-size:12px;color:#94a3b8;margin-top:2px;">参数：' + paramStr + '</div>'
+            + '</div>';
+    }
+
+    function renderLixCatalog() {
+        const kw = (document.getElementById('lixCatalogSearch') || {}).value || '';
+        const k = kw.trim().toLowerCase();
+        const items = k
+            ? lixCatalogItems.filter(i => i.api.toLowerCase().includes(k) || String(i.name || '').toLowerCase().includes(k))
+            : lixCatalogItems;
+        const area = document.getElementById('lixCatalogArea');
+        if (!area) return;
+        if (!items.length) {
+            area.innerHTML = '<div class="text-secondary small">没有匹配的接口。</div>';
+            return;
+        }
+        // 按 区域→分类 分组渲染
+        const groups = {};
+        items.forEach(function (i) {
+            (groups[i.region] = groups[i.region] || {})[i.category] = (groups[i.region][i.category] || []).concat([i]);
+        });
+        let html = '';
+        Object.keys(groups).sort().forEach(function (region) {
+            const regionCount = Object.values(groups[region]).reduce((s, x) => s + x.length, 0);
+            html += '<details open style="margin-bottom:8px;">'
+                + '<summary style="color:#fff;cursor:pointer;padding:4px 2px;"><span style="color:#fbbf24;">▶</span> ' + esc(region)
+                + ' <span style="color:#64748b;font-size:12px;">(' + regionCount + ')</span></summary>';
+            Object.keys(groups[region]).sort().forEach(function (cat) {
+                html += '<div style="margin:4px 0 0 14px;">'
+                    + '<div style="color:#7dd3fc;font-size:12px;margin-bottom:2px;">· ' + esc(cat) + ' <span style="color:#64748b;">(' + groups[region][cat].length + ')</span></div>'
+                    + groups[region][cat].map(lixCatalogApiHtml).join('')
+                    + '</div>';
+            });
+            html += '</details>';
+        });
+        area.innerHTML = html;
+    }
+
+    async function testLixCatalogApi(btn) {
+        const item = btn.closest('.catalog-item');
+        if (!item) return;
+        const apiName = item.getAttribute('data-api') || '';
+        const out = item.querySelector('.catalog-result');
+        const old = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '…';
+        if (out) { out.className = 'catalog-result small text-info'; out.textContent = '测试中'; }
+        try {
+            const res = await fetch('/api/admin/test-lixinger-api/' + encodeURIComponent(apiName), { method: 'POST' });
+            const d = await res.json();
+            if (out) {
+                out.className = 'catalog-result small ' + ((d && d.ok) ? 'text-success' : 'text-danger');
+                out.innerHTML = '<i class="fa-solid fa-' + ((d && d.ok) ? 'circle-check' : 'circle-xmark') + ' me-1"></i>' + esc((d && d.msg) || '失败').slice(0, 160);
+            }
+        } catch (e) {
+            if (out) { out.className = 'catalog-result small text-danger'; out.textContent = '请求失败'; }
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = old;
+        }
+    }
+
+    // ---------------- 伏尧（同花顺）接口目录 ----------------
+    let fuyCatalogLoaded = false;
+    let fuyCatalogLoading = false;
+    let fuyCatalogItems = [];
+    let fuyConfigured = false;   // 是否配了 API Key
+    let fuyEnabled = false;      // 开关是否打开
+
+    async function loadFuyCatalog() {
+        if (fuyCatalogLoaded || fuyCatalogLoading) return;
+        const area = document.getElementById('fuyCatalogArea');
+        if (!area) { setTimeout(loadFuyCatalog, 300); return; }   // 容器尚未由 render() 创建的初始竞态
+        fuyCatalogLoading = true;
+        try {
+            const res = await fetch('/api/admin/fuyao-catalog');
+            const r = await res.json();
+            if (r.status !== 'success') throw new Error(r.detail || ('HTTP ' + res.status));
+            fuyCatalogLoaded = true;
+            fuyConfigured = !!r.configured;
+            fuyEnabled = !!r.enabled;
+            fuyCatalogItems = [];
+            Object.keys(r.regions || {}).forEach(function (region) {
+                const reg = r.regions[region];
+                (reg.categories || []).forEach(function (cat) {
+                    cat.apis.forEach(function (a) {
+                        fuyCatalogItems.push(Object.assign({ region: region, category: cat.category }, a));
+                    });
+                });
+            });
+            paintFuyCatalog();
+        } catch (e) {
+            const meta = document.getElementById('fuyCatalogMeta');
+            if (meta) meta.textContent = '';
+            area.innerHTML = '<div class="text-danger small">接口目录加载失败：' + esc(String((e && e.message) || e)) + '</div>';
+        } finally {
+            fuyCatalogLoading = false;
+        }
+    }
+
+    function paintFuyCatalog() {
+        const area = document.getElementById('fuyCatalogArea');
+        if (!area) return;
+        if (!fuyCatalogLoaded) { area.innerHTML = '<div class="text-secondary small">加载中…</div>'; return; }
+        const meta = document.getElementById('fuyCatalogMeta');
+        if (meta) {
+            const cats = new Set(fuyCatalogItems.map(i => i.category));
+            // ⚠️ 配了 Key 但开关关掉，和没配 Key 是两种状态，必须分开提示，否则排障会误判
+            const st = !fuyConfigured
+                ? '<span class="text-danger">未配置 Key</span>'
+                : (fuyEnabled ? '<span class="text-success">已启用</span>' : '<span class="text-warning">已停用</span>');
+            meta.innerHTML = '共 ' + fuyCatalogItems.length + ' 个接口 / ' + cats.size + ' 大类 · ' + st;
+        }
+        renderFuyCatalog();
+    }
+
+    function fuyCatalogApiHtml(a) {
+        const params = Object.entries(a.params || {});
+        const paramStr = params.length
+            ? params.map(function (p) {
+                return '<code style="color:#7dd3fc;">' + esc(p[0]) + '</code><span style="color:#94a3b8;">(' + esc(p[1]) + ')</span>';
+            }).join('，')
+            : '<span style="color:#64748b;">无参数</span>';
+        const probe = a.probe ? '<div style="font-size:12px;color:#64748b;">实测参数：<code>' + esc(JSON.stringify(a.probe)) + '</code></div>' : '';
+        return '<div class="catalog-item" data-api="' + esc(a.api) + '" style="border-top:1px dashed #1e293b;padding:8px 4px;">'
+            + '<div class="d-flex align-items-center gap-2 flex-wrap">'
+            + '<code style="color:#4ade80;font-size:13px;">' + esc(a.api) + '</code>'
+            + '<span style="color:#e2e8f0;font-size:13px;">' + esc(a.name || '') + '</span>'
+            + '<button class="btn btn-sm btn-outline-success py-0 px-2 fuy-catalog-test" type="button" title="用当前伏尧 Key 实测该接口">测</button>'
+            + '<span class="catalog-result small"></span>'
+            + '</div>'
+            + '<div style="font-size:12px;color:#94a3b8;margin-top:2px;">参数：' + paramStr + '</div>'
+            + probe
+            + '</div>';
+    }
+
+    function renderFuyCatalog() {
+        const kw = (document.getElementById('fuyCatalogSearch') || {}).value || '';
+        const k = kw.trim().toLowerCase();
+        const items = k
+            ? fuyCatalogItems.filter(i => i.api.toLowerCase().includes(k) || String(i.name || '').toLowerCase().includes(k))
+            : fuyCatalogItems;
+        const area = document.getElementById('fuyCatalogArea');
+        if (!area) return;
+        if (!items.length) { area.innerHTML = '<div class="text-secondary small">没有匹配的接口。</div>'; return; }
+        const groups = {};
+        items.forEach(function (i) {
+            (groups[i.region] = groups[i.region] || {})[i.category] = (groups[i.region][i.category] || []).concat([i]);
+        });
+        let html = '';
+        Object.keys(groups).sort().forEach(function (region) {
+            const regionCount = Object.values(groups[region]).reduce((s, x) => s + x.length, 0);
+            html += '<details open style="margin-bottom:8px;">'
+                + '<summary style="color:#fff;cursor:pointer;padding:4px 2px;"><span style="color:#4ade80;">▶</span> ' + esc(region)
+                + ' <span style="color:#64748b;font-size:12px;">(' + regionCount + ')</span></summary>';
+            Object.keys(groups[region]).sort().forEach(function (cat) {
+                html += '<div style="margin:4px 0 0 14px;">'
+                    + '<div style="color:#7dd3fc;font-size:12px;margin-bottom:2px;">· ' + esc(cat) + ' <span style="color:#64748b;">(' + groups[region][cat].length + ')</span></div>'
+                    + groups[region][cat].map(fuyCatalogApiHtml).join('')
+                    + '</div>';
+            });
+            html += '</details>';
+        });
+        area.innerHTML = html;
+    }
+
+    async function testFuyCatalogApi(btn) {
+        const item = btn.closest('.catalog-item');
+        if (!item) return;
+        const apiName = item.getAttribute('data-api') || '';
+        const out = item.querySelector('.catalog-result');
+        const old = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '…';
+        if (out) { out.className = 'catalog-result small text-info'; out.textContent = '测试中'; }
+        try {
+            const res = await fetch('/api/admin/test-fuyao-api/' + encodeURIComponent(apiName), { method: 'POST' });
+            const d = await res.json();
+            if (out) {
+                out.className = 'catalog-result small ' + ((d && d.ok) ? 'text-success' : 'text-danger');
+                out.innerHTML = '<i class="fa-solid fa-' + ((d && d.ok) ? 'circle-check' : 'circle-xmark') + ' me-1"></i>'
+                    + esc(String((d && d.msg) || '失败')).slice(0, 200);
+            }
+        } catch (e) {
+            if (out) { out.className = 'catalog-result small text-danger'; out.textContent = '请求失败'; }
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = old;
+        }
+    }
+
+    async function testFuyao() {
+        const btn = document.getElementById('testFuyaoBtn');
+        const out = document.getElementById('fuyaoTestResult');
+        if (!btn || !out) return;
+        const old = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>测试中…';
+        out.className = 'small text-info';
+        out.textContent = '连接中…';
+        try {
+            const d = await (await fetch('/api/admin/test-fuyao', { method: 'POST' })).json();
+            out.className = 'small ' + (d && d.ok ? 'text-success' : 'text-danger');
+            out.innerHTML = '<i class="fa-solid fa-' + (d && d.ok ? 'circle-check' : 'circle-xmark') + ' me-1"></i>'
+                + esc(String((d && d.msg) || '未知结果'));
+        } catch (e) {
+            out.className = 'small text-danger';
+            out.textContent = '请求失败';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = old;
+        }
+    }
+
+    async function loadSettings() {
+        try {
+            const r = await (await fetch('/api/admin/settings')).json();
+            const s = (r && r.settings) || {};
+            state.dataChannels = parseJson(s.DATA_SOURCE_CHANNELS, []);
+            state.aiChannels = normalizeAiChannels(parseJson(s.AI_MODEL_CHANNELS, []));
+            refreshSavedIds();   // 服务端已有的模型 id → 检测时走「已保存」路径
+            state.dataActive = s.DATA_SOURCE_ACTIVE
+                || (state.dataChannels.find(c => c.enabled) || {}).id
+                || 'tushare';
+            // AI_MODEL_ACTIVE 现在是「模型条目 id」；旧值若是渠道 id，则取该渠道第一个模型
+            const _allModels = state.aiChannels.reduce((acc, c) => acc.concat(c.models || []), []);
+            const _byId = _allModels.find(m => m.id === s.AI_MODEL_ACTIVE);
+            const _chan = s.AI_MODEL_ACTIVE && state.aiChannels.find(c => c.id === s.AI_MODEL_ACTIVE);
+            const _chanFirst = _chan ? (_chan.models || [])[0] : null;
+            state.aiActive = (_byId || _chanFirst || _allModels.find(m => !m.vip_only) || _allModels[0] || {}).id || '';
+            state.tushareToken = s.TUSHARE_TOKEN || '';
+            state.fuyaoApiKey = s.FUYAO_API_KEY || '';
+            state.fuyaoEnabled = String(s.FUYAO_ENABLED === undefined ? '1' : s.FUYAO_ENABLED) !== '0';
+            state.plans = parseJson(s.PRICING_PLANS, []);
+            state.preferences = parseJson(s.ANALYSIS_PREFERENCES, []);
+            // 新增设置键：配额规则 / 注册策略 / 风控阈值 / 法务信息 / 公告条
+            state.quotaRules = parseJson(s.QUOTA_RULES, {}) || {};
+            state.registerPolicy = parseJson(s.REGISTER_POLICY, {}) || {};
+            state.rateLimits = parseJson(s.RATE_LIMITS, {}) || {};
+            state.operatorInfo = parseJson(s.OPERATOR_INFO, {}) || {};
+            state.announcement = parseJson(s.SITE_ANNOUNCEMENT, {}) || {};
+            state.icpNumber = s.ICP_NUMBER || '';
+            state.regBonusNormal = s.REGISTER_BONUS_NORMAL;
+            state.regBonusDeep = s.REGISTER_BONUS_DEEP;
+            // 先让 state 就位（含 plans/preferences），再一次性渲染
+            render();
+            // 站点输入框在 render 之后才存在，这里回填
+            ['SITE_NAME','SITE_DOMAIN','SITE_LOGO_URL','SEO_TITLE','SEO_KEYWORDS','SEO_DESCRIPTION','SEO_OG_IMAGE','ICP_NUMBER']
+                .forEach(function (k) { const el = document.getElementById('f_' + k); if (el) el.value = s[k] || ''; });
+            // 法务运营者 / 公告条 / 配额规则输入框（在 site/plan tab 卡片里）
+            ['entity','email','wechat','address','dpo','sla'].forEach(function (k) {
+                const el = document.getElementById('f_OP_' + k);
+                if (el) el.value = (state.operatorInfo[k] != null ? state.operatorInfo[k] : '');
+            });
+            [['f_ANN_TEXT','text'],['f_ANN_LEVEL','level'],['f_ANN_START','start_at'],['f_ANN_END','end_at']]
+                .forEach(function (pair) {
+                    const el = document.getElementById(pair[0]);
+                    if (el) el.value = (state.announcement[pair[1]] != null ? state.announcement[pair[1]] : '');
+                });
+            const annOn = document.getElementById('f_ANN_ENABLED');
+            if (annOn) annOn.checked = !!(state.announcement && state.announcement.enabled);
+            const qMap = {free_daily_normal:2, free_daily_deep:0, vip1_daily_normal:5, vip1_daily_deep:2, vip2_daily_normal:10, vip2_daily_deep:5};
+            Object.keys(qMap).forEach(function (k) {
+                const el = document.getElementById('q_' + k);
+                if (el && state.quotaRules[k] != null) el.value = state.quotaRules[k];
+            });
+            const qWl = document.getElementById('q_admin_uid_whitelist');
+            if (qWl) qWl.value = state.quotaRules.admin_uid_whitelist || '';
+            // 模型连通性自检结果（可能为空 = 从未体检过）
+            try {
+                const hr = await (await fetch('/api/admin/models/health')).json();
+                state.aiHealth = (hr && hr.health) || {};
+            } catch (e) { /* 体检结果拉不到不影响主流程 */ }
+            // 数据面板：数据组定义 + 各偏好的默认组
+            try {
+                const pr = await (await fetch('/api/admin/panel/groups')).json();
+                state.panelGroups = (pr && pr.groups) || [];
+                state.panelDefaults = (pr && pr.defaults) || {};
+                state.panelBase = (pr && pr.base_groups) || [];
+            } catch (e) { /* 数据面板信息拉不到不影响主流程 */ }
+            render();   // 一次性渲染，让健康徽标与数据面板配置显示出来
+            await loadStockStatus();
+            loadStockList(1);  // 股票列表懒加载（当前或切换到股票库选项卡时可见）
+        } catch (e) {
+            document.getElementById('settingsArea').innerHTML = '<div class="alert alert-danger">加载设置失败：' + esc(String(e && e.message || e)) + '</div>';
+        }
+    }
+
+    // 全局事件委托（async：股票同步按钮内含 await）
+    document.addEventListener('click', async function (e) {
+        // 选项卡切换
+        const tabBtn = e.target.closest('.admin-tabs .nav-link');
+        if (tabBtn) {
+            document.querySelectorAll('.admin-tabs .nav-link').forEach(b => b.classList.remove('active'));
+            tabBtn.classList.add('active');
+            const name = tabBtn.getAttribute('data-tab');
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('d-none'));
+            const pane = document.querySelector('.tab-pane[data-pane="' + name + '"]');
+            if (pane) pane.classList.remove('d-none');
+            // 数据源选项卡：懒加载 DATAHUB / Lixinger 接口目录
+            if (name === 'data') { loadCatalog(); loadLixCatalog(); loadFuyCatalog(); }
+            if (name === 'stock') loadStockList(1);
+            return;
+        }
+        // 小眼睛
+        const eye = e.target.closest('.eye-btn');
+        if (eye) {
+            const inp = document.getElementById(eye.getAttribute('data-target'));
+            if (inp) {
+                const show = inp.type === 'password';
+                inp.type = show ? 'text' : 'password';
+                eye.querySelector('i').className = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+            }
+            return;
+        }
+        // 删除单个模型（AI 渠道内）
+        const delModel = e.target.closest('.del-model-btn');
+        if (delModel) {
+            const row = delModel.closest('.ai-model-row');
+            const card = delModel.closest('.admin-channel');
+            const mid = row.getAttribute('data-mid');
+            if (state.aiActive === mid) state.aiActive = '';
+            if (state.aiHealth) delete state.aiHealth[mid];   // 模型都没了，检测结果也别留着串台
+            syncAiFromDom();
+            const ch = state.aiChannels.find(c => c.id === card.getAttribute('data-id'));
+            if (ch) ch.models = (ch.models || []).filter(m => m.id !== mid);
+            render();
+            return;
+        }
+        // 给某个 AI 渠道添加模型
+        const addModel = e.target.closest('.add-model-btn');
+        if (addModel) {
+            const card = addModel.closest('.admin-channel');
+            syncAiFromDom();
+            const ch = state.aiChannels.find(c => c.id === card.getAttribute('data-id'));
+            if (ch) {
+                ch.models = ch.models || [];
+                const nm = { id: newModelId(), alias: '', model_id: '', enabled: true, vip_only: false };
+                ch.models.push(nm);
+                if (!state.aiActive) state.aiActive = nm.id;
+            }
+            render();
+            return;
+        }
+        // 删除渠道
+        const del = e.target.closest('.del-btn');
+        if (del) {
+            const card = del.closest('.admin-channel');
+            const id = card.getAttribute('data-id');
+            const group = card.getAttribute('data-group');
+            if (group === 'data') {
+                state.dataChannels = state.dataChannels.filter(c => c.id !== id);
+                if (state.dataActive === id) state.dataActive = (state.dataChannels.find(c => c.enabled) || {}).id || 'tushare';
+            } else {
+                syncAiFromDom();
+                state.aiChannels = state.aiChannels.filter(c => c.id !== id);
+                const stillThere = (state.aiChannels || []).some(c => (c.models || []).some(m => m.id === state.aiActive));
+                if (!stillThere) {
+                    const first = state.aiChannels.reduce((acc, c) => acc || (c.models || [])[0], null);
+                    state.aiActive = first ? first.id : '';
+                }
+            }
+            render();
+            return;
+        }
+        if (e.target.closest('#addData')) {
+            state.dataChannels.push({ id: uid('ds'), name: '新代理渠道', base_url: '', api_key: '', enabled: true });
+            if (!state.dataActive) state.dataActive = state.dataChannels[state.dataChannels.length - 1].id;
+            render();
+            return;
+        }
+        if (e.target.closest('#addAi')) {
+            const mid = newModelId();
+            state.aiChannels.push({
+                id: uid('ai'), name: '新模型渠道', base_url: '', api_key: '', enabled: true,
+                models: [{ id: mid, alias: '', model_id: '', enabled: true, vip_only: false,
+                           featured: false, tagline: '', logo: '' }],
+            });
+            if (!state.aiActive) state.aiActive = mid;
+            render();
+            return;
+        }
+        // Logo 上传：点击 → 隐藏 file input → FormData → POST /api/admin/models/upload-logo
+        // 成功后把返回的 url 填进本行 Logo 输入框并刷新预览（尚未点「保存设置」前不会写库，
+        // 与别名/模型 ID 等编辑行为一致 —— 都是草稿，最后统一保存）。
+        const upLogo = e.target.closest('.upload-logo-btn');
+        if (upLogo) {
+            const row = upLogo.closest('.ai-model-row');
+            const inp = row ? row.querySelector('[data-mfield="logo"]') : null;
+            if (!row || !inp) return;
+            const fi = document.createElement('input');
+            fi.type = 'file';
+            fi.accept = 'image/png,image/jpeg,image/gif,image/webp,image/svg+xml';
+            fi.style.display = 'none';
+            document.body.appendChild(fi);
+            fi.addEventListener('change', function () {
+                const f = fi.files && fi.files[0];
+                if (!f) { fi.remove(); return; }
+                const fd = new FormData();
+                fd.append('file', f);
+                const btn = upLogo;
+                const oldHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i>上传中';
+                fetch('/api/admin/models/upload-logo', { method: 'POST', body: fd })
+                    .then(r => r.json().then(d => ({ ok: r.ok, d: d })))
+                    .then(({ ok, d }) => {
+                        if (!ok || d.status !== 'success') {
+                            showToast((d && d.detail) || '上传失败', false);
+                            return;
+                        }
+                        inp.value = d.url;
+                        inp.dispatchEvent(new Event('input', { bubbles: true }));
+                        const pv = row.querySelector('[data-role="logo-preview"]');
+                        if (pv) {
+                            pv.textContent = '';
+                            pv.style.backgroundImage = "url('" + d.url + "')";
+                        }
+                        showToast('Logo 已上传，点下方「保存设置」生效', true);
+                    })
+                    .catch(err => showToast('上传失败：' + err.message, false))
+                    .finally(() => { btn.disabled = false; btn.innerHTML = oldHtml; fi.remove(); });
+            });
+            fi.click();
+            return;
+        }
+
+        // 单个模型连通性自检
+        const testOne = e.target.closest('.test-model-btn');
+        if (testOne) {
+            const row = testOne.closest('.ai-model-row');
+            const card = testOne.closest('.admin-channel');
+            const mid = row.getAttribute('data-mid');
+            const badgeBox = row.lastElementChild;
+            const btn = testOne;
+            const mg = f => row.querySelector('[data-mfield="' + f + '"]');
+            const cg = f => card ? card.querySelector('[data-field="' + f + '"]') : null;
+            const rowModelId = ((mg('model_id') || {}).value || '').trim();
+            const rowAlias = ((mg('alias') || {}).value || '').trim();
+
+            if (!rowModelId) {
+                showToast('请先填写「模型 ID（接口实际标识）」再检测', false);
+                return;
+            }
+            if (row.getAttribute('data-testing') === '1') return;
+
+            // 关键：这一行如果还没保存过，服务端配置里查不到它。
+            // 此时把页面上填的地址/密钥/模型标识原样发给后端做「草稿检测」，
+            // 保证测的就是这一行，而不是被顶替成默认模型。
+            const saved = state.savedModelIds && state.savedModelIds.has(mid);
+            const payload = { model_id: mid };
+            if (!saved) {
+                payload.base_url = ((cg('base_url') || {}).value || '').trim();
+                payload.api_key = ((cg('api_key') || {}).value || '').trim();
+                payload.model = rowModelId;
+                payload.alias = rowAlias;
+                if (!payload.base_url || !payload.api_key) {
+                    showToast('这条是新增模型：请先填好渠道的「接口地址」和「API Key」再检测', false);
+                    return;
+                }
+            }
+
+            btn.disabled = true;
+            row.setAttribute('data-testing', '1');
+            if (badgeBox) badgeBox.innerHTML = `<span class="hbadge none">检测中… ${esc(rowModelId)}</span>`;
+            fetch('/api/admin/models/test', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(r => r.json()).then(d => {
+                state.aiHealth[mid] = (d && d.result) || {};
+                if (badgeBox) badgeBox.innerHTML = healthBadge(mid, rowModelId);
+                const res = (d && d.result) || {};
+                const suffix = d && d.draft ? '（草稿检测，保存后请再测一次）' : '';
+                showToast((res.ok ? `模型可用（${res.ms}ms）` : '该模型不可用：' + (res.error || '未知')) + suffix,
+                          !!res.ok);
+            }).catch(err => { if (badgeBox) badgeBox.innerHTML = healthBadge(mid, rowModelId); showToast('检测失败：' + err.message, false); })
+              .finally(() => { btn.disabled = false; row.removeAttribute('data-testing'); });
+            return;
+        }
+        // 一键体检：并发探测全部启用模型
+        if (e.target.closest('#testAllModelsBtn')) {
+            const btn = e.target.closest('#testAllModelsBtn');
+            const sum = document.getElementById('healthSummary');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i>体检中…';
+            if (sum) sum.innerHTML = '<span class="text-secondary" style="font-size:12px;">正在逐个探测（限并发 3），快的几秒、上游忙的最多等 90 秒…</span>';
+            fetch('/api/admin/models/test-all', { method: 'POST' })
+                .then(r => r.json())
+                .then(d => {
+                    state.aiHealth = (d && d.health) || {};
+                    render();
+                    const s = document.getElementById('healthSummary');
+                    if (s) {
+                        const bad = (d.failed || 0) > 0;
+                        const busy = (d.busy || 0) > 0;
+                        // 三态：真失败红 / 上游繁忙琥珀 / 全绿
+                        const color = bad ? '#f87171' : (busy ? '#fbbf24' : '#34d399');
+                        s.innerHTML = `<span style="font-size:12px;color:${color};">共 ${d.total} 个 · 可用 ${d.ok} · 上游繁忙 ${d.busy || 0} · 不可用 ${d.failed || 0}</span>`;
+                    }
+                    showToast(`体检完成：可用 ${d.ok} / 共 ${d.total}`, !bad);
+                })
+                .catch(err => {
+                    const s = document.getElementById('healthSummary');
+                    if (s) s.innerHTML = '<span style="font-size:12px;color:#f87171;">体检失败：' + esc(err.message) + '</span>';
+                })
+                .finally(() => { const b = document.getElementById('testAllModelsBtn'); if (b) { b.disabled = false; b.innerHTML = '<i class="fa-solid fa-stethoscope me-1"></i>一键体检'; } });
+            return;
+        }
+        // 数据面板：生成预览
+        if (e.target.closest('#panelPreviewBtn')) {
+            const btn = e.target.closest('#panelPreviewBtn');
+            const out = document.getElementById('panelOut');
+            const meta = document.getElementById('panelMeta');
+            const code = (document.getElementById('panelCode') || {}).value || '';
+            const pref = (document.getElementById('panelPref') || {}).value || '';
+            if (!code.trim()) { showToast('请填写股票代码', false); return; }
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-1"></i>拉取中…';
+            if (out) out.textContent = '正在拉取真实数据…';
+            if (meta) meta.textContent = '';
+            fetch('/api/admin/panel/preview', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ts_code: code.trim(), preference_id: pref })
+            }).then(r => r.json()).then(d => {
+                if (d.status === 'success') {
+                    if (out) out.textContent = d.panel || '(空)';
+                    if (meta) meta.textContent = `${d.groups.length} 个数据组 · ${d.length} 字 · 组：${d.groups.join(' + ')}`;
+                } else {
+                    if (out) out.textContent = '生成失败：' + (d.detail || '未知错误');
+                }
+            }).catch(err => { if (out) out.textContent = '请求失败：' + err.message; })
+              .finally(() => { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-play me-1"></i>生成预览'; });
+            return;
+        }
+        // 数据面板：保存「偏好 × 数据组」配置
+        if (e.target.closest('#savePanelBtn')) {
+            const map = {};
+            document.querySelectorAll('.pg-pref-boxes input[type=checkbox]').forEach(function (cb) {
+                const pid = cb.getAttribute('data-pref');
+                const gid = cb.getAttribute('data-group');
+                map[pid] = map[pid] || [];
+                if (cb.checked) map[pid].push(gid);
+            });
+            state.preferences = (state.preferences || []).map(function (p) {
+                return Object.assign({}, p, { data_groups: map[p.id] || [] });
+            });
+            savePreferences();   // 与投资偏好共用 ANALYSIS_PREFERENCES 键
+            return;
+        }
+        if (e.target.closest('#saveDataBtn')) { saveData(); return; }
+        if (e.target.closest('#testDatasourceBtn')) { testDatasource(); return; }
+        if (e.target.closest('#testFuyaoBtn')) { testFuyao(); return; }
+        if (e.target.closest('#saveAiBtn')) { saveAi(); return; }
+        if (e.target.closest('#saveSiteBtn')) { saveSiteSettings(); return; }
+        if (e.target.closest('#syncStocksBtn')) {
+            const btn = e.target.closest('#syncStocksBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>同步中...';
+            try {
+                await fetch('/api/admin/stocks/sync', { method: 'POST' });
+                const timer = setInterval(async () => {
+                    try {
+                        const r = await (await fetch('/api/admin/stocks/status')).json();
+                        const st = r.sync || {};
+                        const c = r.counts || {};
+                        const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.textContent = v; };
+                        set('stockTotal', c.total); set('stockA', c.A); set('stockHK', c.HK);
+                        const at = document.getElementById('stockSyncAt'); if (at) at.textContent = st.updated_at || '同步中...';
+                        const msg = document.getElementById('stockSyncMsg'); if (msg) msg.textContent = st.message || '';
+                        if (!st.running) {
+                            clearInterval(timer);
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fa-solid fa-rotate me-2"></i>同步股票数据库';
+                            if (st.error) showToast('同步失败：' + String(st.error || '').slice(0, 80), false);
+                            else showToast('股票数据库同步完成', true);
+                        }
+                    } catch (e2) { clearInterval(timer); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-rotate me-2"></i>同步股票数据库'; }
+                }, 1500);
+            } catch (e2) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-rotate me-2"></i>同步股票数据库';
+            }
+            return;
+        }
+        if (e.target.closest('#savePlansBtn')) { savePlans(); return; }
+        if (e.target.closest('#saveQuotaBtn')) { saveQuota(); return; }
+        if (e.target.closest('#saveRegisterBtn')) { saveRegister(); return; }
+        if (e.target.closest('#saveRateLimitsBtn')) { saveRateLimits(); return; }
+        if (e.target.closest('#saveLegalBtn')) { saveLegal(); return; }
+        if (e.target.closest('#saveAnnounceBtn')) { saveAnnouncement(); return; }
+        if (e.target.closest('#exportSettingsBtn')) { exportSettings(); return; }
+        if (e.target.closest('#importSettingsFile')) {
+            const inp = e.target.closest('#importSettingsFile');
+            if (inp.files && inp.files[0]) importSettings(inp.files[0]);
+            inp.value = '';   // 允许连续导入同一个文件
+            return;
+        }
+        if (e.target.closest('#savePreferencesBtn')) { savePreferences(); return; }
+        if (e.target.closest('#addPlan')) {
+            state.plans.push({ key: 'newplan', name: '新方案', tagline: '一句话卖点', type: 'subscription',
+                popular: false, price_from: '¥0', period: '/月', prices: [{label:'月卡',price:'¥0',unit:'/月',note:''}],
+                button: { text: '立即开通', action: 'vip1' }, features: [{ text: '新权益', on: true }] });
+            document.getElementById('planCards').innerHTML = planSectionHtml();
+            return;
+        }
+        const delPlan = e.target.closest('.plan-del-plan');
+        if (delPlan) {
+            const idx = parseInt(delPlan.closest('.plan-card').getAttribute('data-idx'), 10);
+            state.plans.splice(idx, 1);
+            document.getElementById('planCards').innerHTML = planSectionHtml();
+            return;
+        }
+        if (e.target.closest('.plan-add-price')) {
+            const card = e.target.closest('.plan-card');
+            const idx = parseInt(card.getAttribute('data-idx'), 10);
+            state.plans[idx].prices = state.plans[idx].prices || [];
+            state.plans[idx].prices.push({ label: '新价格项', price: '¥0', unit: '', note: '' });
+            document.getElementById('planCards').innerHTML = planSectionHtml();
+            return;
+        }
+        if (e.target.closest('.plan-del-price')) {
+            const card = e.target.closest('.plan-card');
+            const idx = parseInt(card.getAttribute('data-idx'), 10);
+            const pi = parseInt(e.target.closest('.plan-price').getAttribute('data-pi'), 10);
+            state.plans[idx].prices.splice(pi, 1);
+            document.getElementById('planCards').innerHTML = planSectionHtml();
+            return;
+        }
+        if (e.target.closest('.plan-add-feature')) {
+            const card = e.target.closest('.plan-card');
+            const idx = parseInt(card.getAttribute('data-idx'), 10);
+            state.plans[idx].features = state.plans[idx].features || [];
+            state.plans[idx].features.push({ text: '新权益', on: true });
+            document.getElementById('planCards').innerHTML = planSectionHtml();
+            return;
+        }
+        if (e.target.closest('.plan-del-feature')) {
+            const card = e.target.closest('.plan-card');
+            const idx = parseInt(card.getAttribute('data-idx'), 10);
+            const fi = parseInt(e.target.closest('.plan-feature').getAttribute('data-fi'), 10);
+            state.plans[idx].features.splice(fi, 1);
+            document.getElementById('planCards').innerHTML = planSectionHtml();
+            return;
+        }
+        if (e.target.closest('#addPreference')) {
+            state.preferences = state.preferences || [];
+            state.preferences.push({
+                id: 'newpref' + (state.preferences.length + 1),
+                name: '新偏好',
+                tagline: '一句话说明',
+                is_deep: false,
+                vip_only: false,
+                system_prompt: '你是一位投资分析师，请为【{stock_name} ({stock_code})】撰写投资分析报告。'
+            });
+            document.getElementById('preferenceCards').innerHTML = preferenceSectionHtml();
+            return;
+        }
+        const delPref = e.target.closest('.pref-del');
+        if (delPref) {
+            const idx = parseInt(delPref.closest('.preference-card').getAttribute('data-idx'), 10);
+            state.preferences.splice(idx, 1);
+            document.getElementById('preferenceCards').innerHTML = preferenceSectionHtml();
+            return;
+        }
+        // DATAHUB 目录：单接口连通性测试
+        const catTest = e.target.closest('.catalog-test');
+        if (catTest) { testCatalogApi(catTest); return; }
+        // Lixinger 目录：单接口连通性测试
+        const lixTest = e.target.closest('.lix-catalog-test');
+        if (lixTest) { testLixCatalogApi(lixTest); return; }
+        // 伏尧目录：单接口连通性测试
+        const fuyTest = e.target.closest('.fuy-catalog-test');
+        if (fuyTest) { testFuyCatalogApi(fuyTest); return; }
+    });
+
+    // 目录搜索框（input 事件）
+    document.addEventListener('input', function (e) {
+        if (e.target && e.target.id === 'catalogSearch') renderCatalog();
+        if (e.target && e.target.id === 'lixCatalogSearch') renderLixCatalog();
+        if (e.target && e.target.id === 'fuyCatalogSearch') renderFuyCatalog();
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadSettings();
+        // 首屏默认就在数据源选项卡，直接加载目录
+        loadCatalog();
+        loadLixCatalog();
+        loadFuyCatalog();
+    });
+</script>
+{% endblock %}

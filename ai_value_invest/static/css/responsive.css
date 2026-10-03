@@ -1,0 +1,228 @@
+
+
+.table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+}
+.table-scroll > table {
+    min-width: 480px;      
+    margin: 0;
+}
+
+.markdown-body .table-scroll,
+.report-card .table-scroll { margin: 1em 0; }
+
+.only-mobile { display: none !important; }
+@media (max-width: 768px) {
+    .only-mobile { display: initial !important; }
+    .hide-mobile { display: none !important; }
+}
+
+@media (max-width: 768px) {
+    .markdown-body table,
+    .report-card table,
+    .markdown-body pre {
+        display: block;
+        width: max-content;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .markdown-body th,
+    .markdown-body td,
+    .report-card th,
+    .report-card td { white-space: nowrap; }
+    
+}
+
+@media (max-width: 992px) {
+    
+    .container { padding-left: 16px; padding-right: 16px; }
+
+    
+
+    .hero-section, .hero { padding: 96px 0 56px; }
+    .feature-card { padding: 28px 22px; }
+
+    
+    
+    .navbar-collapse {
+        max-height: calc(100vh - 72px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .navbar-nav .nav-link { padding: 10px 4px; margin: 0; }
+    .navbar-brand { margin-right: 0; }
+    #authArea { padding: 10px 0 14px; }
+
+    
+    
+
+    .admin-shell {
+        display: block;
+        min-height: 0;
+        margin-top: 64px;
+    }
+    .admin-sidebar {
+        width: 100%;
+        height: auto;
+        position: static;
+        flex-shrink: 1;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 8px 10px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+    .admin-sidebar .brand { display: none; }   
+    .admin-nav {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 6px;
+    }
+    .admin-nav a {
+        white-space: nowrap;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+    .admin-nav hr { display: none; }           
+    .admin-main {
+        padding: 18px 14px 40px;
+        overflow-x: visible;
+    }
+    .admin-card { padding: 16px; margin-bottom: 16px; }
+    .admin-stat { padding: 14px 16px; }
+    .admin-stat .value { font-size: 1.5rem; }
+
+    
+    .submit-card { position: static !important; }
+    .page-title { font-size: 2.1rem; }
+
+    
+    .back-top { right: 14px; bottom: 14px; }
+}
+
+@media (max-width: 768px) {
+    .hero-section, .hero { padding: 84px 0 44px; }
+    .hero-title { font-size: 1.95rem; }
+    .hero-desc { font-size: 1rem; margin-bottom: 32px; }
+    .feature-card { padding: 22px 18px; }
+
+    
+    .report-card {
+        padding: 20px 16px;
+        border-radius: 14px;
+        font-size: 0.98rem;
+        line-height: 1.75;
+    }
+    .report-card h1 { font-size: 1.3rem; }
+    .report-card h2 { font-size: 1.15rem; }
+    .report-card h3 { font-size: 1.05rem; }
+    .report-card th,
+    .report-card td { padding: 7px 9px; font-size: 0.9rem; }
+    
+    .archive-wrap { padding: 88px 14px 40px; }
+    .archive-title { font-size: 1.25rem; }
+    
+    .archive-head { gap: 10px; }
+    .archive-actions { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+    .archive-actions .btn { flex: 1 1 auto; margin-right: 0 !important; }
+
+    
+    
+    .stat-row { grid-template-columns: 1fr !important; gap: 10px; }
+    
+    .terminal-window { min-height: 320px !important; }
+    .processing-container { padding: 24px 16px !important; }
+    
+    .mpanel { padding: 10px !important; }
+    .mpanel-list { max-height: 46vh !important; }
+    
+    .search-hero { flex-wrap: wrap; }
+
+    
+    .stats-group { gap: 20px; }
+
+    
+    footer { padding: 48px 0 32px; }
+}
+
+@media (max-width: 576px) {
+    .container { padding-left: 12px; padding-right: 12px; }
+
+    .hero-title { font-size: 1.7rem; }
+    .hero-desc { font-size: 0.95rem; }
+    .badge-tech { font-size: 0.75rem; padding: 6px 12px; }
+
+    
+    .admin-card { padding: 14px; }
+    .admin-main { padding: 14px 12px 32px; }
+    .admin-table th,
+    .admin-table td { padding: 9px 10px; font-size: 0.85rem; }
+
+    
+    .report-card { padding: 16px 12px; font-size: 0.95rem; }
+    .report-card th,
+    .report-card td { padding: 6px 8px; font-size: 0.86rem; }
+
+    
+    .archive-actions .btn { flex: 1 1 100%; }
+
+    
+    .legal-body { padding: 22px 16px; }
+
+    
+    .page-title { font-size: 1.8rem; }
+
+    
+    
+    .hero { padding: 64px 0 36px; }
+
+    
+
+    .search-shell { flex-wrap: wrap; padding: 10px; border-radius: 16px; }
+    .search-shell .search-ico { display: none; }
+    .search-shell input { flex: 1 1 100%; font-size: 1rem; padding: 10px 4px; }
+    
+    .search-shell .hero-actions { flex: 1 1 100%; }
+    .search-shell .hero-actions .btn-hero { padding: 12px 8px; font-size: 1rem; }
+    
+    .search-shell .hero-actions .btn-hero i { margin-right: .35rem !important; }
+
+    
+
+    .hot-strip .hot-chip:nth-child(n+6):not(:last-child) { display: none; }
+
+    
+    .stat-card { padding: 18px 12px; }
+    .stat-card .num { font-size: 1.5rem; }
+
+    
+    .cta-band { padding: 40px 20px; border-radius: 20px; }
+    .btn-free { padding: 15px 30px; font-size: 1.05rem; }
+}
+
+@media (max-width: 360px) {
+    .container { padding-left: 10px; padding-right: 10px; }
+    .hero-title { font-size: 1.5rem; }
+    .navbar-brand { font-size: 1.2rem; }
+    .brand-main { font-size: 1.05rem; }
+    .brand-sub { font-size: 0.55rem; }
+}
+
+@media (pointer: coarse) {
+    .nav-link,
+    .admin-nav a,
+    .sg-item,
+    .suggest-item,
+    .mpanel-item { min-height: 40px; }
+    
+    .feature-card:hover { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

@@ -1,0 +1,414 @@
+{% extends "base.html" %}
+
+{% block title %}意见反馈 - 用户反馈中心{% endblock %}
+{% block seo_description %}提交 Bug、功能建议或产品吐槽，与 A股棱镜团队共建更好的 A 股研究工具。{% endblock %}
+{% block seo_keywords %}A股棱镜,意见反馈,用户反馈,功能建议,Bug上报{% endblock %}
+
+
+
+
+
+{% block description %}
+A股棱镜用户反馈中心 - 提交Bug，建议功能，参与社区投票，共同打造最强AI投研工具。
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* --- 覆盖与增强 --- */
+    
+    /* 页面特有背景微调 (叠加在 base 背景之上) */
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0; 
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+            radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.08) 0%, transparent 25%),
+            radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08) 0%, transparent 25%);
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    /* 头部区域 */
+    .feedback-header {
+        padding: 140px 0 60px; /* 适配固定导航栏的高度 */
+        text-align: center;
+    }
+    .page-title {
+        font-size: 3rem;
+        font-weight: 800;
+        letter-spacing: -1px;
+        background: linear-gradient(135deg, #fff 30%, #38bdf8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+        font-family: 'Orbitron', sans-serif;
+    }
+
+    /* 提交卡片 */
+    .submit-card {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 16px;
+        padding: 35px;
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+        position: sticky;
+        top: 100px;
+    }
+
+    /* 表单控件深度定制 */
+    .form-control, .form-select {
+        background-color: rgba(15, 23, 42, 0.8) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #fff !important;
+        padding: 12px 15px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+    .form-control:focus, .form-select:focus {
+        background-color: rgba(15, 23, 42, 1) !important;
+        border-color: #38bdf8 !important;
+        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
+    }
+    .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.3) !important;
+    }
+    /* 修复下拉菜单选项背景 */
+    select option {
+        background-color: #0f172a;
+        color: #fff;
+        padding: 10px;
+    }
+
+    /* 反馈列表项 */
+    .feedback-item {
+        background: rgba(30, 41, 59, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 20px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    .feedback-item::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 4px; height: 100%;
+        background: transparent;
+        transition: background 0.3s;
+    }
+    .feedback-item:hover {
+        background: rgba(30, 41, 59, 0.8);
+        transform: translateY(-4px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        border-color: rgba(56, 189, 248, 0.3);
+    }
+    .feedback-item:hover::before {
+        background: #38bdf8;
+    }
+
+    /* 投票按钮 */
+    .vote-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        width: 60px;
+        padding: 8px 0;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .vote-box:hover {
+        background: rgba(56, 189, 248, 0.1);
+        border-color: #38bdf8;
+        color: #38bdf8;
+    }
+    .vote-box i {
+        font-size: 1.2rem;
+        margin-bottom: 2px;
+        color: #94a3b8; /* 默认静默色 */
+        transition: color 0.2s;
+    }
+    .vote-box:hover i {
+        color: #38bdf8;
+    }
+    .vote-count {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #fff;
+    }
+
+    /* 状态标签 */
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 5px 12px;
+        border-radius: 50px;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .status-pending { 
+        background: rgba(251, 191, 36, 0.1); 
+        color: #fbbf24; 
+        border: 1px solid rgba(251, 191, 36, 0.3); 
+    }
+    .status-in_progress { 
+        background: rgba(56, 189, 248, 0.1); 
+        color: #38bdf8; 
+        border: 1px solid rgba(56, 189, 248, 0.3); 
+    }
+    .status-done { 
+        background: rgba(34, 197, 94, 0.1); 
+        color: #4ade80; 
+        border: 1px solid rgba(34, 197, 94, 0.3); 
+    }
+
+    /* 吐司通知样式覆盖 */
+    .toast {
+        background-color: #1e293b !important;
+        border: 1px solid #38bdf8 !important;
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.2) !important;
+    }
+    .toast-header {
+        background-color: rgba(56, 189, 248, 0.1) !important;
+        color: #38bdf8 !important;
+        border-bottom: 1px solid rgba(56, 189, 248, 0.2) !important;
+    }
+    .btn-close-white {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="feedback-header container">
+    <h1 class="page-title">FEEDBACK CENTER</h1>
+    <p class="lead text-secondary mx-auto" style="max-width: 700px;">
+        您的建议是我们进化的核心驱动力。提交 Bug 或功能请求，决定 
+        <span class="text-info fw-bold">A股棱镜</span> 下一个版本的方向。
+    </p>
+</div>
+
+<div class="container pb-5">
+    <div class="row g-5">
+        <div class="col-lg-4">
+            <div class="submit-card">
+                <h4 class="mb-4 text-white font-tech border-bottom border-secondary border-opacity-25 pb-3">
+                    <i class="fa-solid fa-pen-to-square me-2 text-info"></i>提交工单
+                </h4>
+                <form id="feedbackForm">
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small">反馈类型 / TYPE</label>
+                        <select class="form-select" id="fbType">
+                            <option value="bug">🐛 Bug 错误报告</option>
+                            <option value="feature">✨ Feature 功能建议</option>
+                            <option value="data">📊 Data 数据问题</option>
+                            <option value="other">🔧 Other 其他反馈</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary small">标题 / TITLE</label>
+                        <input type="text" class="form-control" id="fbTitle" placeholder="一句话描述问题..." required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-secondary small">详细描述 / DESCRIPTION</label>
+                        <textarea class="form-control" id="fbDesc" rows="6" placeholder="请提供复现步骤、设备型号或详细建议..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn w-100 fw-bold py-2 text-dark" 
+                            style="background: linear-gradient(90deg, #38bdf8, #818cf8); border:none; box-shadow: 0 4px 15px rgba(56,189,248,0.3);">
+                        <i class="fa-solid fa-paper-plane me-2"></i>提交反馈 (Submit)
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="text-white mb-0 font-tech">
+                    <i class="fa-solid fa-list-check me-2 text-warning"></i>社区反馈墙
+                </h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary active" id="filterHot">🔥 热门</button>
+                    <button type="button" class="btn btn-outline-secondary" id="filterNew">🕒 最新</button>
+                </div>
+            </div>
+
+            <div id="feedbackList">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-info mb-3" role="status" style="width: 2rem; height: 2rem;"></div>
+                    <p class="text-secondary font-mono small">SYNCING COMMUNITY DATA...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
+    <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="fa-solid fa-bell me-2"></i>
+            <strong class="me-auto font-tech">System Notification</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body text-white" id="toastMsg">
+            Operation successful.
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // --- 反馈页面逻辑 ---
+
+    // 排序模式：hot=按投票数（后端默认），new=按时间倒序
+    let sortMode = 'hot';
+
+    function applySort(data) {
+        if (sortMode === 'new') {
+            return [...data].sort((a, b) => String(b.time || '').localeCompare(String(a.time || '')));
+        }
+        // hot：后端默认已按 votes DESC 返回，保险起见前端再排一次
+        return [...data].sort((a, b) => (b.votes || 0) - (a.votes || 0));
+    }
+
+    function setSortMode(mode, btn) {
+        sortMode = mode;
+        document.querySelectorAll('#filterHot, #filterNew').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadFeedback();
+    }
+    document.getElementById('filterHot').addEventListener('click', function () { setSortMode('hot', this); });
+    document.getElementById('filterNew').addEventListener('click', function () { setSortMode('new', this); });
+
+    // 加载列表
+    async function loadFeedback() {
+        const listDiv = document.getElementById('feedbackList');
+        try {
+            const res = await fetch('/api/feedback/list');
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+
+            listDiv.innerHTML = '';
+            if(data.length === 0) {
+                listDiv.innerHTML = `
+                    <div class="text-center py-5 border border-dashed border-secondary rounded-3">
+                        <i class="fa-regular fa-comment-dots fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">暂无反馈数据，快来抢占沙发！</p>
+                    </div>`;
+                return;
+            }
+
+            applySort(data).forEach(item => {
+                let typeIcon = '';
+                if(item.type === 'bug') typeIcon = '<i class="fa-solid fa-bug text-danger me-2"></i>';
+                else if(item.type === 'feature') typeIcon = '<i class="fa-solid fa-lightbulb text-warning me-2"></i>';
+                else if(item.type === 'data') typeIcon = '<i class="fa-solid fa-database text-success me-2"></i>';
+                else typeIcon = '<i class="fa-solid fa-wrench text-secondary me-2"></i>';
+
+                let statusBadge = '';
+                if(item.status === 'pending') statusBadge = '<span class="status-badge status-pending"><i class="fa-regular fa-clock me-1"></i>待处理</span>';
+                else if(item.status === 'in_progress') statusBadge = '<span class="status-badge status-in_progress"><i class="fa-solid fa-code me-1"></i>开发中</span>';
+                else if(item.status === 'done') statusBadge = '<span class="status-badge status-done"><i class="fa-solid fa-check me-1"></i>已上线</span>';
+
+                const html = `
+                    <div class="feedback-item">
+                        <div class="vote-box" onclick="voteFeedback(${item.id})">
+                            <i class="fa-solid fa-caret-up"></i>
+                            <span class="vote-count" id="vote-${item.id}">${item.votes}</span>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="text-white mb-0" style="font-size: 1.1rem; font-weight: 600;">
+                                    ${typeIcon}${esc(item.title)}
+                                </h5>
+                                ${statusBadge}
+                            </div>
+                            <p class="text-secondary mb-3 small" style="line-height: 1.6;">${esc(item.desc)}</p>
+                            <div class="d-flex justify-content-between align-items-center border-top border-secondary border-opacity-10 pt-2">
+                                <span class="text-muted" style="font-size: 0.75rem; font-family: 'JetBrains Mono';">
+                                    <i class="fa-regular fa-calendar me-1"></i>${item.time}
+                                </span>
+                                <span class="text-muted" style="font-size: 0.75rem;">ID: #${item.id.toString().padStart(4, '0')}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                listDiv.innerHTML += html;
+            });
+        } catch(e) {
+            listDiv.innerHTML = `<div class="alert alert-danger bg-dark border-danger text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i>无法连接到反馈服务器</div>`;
+        }
+    }
+
+    // 提交表单
+    document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+        btn.disabled = true;
+
+        const payload = {
+            type: document.getElementById('fbType').value,
+            title: document.getElementById('fbTitle').value,
+            desc: document.getElementById('fbDesc').value
+        };
+
+        try {
+            const res = await fetch('/api/feedback/submit', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            if(res.ok) {
+                showToast('✅ 反馈提交成功！我们将尽快评估。');
+                e.target.reset();
+                loadFeedback(); 
+            }
+        } catch(e) {
+            showToast('❌ 提交失败，请检查网络连接。');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    });
+
+    // 投票功能
+    async function voteFeedback(id) {
+        try {
+            const res = await fetch(`/api/feedback/vote/${id}`, {method: 'POST'});
+            const data = await res.json();
+            if(data.status === 'success') {
+                const countEl = document.getElementById(`vote-${id}`);
+                countEl.innerText = data.votes;
+                countEl.parentElement.style.borderColor = '#38bdf8';
+                countEl.parentElement.querySelector('i').style.color = '#38bdf8';
+                showToast('👍 投票成功 +1');
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    // 显示 Toast
+    function showToast(msg) {
+        const toastEl = document.getElementById('liveToast');
+        document.getElementById('toastMsg').innerText = msg;
+        const toast = new bootstrap.Toast(toastEl);
+        toast.show();
+    }
+
+    // 页面加载
+    document.addEventListener('DOMContentLoaded', loadFeedback);
+</script>
+{% endblock %}

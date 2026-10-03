@@ -1,0 +1,1081 @@
+{% extends "base.html" %}
+{% block jsonld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": {{ _site_name|tojson }},
+  "url": {{ (_site_domain or _cur_url)|tojson }},
+  "description": {{ (site.get('SEO_DESCRIPTION') or _def_desc)|tojson }},
+  "inLanguage": "zh-CN",
+  "publisher": {
+    "@type": "Organization",
+    "name": {{ _site_name|tojson }},
+    "url": {{ (_site_domain or _cur_url)|tojson }},
+    "logo": {{ ((_site_domain + _og_image) if _site_domain else _og_image)|tojson }}
+  }
+}
+</script>
+{% endblock %}
+
+{% block title %}A股棱镜 - A股基本面研究与财报解读工具{% endblock %}
+{% block seo_description %}A股棱镜是面向个人投资者的A股基本面研究平台，聚合多源金融数据，用 AI 自动生成财报解读、估值测算、财务排雷与风险提示，看清一家公司的真实质地。{% endblock %}
+{% block seo_keywords %}A股棱镜,A股基本面,股票财报解读,A股估值,财务排雷,价值投资,AI研报,金融大数据,个股研究{% endblock %}
+{% block og_title %}A股棱镜 - 看清一家公司的真实质地{% endblock %}
+{% block og_description %}A股基本面研究平台：财报解读、估值测算、财务排雷、风险提示，一站式工具。{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== 首页专属样式 ===== */
+    .hero {
+        position: relative;
+        padding: 100px 0 60px;
+        /* 不能用 overflow:hidden：会裁剪下拉面板伸出 hero 的部分（08-29 实测踩坑，
+           面板底部直接「消失」其实是被裁剪，elementFromPoint 穿透命中下层元素）。
+           极光背景的溢出裁剪改由 .hero-bg-clip 承担。 */
+    }
+    /* 极光背景专用裁剪层：absolute + overflow:hidden + z-index:0，
+       把 ::before 的负 inset 溢出裁在 hero 内，同时不影响内容层的下拉面板。 */
+    .hero-bg-clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 0;
+    }
+    /* 动态极光网格背景（挂在 .hero-bg-clip 裁剪层内，负 inset 溢出被层裁剪） */
+    .hero-bg-clip::before {
+        content: "";
+        position: absolute;
+        inset: -20% -10% auto -10%;
+        height: 520px;
+        background:
+            radial-gradient(40% 60% at 20% 30%, rgba(56,189,248,0.18), transparent 60%),
+            radial-gradient(40% 60% at 80% 20%, rgba(129,140,248,0.16), transparent 60%),
+            radial-gradient(50% 50% at 60% 80%, rgba(16,185,129,0.10), transparent 60%);
+        filter: blur(20px);
+        animation: drift 14s ease-in-out infinite alternate;
+        pointer-events: none;
+        z-index: 0;
+    }
+    @keyframes drift {
+        from { transform: translate3d(-2%, -1%, 0) scale(1); }
+        to   { transform: translate3d(3%, 2%, 0) scale(1.06); }
+    }
+    .hero .container { position: relative; z-index: 1; }
+
+    .hero-greeting {
+        font-size: 0.95rem;
+        color: #94a3b8;
+        margin-bottom: 18px;
+    }
+    .hero-greeting b { color: #38bdf8; }
+
+    /* ===== 强化搜索框：更大、发光、自动补全 ===== */
+    .search-shell {
+        max-width: 760px;
+        margin: 0 auto;
+        background: linear-gradient(180deg, rgba(30,41,59,0.72), rgba(30,41,59,0.5));
+        border: 1px solid rgba(148,163,184,0.22);
+        border-radius: 20px;
+        padding: 12px;
+        display: flex;
+        gap: 12px;
+        backdrop-filter: blur(16px);
+        box-shadow: 0 24px 70px -24px rgba(56,189,248,0.25), 0 10px 40px -12px rgba(0,0,0,.55);
+        transition: border-color .3s, box-shadow .3s, transform .3s;
+        position: relative;
+    }
+    .search-shell:focus-within {
+        border-color: #38bdf8;
+        box-shadow: 0 0 0 5px rgba(56,189,248,0.14), 0 24px 70px -18px rgba(56,189,248,0.35);
+        transform: translateY(-3px);
+    }
+    .search-shell .search-ico {
+        align-self: center;
+        padding-left: 14px;
+        color: #64748b;
+        font-size: 1.15rem;
+    }
+    .search-shell:focus-within .search-ico { color: #38bdf8; }
+    .search-shell input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: #f8fafc;
+        font-size: 1.15rem;
+        padding: 14px 8px 14px 0;
+        outline: none;
+        min-width: 0;
+    }
+    .search-shell input::placeholder { color: #64748b; }
+    .search-shell input.is-selected {
+        color: #38bdf8;   /* 选中标的后，输入框文字变蓝，提示已锁定一只股票 */
+    }
+    /* 「查看 / 分析」两颗按钮并排：原「立即诊断」单按钮把「只想看看行情」和
+       「要跑 AI 研报」混成一个动作，点一下就扣额度，故拆开。 */
+    .hero-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+    .hero-actions .btn-hero { flex: 1; }
+    .btn-hero {
+        white-space: nowrap;
+        border: none;
+        border-radius: 14px;
+        padding: 14px 22px;
+        font-weight: 800;
+        font-size: 1.05rem;
+        color: #04121f;
+        background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+        box-shadow: 0 10px 30px -8px rgba(56,189,248,.45);
+        transition: transform .2s, box-shadow .2s, filter .2s;
+    }
+    /* 分析 = 主动作（跑 AI 研报、消耗额度），保持高亮渐变 */
+    .btn-hero-analyze { padding: 14px 26px; }
+    /* 查看 = 次动作（只看数据、不扣额度），走描边幽灵风，避免和主动作抢焦点 */
+    .btn-hero-view {
+        color: #e2e8f0;
+        background: rgba(148,163,184,.10);
+        border: 1px solid rgba(148,163,184,.35);
+        box-shadow: none;
+    }
+    .btn-hero-view:hover {
+        color: #38bdf8;
+        border-color: #38bdf8;
+        background: rgba(56,189,248,.12);
+        box-shadow: none;
+        filter: none;
+    }
+    /* 解析中文名时给「查看」一个等待态，避免用户以为点了没反应 */
+    .btn-hero[disabled] { opacity: .65; cursor: progress; transform: none; }
+    .btn-hero:hover { transform: translateY(-2px); box-shadow: 0 16px 40px -10px rgba(56,189,248,.65); filter: brightness(1.06); }
+    .btn-ghost {
+        border: 1px solid rgba(148,163,184,.35);
+        color: #f8fafc;
+        background: rgba(255,255,255,.04);
+        border-radius: 12px;
+        padding: 12px 26px;
+        font-weight: 600;
+        transition: all .25s;
+    }
+    .btn-ghost:hover { border-color: #38bdf8; color: #38bdf8; background: rgba(56,189,248,.1); }
+
+    /* 首页提示行：替代原先的「模型 / 投资风格」两个下拉，
+       明确告知用户这两项在分析页选择，首屏只保留「选股」一件事。 */
+    .analyze-hint {
+        margin: 0 auto;
+        font-size: .82rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 2px;
+    }
+    .analyze-hint i { color: #38bdf8; opacity: .8; margin-right: 4px; }
+    .analyze-hint b { color: #94a3b8; font-weight: 600; }
+    .analyze-hint .hint-sep { opacity: .45; margin: 0 6px; }
+    .analyze-hint-link {
+        color: #7dd3fc; text-decoration: none;
+        border-bottom: 1px dashed rgba(56,189,248,.45);
+        margin: 0 2px;
+    }
+    .analyze-hint-link:hover { color: #38bdf8; border-bottom-style: solid; }
+
+    /* 空输入点「查看」或「分析」时的抖动提示：比弹窗轻，不打断输入节奏。
+       原先直接跳 /analysis（无 code）会让用户面对一个空白页，不知道发生了什么。 */
+    .search-shell.shake { animation: shell-shake .4s ease; border-color: #fbbf24; }
+    @keyframes shell-shake {
+        0%,100% { transform: translateX(0); }
+        20% { transform: translateX(-8px); }
+        40% { transform: translateX(7px); }
+        60% { transform: translateX(-5px); }
+        80% { transform: translateX(3px); }
+    }
+
+    /* 登录后快捷入口：首屏给老用户一条「继续干活」的通路，
+       未登录不展示，避免首屏堆无关链接。 */
+    .quick-links {
+        margin: 14px auto 0;
+        display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+    }
+    .quick-link {
+        display: inline-flex; align-items: center; gap: 6px;
+        font-size: .82rem; color: #94a3b8; text-decoration: none;
+        border: 1px solid rgba(148,163,184,.18);
+        background: rgba(255,255,255,.03);
+        border-radius: 50px; padding: 5px 14px;
+        transition: all .2s;
+    }
+    .quick-link:hover { color: #38bdf8; border-color: rgba(56,189,248,.45); background: rgba(56,189,248,.08); }
+
+    /* 搜索自动补全面板 */
+    .search-suggest {
+        position: absolute;
+        top: calc(100% + 10px);
+        left: 0; right: 0;
+        background: rgba(15,23,42,0.97);
+        border: 1px solid rgba(56,189,248,0.25);
+        border-radius: 14px;
+        box-shadow: 0 24px 60px -12px rgba(0,0,0,.7);
+        overflow: hidden;
+        z-index: 50;
+        display: none;
+        text-align: left;
+    }
+    .search-suggest.show { display: block; }
+    .sg-item {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 11px 18px;
+        cursor: pointer;
+        border-bottom: 1px solid rgba(148,163,184,0.08);
+        transition: background .15s;
+    }
+    .sg-item:last-child { border-bottom: none; }
+    .sg-item:hover, .sg-item.active { background: rgba(56,189,248,0.1); }
+    .sg-item .sg-name { color: #f1f5f9; font-weight: 600; }
+    .sg-item .sg-code { color: #38bdf8; font-family: 'JetBrains Mono', monospace; font-size: .9rem; }
+
+    /* 大盘 ticker 条
+       布局说明：6 个子元素（3 指数 + 3 统计）原先平铺在 860px 容器里用 space-between，
+       总宽约 990px 放不下必然换行，换行后两端对齐就会参差错位。
+       改为「分组」：左侧 3 指数等宽网格（1fr×3），右侧 3 项统计独立成组、竖线分隔。 */
+    .index-ticker {
+        max-width: 980px;
+        margin: 26px auto 0;
+        background: rgba(15,23,42,0.6);
+        border: 1px solid rgba(148,163,184,0.14);
+        border-radius: 16px;
+        padding: 12px 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        backdrop-filter: blur(12px);
+    }
+    /* 左组：三大指数等宽，保证数字列对齐 */
+    .idx-group {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .idx-card {
+        padding: 2px 8px;
+        text-align: center;
+        min-width: 0;
+        border-right: 1px solid rgba(148,163,184,0.12);
+    }
+    .idx-group .idx-card:last-child { border-right: none; }
+    .idx-name {
+        display: block;
+        color: #94a3b8;
+        font-size: .78rem;
+        white-space: nowrap;
+        margin-bottom: 4px;
+    }
+    .idx-val {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 7px;
+    }
+    .idx-price { color: #f1f5f9; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 1.02rem; letter-spacing: .2px; }
+    .idx-chg { font-family: 'JetBrains Mono', monospace; font-size: .85rem; font-weight: 600; }
+    .idx-up .idx-price, .idx-up .idx-chg { color: #f87171; }
+    .idx-down .idx-price, .idx-down .idx-chg { color: #34d399; }
+    .idx-flat .idx-price, .idx-flat .idx-chg { color: #94a3b8; }
+
+    /* 右组：市场统计，与指数区用竖线分隔 */
+    .idx-stats {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding-left: 10px;
+        border-left: 1px solid rgba(148,163,184,0.14);
+    }
+    .st-card { padding: 2px 10px; text-align: center; white-space: nowrap; }
+    .st-label { display: block; color: #94a3b8; font-size: .78rem; margin-bottom: 4px; }
+    .st-val { font-family: 'JetBrains Mono', monospace; font-size: .95rem; font-weight: 700; }
+
+    /* 加载 / 失败态：原为 inline span，width 不生效，需 display:block */
+    .idx-north { display: block; color: #94a3b8; font-size: .85rem; text-align: center; width: 100%; padding: 4px 0; }
+    .ticker-up-dot { width: 7px; height: 7px; border-radius: 50%; background: #34d399; display: inline-block; margin-right: 6px; animation: pulse-dot 2s infinite; }
+    @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+
+    /* 窄屏 / 中等屏：两组改为上下堆叠，各自居中，避免挤压换行。
+       断点取 992px（Bootstrap lg）——指数区约需 510px，加上统计区约 281px，
+       低于 992px 时并排就会挤压数字，因此提前切换为堆叠。 */
+    @media (max-width: 991.98px) {
+        .index-ticker { flex-direction: column; gap: 12px; padding: 14px 8px; }
+        .idx-group { width: 100%; }
+        .idx-stats {
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+            border-left: none;
+            border-top: 1px solid rgba(148,163,184,0.14);
+            padding-left: 0;
+            padding-top: 12px;
+        }
+    }
+    /* 手机：3 列等宽已放不下「13953.07 -0.68%」，改为纵向列表（名称左、数值右） */
+    @media (max-width: 575.98px) {
+        .idx-group { grid-template-columns: 1fr; gap: 2px; }
+        .idx-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            text-align: left;
+            padding: 5px 14px;
+            border-right: none;
+            border-bottom: 1px solid rgba(148,163,184,0.1);
+        }
+        .idx-group .idx-card:last-child { border-bottom: none; }
+        .idx-name { margin-bottom: 0; }
+        .idx-stats { gap: 0; }
+    }
+
+    .trust-line { color: #64748b; font-size: .9rem; }
+    .trust-line i { color: #34d399; }
+
+    /* 图层顺序修复：search-shell 的 backdrop-filter 会创建堆叠上下文，
+       联想面板的 z-index 被困在宿主内部；DOM 靠后的 .index-ticker / .hot-strip
+       （同为堆叠上下文）按文档顺序绘制在面板之上。面板打开时给宿主整体抬 z
+       （backdrop-filter 上下文必须整体抬升，单改面板自身 z-index 无效）。 */
+    .search-shell.panel-open { z-index: 1200; }
+
+    /* （已移除首页「模型 / 投资风格」下拉面板样式：选择器下线，改由分析页统一选择） */
+
+    /* 热门个股迷你条（真实热股榜） */
+    .hot-strip { max-width: 980px; margin: 14px auto 0; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .hot-chip {
+        display: inline-flex; align-items: center; gap: 7px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(148,163,184,0.15);
+        border-radius: 50px;
+        padding: 6px 14px;
+        font-size: .85rem;
+        color: #cbd5e1;
+        text-decoration: none;
+        transition: all .2s;
+    }
+    .hot-chip:hover { border-color: rgba(56,189,248,.5); background: rgba(56,189,248,.08); color: #fff; transform: translateY(-1px); }
+    .hot-chip .hc-rank { color: #fbbf24; font-weight: 700; font-size: .75rem; }
+    .hot-chip .hc-net { font-family: 'JetBrains Mono', monospace; font-size: .78rem; color: #f87171; }
+    .hot-chip.hc-down .hc-net { color: #34d399; }
+    /* 无涨跌幅（'--'）必须走中性灰：'--' 以 '-' 开头，
+       若沿用 hc-down 判据会被染成绿色，等于凭空伪造「下跌」方向。 */
+    .hot-chip.hc-flat .hc-net { color: #94a3b8; }
+
+    /* 数据指标卡 */
+    .stat-card {
+        background: rgba(30,41,59,0.45);
+        border: 1px solid rgba(148,163,184,0.12);
+        border-radius: 16px;
+        padding: 26px 20px;
+        text-align: center;
+        transition: transform .25s, border-color .25s;
+    }
+    .stat-card:hover { transform: translateY(-4px); border-color: rgba(56,189,248,.3); }
+    .stat-card .num {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.9rem;
+        font-weight: 800;
+        color: #f8fafc;
+        line-height: 1.2;
+    }
+    .stat-card .num span { color: #38bdf8; }
+    .stat-card .lbl { color: #94a3b8; font-size: .85rem; margin-top: 6px; }
+
+    /* 步骤卡 */
+    .step-card {
+        position: relative;
+        background: rgba(30,41,59,0.4);
+        border: 1px solid rgba(148,163,184,0.12);
+        border-radius: 18px;
+        padding: 30px 26px 26px;
+        height: 100%;
+        transition: transform .25s, border-color .25s;
+    }
+    .step-card:hover { transform: translateY(-6px); border-color: rgba(56,189,248,.35); }
+    .step-no {
+        position: absolute; top: 18px; right: 20px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.4rem; font-weight: 800;
+        color: rgba(56,189,248,0.18);
+    }
+    .step-ico {
+        width: 54px; height: 54px; border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem; color: #38bdf8;
+        background: linear-gradient(135deg, rgba(56,189,248,.12), rgba(129,140,248,.12));
+        border: 1px solid rgba(56,189,248,.25);
+        margin-bottom: 18px;
+    }
+
+    /* 区块标题 */
+    .sec-title { font-size: 1.8rem; font-weight: 800; color: #f8fafc; }
+    .sec-sub { color: #94a3b8; }
+
+    /* 投资偏好卡（6 种真实偏好） */
+    .pref-card {
+        background: rgba(30,41,59,0.4);
+        border: 1px solid rgba(148,163,184,0.12);
+        border-radius: 16px;
+        padding: 20px 18px;
+        height: 100%;
+        transition: transform .25s, border-color .25s, box-shadow .25s;
+        position: relative;
+        overflow: hidden;
+    }
+    .pref-card:hover { transform: translateY(-5px); border-color: rgba(56,189,248,.4); box-shadow: 0 16px 40px -18px rgba(56,189,248,.35); }
+    .pref-card .pf-ico { font-size: 1.3rem; margin-bottom: 10px; color: #38bdf8; }
+    .pref-card .pf-name { color: #f1f5f9; font-weight: 700; font-size: 1rem; margin-bottom: 6px; }
+    .pref-card .pf-tag { color: #94a3b8; font-size: .82rem; line-height: 1.5; }
+    .pref-card .pf-badge {
+        position: absolute; top: 12px; right: 12px;
+        font-size: .68rem; font-weight: 700;
+        padding: 3px 9px; border-radius: 20px;
+        background: linear-gradient(135deg, rgba(251,191,36,.18), rgba(245,158,11,.18));
+        border: 1px solid rgba(251,191,36,.4);
+        color: #fbbf24;
+    }
+
+    /* 研报预览窗口（打字机） */
+    .code-preview-container {
+        background: linear-gradient(180deg, rgba(11,15,25,0.9), rgba(15,23,42,0.6));
+        border-top: 1px solid rgba(148,163,184,0.1);
+        border-bottom: 1px solid rgba(148,163,184,0.1);
+    }
+    .code-window {
+        background: #0d1117;
+        border-radius: 16px;
+        box-shadow: 0 30px 70px -20px rgba(0,0,0,0.75), 0 0 60px -30px rgba(56,189,248,0.3);
+        border: 1px solid rgba(56,189,248,0.18);
+        font-family: 'JetBrains Mono', monospace;
+        overflow: hidden;
+    }
+    .window-bar {
+        background: rgba(30,41,59,0.9);
+        padding: 12px 18px;
+        border-bottom: 1px solid rgba(148,163,184,0.12);
+        display: flex; align-items: center;
+    }
+    .window-content {
+        padding: 26px;
+        color: #d4d4d4;
+        font-size: 0.88rem;
+        line-height: 1.85;
+        min-height: 300px;
+    }
+    .c-key { color: #7dd3fc; }
+    .c-str { color: #fca5a5; }
+    .c-num { color: #86efac; }
+    .c-bool { color: #c586c0; }
+    .c-comment { color: #64748b; font-style: italic; }
+    .type-cursor { display: inline-block; width: 8px; height: 1.05em; background: #38bdf8; vertical-align: text-bottom; animation: blink .9s step-end infinite; }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+    .check-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
+    .check-item i { color: #38bdf8; margin-top: 4px; }
+    .check-item .ck-t { color: #e2e8f0; font-weight: 600; font-size: .95rem; }
+    .check-item .ck-d { color: #94a3b8; font-size: .84rem; }
+
+    /* 最终 CTA 条 */
+    .cta-band {
+        position: relative;
+        border-radius: 26px;
+        padding: 64px 40px;
+        text-align: center;
+        overflow: hidden;
+        background: linear-gradient(135deg, rgba(56,189,248,0.12), rgba(129,140,248,0.12));
+        border: 1px solid rgba(56,189,248,.25);
+    }
+    .cta-band::before {
+        content: ""; position: absolute; inset: 0;
+        background: radial-gradient(60% 120% at 50% 0%, rgba(56,189,248,.18), transparent 60%);
+        pointer-events: none;
+    }
+    .cta-band .inner { position: relative; z-index: 1; }
+    .btn-free {
+        border: none; border-radius: 16px;
+        padding: 18px 52px;
+        font-size: 1.2rem; font-weight: 800;
+        color: #04121f;
+        background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+        box-shadow: 0 16px 50px -10px rgba(56,189,248,.6);
+        transition: transform .2s, box-shadow .2s, filter .2s;
+    }
+    .btn-free:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 22px 60px -10px rgba(56,189,248,.75); filter: brightness(1.07); color: #04121f; }
+    .cta-free-note { color: #94a3b8; font-size: .9rem; margin-top: 16px; }
+    .cta-free-note b { color: #fbbf24; }
+
+    /* 尊重系统「减少动态效果」设置：极光背景的持续漂移动画对前庭敏感用户不友好，
+       这里关掉动画与位移类过渡，静态观感不受影响。 */
+    @media (prefers-reduced-motion: reduce) {
+        .hero-bg-clip::before,
+        .ticker-up-dot,
+        .type-cursor { animation: none; }
+        .search-shell, .search-shell:focus-within,
+        .stat-card, .step-card, .pref-card, .hot-chip,
+        .btn-hero, .btn-ghost, .btn-free { transition: none; }
+        .search-shell:focus-within,
+        .stat-card:hover, .step-card:hover, .pref-card:hover,
+        .hot-chip:hover, .btn-hero:hover, .btn-free:hover { transform: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero text-center">
+    <div class="hero-bg-clip" aria-hidden="true"></div>
+    <div class="container">
+        {% if is_logged_in and user %}
+        <div class="hero-greeting">欢迎回来，<b>{{ user.nickname }}</b> · 继续你的价值投资研究</div>
+        {% endif %}
+
+        <div class="badge-tech font-mono">
+            <i class="fa-solid fa-bolt me-2"></i>{{ analysis_models|length }} 款主流大模型 · {{ analysis_preferences|length }} 种投资视角 · 全量 A 股数据
+        </div>
+
+        <h1 class="hero-title">
+            A股基本面研究与财报解读<br>
+            <span>拒绝盲目炒作，回归商业本质的价值投资</span>
+        </h1>
+
+        <p class="hero-desc">
+            实时拉取企业财报、清洗关键指标，用 AI 大模型一键生成 AI研报：完成<strong>股票财报解读</strong>与<strong>个股研究</strong>，同步给出 A股估值安全边际测算、<strong>财务排雷</strong>与风险预警。
+            让每一次决策都有数据支撑。
+        </p>
+
+        <!-- 强化搜索框 + 自动补全 -->
+        <div class="search-shell mb-3" id="searchShell">
+            <i class="fa-solid fa-magnifying-glass search-ico"></i>
+            <input type="text" id="homeStockInput" placeholder="输入股票代码或简称，如 600519 / 贵州茅台…" aria-label="股票代码或简称" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="searchSuggest" aria-autocomplete="list">
+
+            <div class="hero-actions">
+                <button class="btn-hero btn-hero-view" id="btnHomeView" title="查看个股详情（不消耗分析额度）">
+                    <i class="fa-regular fa-eye me-2"></i>查看
+                </button>
+                <button class="btn-hero btn-hero-analyze" id="btnHomeAnalyze" title="生成 AI 深度研报（消耗分析额度）">
+                    <i class="fa-solid fa-magnifying-glass-chart me-2"></i>分析
+                </button>
+            </div>
+            <div class="search-suggest" id="searchSuggest" role="listbox" aria-label="股票搜索结果"></div>
+        </div>
+
+        <!-- 首页只做「选股」这一件事：AI 模型与投资视角改到分析页选择，
+             首屏不再堆两个下拉，降低决策负担，也让分析页成为唯一的配置入口。
+             搜索框拆成「查看 / 分析」两个按钮后，这里顺带把两者的代价讲清楚：
+             分析会消耗额度，查看不会。 -->
+        <div class="analyze-hint">
+            <i class="fa-solid fa-circle-info me-1"></i>
+            <span><b>查看</b>看行情 · 财报 · 股东等原始数据，不消耗额度</span>
+            <span class="hint-sep">·</span>
+            <span><b>分析</b>生成 AI 深度研报，模型与视角可在<a href="/analysis" class="analyze-hint-link">分析页</a>自由切换</span>
+        </div>
+
+        {% if is_logged_in %}
+        <!-- 老用户的「继续干活」入口：首屏不必再回导航栏找 -->
+        <div class="quick-links">
+
+            <a href="/profile#history" class="quick-link"><i class="fa-solid fa-clock-rotate-left"></i>我的分析记录</a>
+            <a href="/profile#watchlist" class="quick-link"><i class="fa-solid fa-star"></i>自选股</a>
+            <a href="/hot" class="quick-link"><i class="fa-solid fa-fire"></i>热榜风向标</a>
+            <a href="/profile#membership" class="quick-link"><i class="fa-solid fa-crown"></i>{{ user.membership_name }}</a>
+        </div>
+        {% endif %}
+
+        <!-- 真实大盘 ticker（可在后台「系统边栏 → 首页模块」停用 / 调整刷新间隔） -->
+        {% if sb('home.ticker').enabled %}
+        <div class="index-ticker" id="indexTicker">
+            <span class="idx-north"><span class="ticker-up-dot"></span>正在获取实时行情…</span>
+        </div>
+        {% endif %}
+
+        <!-- 热股榜（真实数据；数据源与条数由后台「系统边栏」配置） -->
+        {% set hs = sb('home.hot_stocks') %}
+        {% if hs.enabled %}
+        {% set home_hot = (local_hot_stocks if hs.options.source == 'local' else hot_stocks) or [] %}
+        {% if home_hot %}
+        <div class="hot-strip">
+            <span class="text-secondary small align-self-center me-1"><i class="fa-solid fa-fire text-warning me-1"></i>{{ '大家都在分析' if hs.options.source == 'local' else '热股' }}：</span>
+            {% for s in home_hot[:hs.options.limit] %}
+            {% if hs.options.source == 'local' %}
+            <a href="/stock/{{ s.code }}" class="hot-chip" title="{{ s.name }} {{ s.code }} 近 7 天被分析 {{ s.cnt }} 次">
+                <span class="hc-rank">#{{ loop.index }}</span>{{ s.name }}
+                <span class="hc-net">{{ s.cnt }} 次</span>
+            </a>
+            {% else %}
+            {% set chg = s.change or '--' %}
+            <a href="/stock/{{ s.code }}" class="hot-chip{% if chg == '--' %} hc-flat{% elif chg.startswith('-') %} hc-down{% endif %}" title="{{ s.name }} {{ s.code }}">
+                <span class="hc-rank">#{{ s.rank }}</span>{{ s.name }}
+                <span class="hc-net">{{ s.net_amount }}</span>
+            </a>
+            {% endif %}
+            {% endfor %}
+            <a href="/hot" class="hot-chip" title="查看完整热榜风向标">
+                <i class="fa-solid fa-arrow-right-long me-1"></i>完整热榜
+            </a>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <div class="trust-line mt-4">
+            <i class="fa-solid fa-shield-halved me-1"></i>真实财务数据 · 可验证分析过程 · 支持导出 PDF 研报
+        </div>
+    </div>
+</section>
+
+<!-- 数据指标（真实口径） -->
+<div class="container pb-4">
+    <div class="row g-3 text-center">
+        <div class="col-6 col-md-3">
+
+            <div class="stat-card">
+                <div class="num">{% if stocks_total %}{{ '{:,}'.format(stocks_total) }}<span>+</span>{% else %}--{% endif %}</div>
+                <div class="lbl">A股上市公司数据覆盖</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card"><div class="num">{{ analysis_preferences|length }}<span>维</span></div><div class="lbl">投资视角按需切换</div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card"><div class="num">{{ analysis_models|length }}<span>款</span></div><div class="lbl">主流大模型流式研报</div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card"><div class="num">PDF</div><div class="lbl">专业排版研报一键导出</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- 三步上手（可在后台「系统边栏 → 首页模块」停用） -->
+{% if sb('home.steps').enabled %}
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="sec-title">三步开启你的价值投资研究</h2>
+            <p class="sec-sub mt-2">从输入到决策，平均只需 60 秒</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="step-card">
+                    <div class="step-no">01</div>
+                    <div class="step-ico"><i class="fa-solid fa-keyboard"></i></div>
+                    <h4 class="feature-title">输入标的</h4>
+                    <p class="feature-text">输入代码或简称，系统自动识别并拉取该股票的全量基础信息。</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step-card">
+                    <div class="step-no">02</div>
+                    <div class="step-ico"><i class="fa-solid fa-robot"></i></div>
+                    <h4 class="feature-title">AI 深度体检</h4>
+                    <p class="feature-text">基于近三年财报与宏观数据，AI 完成基本面扫描、风险排雷与估值测算。</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step-card">
+                    <div class="step-no">03</div>
+                    <div class="step-ico"><i class="fa-solid fa-file-pdf"></i></div>
+                    <h4 class="feature-title">获取研报</h4>
+                    <p class="feature-text">实时查看分析思路，或一键导出专业排版的 PDF 研报永久留存。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- 6 种投资偏好（真实数据驱动；显示数量 / 是否只看 VIP 由后台「系统边栏」配置） -->
+{% set pv = sb('home.perspectives') %}
+{% if pv.enabled %}
+{% set pv_list = analysis_preferences %}
+{% if pv.options.vip_only %}{% set pv_list = pv_list | selectattr('is_deep') | list %}{% endif %}
+{% if pv.options.limit > 0 %}{% set pv_list = pv_list[:pv.options.limit] %}{% endif %}
+<section class="py-4">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="sec-title">同一只股票，{{ pv_list|length }} 种专业视角</h2>
+            <p class="sec-sub mt-2">不同投资风格看到的数据维度与推演逻辑完全不同 —— 点击任一视角，直接带着它进入分析页</p>
+        </div>
+        <div class="row g-3">
+            {% for p in pv_list %}
+            <div class="col-6 col-md-4 col-lg-2">
+
+                <a href="/analysis?pref={{ p.id }}" class="text-decoration-none" title="{{ p.name }} — {{ p.tagline }}">
+                    <div class="pref-card">
+                        {% if p.is_deep %}<span class="pf-badge">VIP 深度</span>{% endif %}
+                        <div class="pf-ico">
+                            {% if p.id == 'short_term' %}<i class="fa-solid fa-bolt"></i>
+                            {% elif p.id == 'swing' %}<i class="fa-solid fa-wave-square"></i>
+                            {% elif p.id == 'long_term_value' %}<i class="fa-solid fa-gem"></i>
+                            {% elif p.id == 'comprehensive' %}<i class="fa-solid fa-layer-group"></i>
+                            {% elif p.id == 'deep_tech' %}<i class="fa-solid fa-chart-line"></i>
+                            {% else %}<i class="fa-solid fa-scale-balanced"></i>{% endif %}
+                        </div>
+                        <div class="pf-name">{{ p.name }}</div>
+                        <div class="pf-tag">{{ p.tagline }}</div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- 研报真实感预览（打字机效果） -->
+<section class="code-preview-container py-5 mt-4">
+    <div class="container py-4">
+        <div class="row align-items-center">
+            <div class="col-lg-5 mb-5 mb-lg-0">
+                <h2 class="sec-title mb-4">专业、透明、<br><span style="color:#38bdf8">可验证的分析过程</span></h2>
+                <p class="sec-sub mb-4">我们不提供"黑盒"策略。每一份报告都基于真实的财务数据和公开的市场信息，你可以在网页上实时查看 AI 的分析思路。</p>
+                <div class="check-item"><i class="fa-solid fa-circle-check"></i><div><div class="ck-t">近三年财报 + 十余项核心指标</div><div class="ck-d">ROE、毛利率、现金流、资产负债率等自动清洗入库</div></div></div>
+                <div class="check-item"><i class="fa-solid fa-circle-check"></i><div><div class="ck-t">AI 流式输出研报</div><div class="ck-d">边生成边阅读，如同研究员在你面前书写</div></div></div>
+                <div class="check-item"><i class="fa-solid fa-circle-check"></i><div><div class="ck-t">一键导出 PDF 研报</div><div class="ck-d">专业排版，支持打印与存档回看</div></div></div>
+                <a href="/market" class="btn-ghost mt-2"><i class="fa-solid fa-chart-area me-2"></i>查看大盘概览</a>
+            </div>
+            <div class="col-lg-7">
+                <div class="code-window">
+                    <div class="window-bar">
+                        <div class="d-flex gap-2 me-3">
+                            <div style="width:12px;height:12px;border-radius:50%;background:#ff5f56"></div>
+                            <div style="width:12px;height:12px;border-radius:50%;background:#ffbd2e"></div>
+                            <div style="width:12px;height:12px;border-radius:50%;background:#27c93f"></div>
+                        </div>
+                        <span class="text-muted small font-mono">sample_output.md — 输出格式示例</span>
+                    </div>
+                    <div class="window-content font-mono" id="typeTarget"></div>
+                </div>
+                <div class="text-secondary small mt-2 font-mono">
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                    以上为<strong class="text-warning">输出格式示例</strong>，其中数字仅为示意、非实时行情；
+                    真实研报会对目标个股拉取真实财报与行情后生成。
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 最终 CTA：免费试用大按钮 -->
+<section class="py-5">
+    <div class="container">
+        <div class="cta-band">
+            <div class="inner">
+                {% if is_logged_in %}
+
+                    <h2 class="sec-title mb-3">选一只股票，开始做研究</h2>
+                    <p class="sec-sub mb-4">输入代码或简称即可生成深度研报 —— 当前等级：{{ user.membership_name }}</p>
+                    <a href="/analysis" class="btn-free d-inline-block">
+                        <i class="fa-solid fa-magnifying-glass-chart me-2"></i>开始分析
+                    </a>
+                    <div class="cta-free-note">
+                        免费版每日 <b>{{ free_daily_normal }} 次</b>普通分析 ·
+                        <a href="/profile" class="text-decoration-none" style="color:#38bdf8">查看我的额度与记录 →</a>
+                    </div>
+                {% else %}
+                    <h2 class="sec-title mb-3">准备好用数据做决策了吗？</h2>
+                    <p class="sec-sub mb-4">无需绑卡，注册立即到账 —— 亲自体验一次 AI 研报的质量。</p>
+                    <a href="/register" class="btn-free d-inline-block">
+                        <i class="fa-solid fa-rocket me-2"></i>免费试用
+                    </a>
+
+                    <div class="cta-free-note">注册即送 <b>{{ register_bonus_normal }} 次普通分析 + {{ register_bonus_deep }} 次深度分析</b> · 免费版每日另有 {{ free_daily_normal }} 次分析额度 · <a href="/pricing" class="text-decoration-none" style="color:#38bdf8">查看会员方案 →</a></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 首页登录态（由服务端注入，避免额外请求）
+    const IS_LOGGED_IN = {{ 'true' if is_logged_in else 'false' }};
+    function _hEsc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    let homeStockCode = '';   // 选中联想项时的规范 ts_code（如 600519.SH），优先于输入框文本提交
+
+    // 取当前标的：优先用联想项带来的规范 ts_code；手动输入则用文本。
+    // 空输入一律拦下（抖动 + 聚焦），别把用户送进空白页。
+    function currentQuery(opts) {
+        const input = document.getElementById('homeStockInput');
+        const shell = document.getElementById('searchShell');
+        if (!input) return '';
+        const q = (homeStockCode || input.value || '').trim();
+        if (!q) {
+            input.placeholder = '请先输入股票代码或简称，如 600519 / 贵州茅台';
+            shell.classList.remove('shake');
+            void shell.offsetWidth;          // 强制重排，让同一动画能连续触发第二次
+            shell.classList.add('shake');
+            input.focus();
+            if (opts && opts.onEmpty) opts.onEmpty();
+            return '';
+        }
+        return q;
+    }
+
+    // 跳转：详情页与分析页都不在登录豁免名单里，未登录统一带 next 去登录页，
+    // 登录成功后能自动回到原本要去的那一页。
+    function navigate(target) {
+        window.location.href = IS_LOGGED_IN
+            ? target
+            : ('/login?next=' + encodeURIComponent(target));
+    }
+
+    // 去分析页：只把「选中的标的」带过去。
+    // AI 模型与投资视角不在首屏选择（首页两个下拉已下线），统一由分析页承担配置入口。
+    function goAnalyze() {
+        const q = currentQuery();
+        if (!q) return;
+        navigate('/analysis?' + new URLSearchParams({ code: q }).toString());
+    }
+
+    // 去个股详情页：URL 形如 /stock/600519.SH，必须是「代码」而不是名称——
+    // 后端 _normalize_ts_code 只认 6 位数字和 6 位+交易所后缀，
+    // 把「贵州茅台」直接拼进路径会 404。
+    const _TS_LOCAL_RE = /^\d{6}(\.(SH|SZ|BJ))?$/i;
+    function goView() {
+        const q = currentQuery();
+        if (!q) return;
+        const btn = document.getElementById('btnHomeView');
+        if (_TS_LOCAL_RE.test(q)) {
+            navigate('/stock/' + q.toUpperCase());
+            return;
+        }
+        // 走到这里说明输入的是中文名（用户手打后没选联想项）：
+        // 查一次搜索接口把名称换回代码，查不到就退回分析页继续搜，而不是甩 404。
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> 解析中'; }
+        fetch('/api/stocks/search?q=' + encodeURIComponent(q) + '&limit=1')
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                const it = (d && d.results && d.results[0]) || null;
+                const code = it ? (it.ts_code || it.code) : '';
+                if (code) {
+                    navigate('/stock/' + String(code).toUpperCase());
+                } else {
+                    // 查不到就退回分析页：那里还能继续搜，比甩一个 404 强
+                    navigate('/analysis?' + new URLSearchParams({ code: q }).toString());
+                }
+            })
+            .catch(function () {
+                navigate('/analysis?' + new URLSearchParams({ code: q }).toString());
+            })
+            .finally(function () {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-regular fa-eye me-2"></i>查看'; }
+            });
+    }
+
+    const analyzeBtn = document.getElementById('btnHomeAnalyze');
+    const viewBtn = document.getElementById('btnHomeView');
+    const homeInput = document.getElementById('homeStockInput');
+    if (analyzeBtn) analyzeBtn.addEventListener('click', goAnalyze);
+    if (viewBtn) viewBtn.addEventListener('click', goView);
+    if (homeInput && analyzeBtn) {
+        // 回车 = 主动作（分析），与按钮主次一致
+        homeInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') goAnalyze();
+        });
+    }
+
+    /* ===== 搜索自动补全 ===== */
+    const suggestBox = document.getElementById('searchSuggest');
+    const suggestShell = document.getElementById('searchShell');
+    const HOME_PLACEHOLDER = (document.getElementById('homeStockInput') || {}).placeholder || '';
+    let sgTimer = null, sgItems = [], sgActive = -1;
+    function hideSuggest() {
+        suggestBox.classList.remove('show');
+        suggestShell.classList.remove('panel-open');   // 关面板同时撤掉宿主抬升
+        homeInput.setAttribute('aria-expanded', 'false');
+        sgActive = -1;
+    }
+    function pickSuggest(item) {
+        // 仅「选中」：把规范 ts_code 记入 homeStockCode，并把「名称(代码)」回填输入框，
+        // 不立即跳转——分析会消耗每日/会员额度，未确认就自动执行等于替用户花掉配额，
+        // 统一交回用户点击「查看」或「分析」再走 goView / goAnalyze。
+        homeStockCode = item.ts_code || item.code || '';   // 记下规范代码，提交时优先用它
+        homeInput.value = item.name + '(' + (item.ts_code || item.code) + ')';
+        homeInput.classList.add('is-selected');            // 轻量视觉提示：已选中标的
+        hideSuggest();
+    }
+    function renderSuggest(list) {
+        sgItems = list;
+        sgActive = -1;   // 每次重渲染都回到「未选中」态：结果集变了，旧的高亮序号不再有意义
+        if (!list.length) { hideSuggest(); return; }
+        suggestBox.innerHTML = list.map(function (it, i) {
+            return '<div class="sg-item" role="option" aria-selected="false" data-i="' + i + '">' +
+                '<span class="sg-name">' + _hEsc(it.name) + '</span>' +
+                '<span class="sg-code">' + _hEsc(it.ts_code || it.code || '') + '</span></div>';
+        }).join('');
+        suggestShell.classList.add('panel-open');   // 显示提示框时抬升宿主，保证压在 ticker/hot-strip 之上
+        suggestBox.classList.add('show');
+        homeInput.setAttribute('aria-expanded', 'true');
+    }
+    if (homeInput) {
+        homeInput.addEventListener('input', function () {
+            homeStockCode = '';   // 手动编辑后作废联想带来的规范代码，改用文本本身
+            homeInput.classList.remove('is-selected');   // 用户改了输入，取消「已选中」标记
+            suggestShell.classList.remove('shake');      // 已开始输入，撤掉空输入抖动提示
+            homeInput.placeholder = HOME_PLACEHOLDER;    // 还原被抖动提示改掉的占位文案
+            clearTimeout(sgTimer);
+            const q = this.value.trim();
+            if (q.length < 2) { hideSuggest(); return; }
+            sgTimer = setTimeout(function () {
+                fetch('/api/stocks/search?q=' + encodeURIComponent(q) + '&limit=6')
+                    .then(function (r) { return r.json(); })
+                    .then(function (d) { renderSuggest((d.results || []).slice(0, 6)); })
+                    .catch(hideSuggest);
+            }, 220);
+        });
+        homeInput.addEventListener('keydown', function (e) {
+            if (!suggestBox.classList.contains('show')) return;
+            const els = suggestBox.querySelectorAll('.sg-item');
+            if (e.key === 'ArrowDown') { e.preventDefault(); sgActive = (sgActive + 1) % els.length; }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); sgActive = (sgActive - 1 + els.length) % els.length; }
+            else if (e.key === 'Enter' && sgActive >= 0) { e.preventDefault(); pickSuggest(sgItems[sgActive]); return; }
+            else if (e.key === 'Escape') { hideSuggest(); return; }
+            else return;
+            els.forEach(function (el, i) {
+                el.classList.toggle('active', i === sgActive);
+                el.setAttribute('aria-selected', i === sgActive ? 'true' : 'false');
+            });
+        });
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('#searchShell')) hideSuggest();
+        });
+        suggestBox.addEventListener('click', function (e) {
+            const el = e.target.closest('.sg-item');
+            if (el) pickSuggest(sgItems[parseInt(el.dataset.i)]);
+        });
+    }
+
+    /* ===== 大盘 ticker（真实数据，红涨绿跌） ===== */
+    (function loadTicker() {
+        const box = document.getElementById('indexTicker');
+        if (!box) return;
+        function paint(m, tradeDate) {
+            // 统一用全局 _hEsc：这里的 name / 情绪标签都来自外部数据源，
+            // 之前本地 esc() 只做了 String() 转换，等于没转义。
+            const esc = _hEsc;
+            function item(k, name) {
+                const d = m[k]; if (!d) return '';
+                const pct = parseFloat(d.change_pct);
+                const flat = isNaN(pct) || pct === 0;          // 平盘用中性色，不算涨跌
+                const cls = flat ? 'idx-flat' : (d.is_up ? 'idx-up' : 'idx-down');
+                const sign = (!flat && d.is_up) ? '+' : '';     // 下跌时 change_pct 自带负号
+                return '<div class="idx-card ' + cls + '">' +
+                    '<span class="idx-name">' + esc(name) + '</span>' +
+                    '<span class="idx-val">' +
+                        '<span class="idx-price">' + esc(d.price) + '</span>' +
+                        '<span class="idx-chg">' + sign + esc(d.change_pct) + '%</span>' +
+                    '</span></div>';
+            }
+            function stat(label, val, color) {
+                return '<div class="st-card">' +
+                    '<span class="st-label">' + esc(label) + '</span>' +
+                    '<span class="st-val" style="color:' + color + '">' + esc(val) + '</span></div>';
+            }
+
+            let html = '<div class="idx-group">' +
+                item('sh', '上证指数') + item('sz', '深证成指') + item('cy', '创业板指') +
+                '</div>';
+
+            const stats = [];
+            if (m.north_fund && m.north_fund !== '--') {
+                stats.push(stat('北向资金', m.north_fund, m.north_is_up !== false ? '#f87171' : '#34d399'));
+            }
+            if (m.limit_count && m.limit_count !== '-') {
+                stats.push(stat('涨停家数', m.limit_count, '#f87171'));
+            }
+            if (m.sentiment) {
+                stats.push(stat('市场情绪', m.sentiment + ' ' + (m.sentiment_label || ''), '#38bdf8'));
+            }
+            // 数据日期必须显式给出：非交易时段（收盘后 / 周末）这里显示的是
+            // 上一交易日收盘数据，不给日期用户会误以为是实时行情。
+            const td = String(tradeDate || '').trim();
+            if (/^\d{8}$/.test(td)) {
+                stats.push(stat('数据日期', td.slice(4, 6) + '-' + td.slice(6), '#94a3b8'));
+            }
+            if (stats.length) html += '<div class="idx-stats">' + stats.join('') + '</div>';
+
+            box.innerHTML = html;
+        }
+        // 首页 ticker 的开关与刷新间隔由后台「系统边栏 → 首页模块」控制
+        const TICKER_CFG = {
+            enabled: {{ 'true' if sb('home.ticker').enabled else 'false' }},
+            autoRefresh: {{ 'true' if sb('home.ticker').options.auto_refresh else 'false' }},
+            refreshSec: {{ sb('home.ticker').options.refresh_sec | int }}
+        };
+        function pullTicker() {
+            return fetch('/api/market-snapshot').then(function (r) { return r.json(); })
+                .then(function (d) { if (d.market) paint(d.market, d.trade_date); });
+        }
+        pullTicker().catch(function () {
+            box.innerHTML = '<span class="idx-north">行情加载失败，请稍后刷新</span>';
+        });
+        if (TICKER_CFG.enabled && TICKER_CFG.autoRefresh) {
+            setInterval(function () { pullTicker().catch(function () { /* 轮询失败静默，保留上一次结果 */ }); },
+                        Math.max(15, TICKER_CFG.refreshSec || 60) * 1000);
+        }
+    })();
+
+    /* ===== 研报预览打字机 ===== */
+    (function typewriter() {
+        const el = document.getElementById('typeTarget');
+        if (!el) return;
+        /* 2026-10-03：这里原先打的是一份「示例研报 JSON」，已废弃。
+           原因：编造的个股数字会随时间越来越离谱；安全边际与结论自相矛盾；
+           抬头说「仅为示意」落款却说「基于真实数据」，三者互相打架。
+           改为展示**出具标准**而非编造结论：不出现任何具体数字，不过时、
+           不自相矛盾，且「怎么判断」比「结论是什么」更值得展示。 */
+        const LINES = [
+            ['c-comment', '# 【分析协议】每份研报都按以下标准出具 — 非个股结论'],
+            ['c-key', '"data_basis": '], ['c-str', '"交易所公告 · 定期报告 · 行情与估值数据"'], ['', ''],
+            ['c-key', '"dimensions": ['],
+            ['', '  "生意本质：护城河与议价权，谁在赚钱"'],
+            ['', '  "财务质量：ROE 拆解、现金流含金量、偿债安全"'],
+            ['', '  "估值锚定：历史分位 + 现金流折现，三情景测算"'],
+            ['', '  "风险排查：商誉、应收账款、存贷双高、解禁与质押"'],
+            ['c-key', '],'],
+            ['c-key', '"output": '], ['c-str', '"合理价值区间 · 安全边际 · 持有周期 · 证伪条件"'], ['', ''],
+            ['c-comment', '# ✓ 每个数字标注来源与报告期 · 结论可复核 · 支持 PDF 导出'],
+        ];
+        let li = 0, ci = 0, buf = [];
+        function curSpan() { return '<span class="type-cursor"></span>'; }
+        function render() {
+            let html = '';
+            for (let i = 0; i < li; i++) {
+                const t = LINES[i];
+                html += t[1] ? '<span class="' + t[0] + '">' + t[1] + '</span>' : '';
+                if (i < li - 1 || (i === li && ci === 0)) html += '<br>';
+            }
+            if (li < LINES.length && ci > 0) {
+                const t = LINES[li];
+                html += '<span class="' + t[0] + '">' + t[1].slice(0, ci) + '</span>';
+            }
+            el.innerHTML = html + curSpan();
+        }
+        function tick() {
+            if (li >= LINES.length) { el.innerHTML = el.innerHTML.replace(curSpan(), ''); return; }
+            const t = LINES[li];
+            if (!t[1]) { li++; ci = 0; render(); setTimeout(tick, 90); return; }
+            if (ci <= t[1].length) { render(); ci++; setTimeout(tick, t[0] === 'c-comment' ? 14 : 22); }
+            else { li++; ci = 0; render(); setTimeout(tick, 130); }
+        }
+        // 进入视口才开始打字
+        const io = new IntersectionObserver(function (entries) {
+            if (entries[0].isIntersecting) { io.disconnect(); tick(); }
+        }, { threshold: 0.3 });
+        io.observe(el);
+    })();
+</script>
+{% endblock %}

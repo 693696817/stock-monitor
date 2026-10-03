@@ -1,0 +1,204 @@
+
+
+{% set site = request.app.state.site if (request and request.app.state and request.app.state.site) else {} %}
+{% set site_name = site.get('SITE_NAME') or 'A股棱镜' %}
+<style>
+    /* Footer 专属样式 */
+    footer {
+        background-color: #0b0f19; /* 极深蓝背景 */
+        border-top: 1px solid rgba(56, 189, 248, 0.1); /* 顶部微光边框 */
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* 顶部光晕装饰 */
+    footer::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.5), transparent);
+    }
+
+    /* 链接样式增强 */
+    .footer-link {
+        color: #64748b;
+        text-decoration: none;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+    }
+    .footer-link:hover {
+        color: #38bdf8;
+        padding-left: 8px; /* 悬停右移效果 */
+    }
+    .footer-link i {
+        font-size: 0.8em;
+        margin-right: 8px;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .footer-link:hover i {
+        opacity: 1;
+    }
+
+    /* 订阅框风格化 */
+    .footer-input-group {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 4px;
+        transition: border-color 0.3s;
+    }
+    .footer-input-group:focus-within {
+        border-color: rgba(56, 189, 248, 0.5);
+    }
+    .footer-input {
+        background: transparent;
+        border: none;
+        color: #fff;
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+    .footer-input:focus {
+        box-shadow: none;
+        background: transparent;
+        color: #fff;
+    }
+    .btn-subscribe {
+        background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
+        color: #fff;
+        border-radius: 6px;
+        padding: 8px 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: opacity 0.3s;
+    }
+    .btn-subscribe:hover {
+        opacity: 0.9;
+        color: #fff;
+    }
+
+    /* 社交图标 */
+    .social-btn {
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.05);
+        color: #94a3b8;
+        margin-right: 10px;
+        transition: all 0.3s;
+        text-decoration: none;
+    }
+    .social-btn:hover {
+        background: rgba(56, 189, 248, 0.2);
+        color: #38bdf8;
+        transform: translateY(-3px);
+    }
+</style>
+
+<footer class="text-lg-start py-5">
+    <div class="container">
+        <div class="row g-4">
+
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="d-flex align-items-center justify-content-center me-3"
+                         style="width: 36px; height: 36px; background: rgba(56,189,248,0.1); border-radius: 8px; color: #38bdf8;">
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <div>
+                        <h5 class="m-0 font-tech fw-bold text-white" style="letter-spacing: 1px;">{{ site_name }}</h5>
+                        <small class="text-muted" style="font-size: 0.7rem;">AI智能股票分析平台</small>
+                    </div>
+                </div>
+
+                <p class="text-muted small pe-lg-5 mb-4" style="line-height: 1.8;">
+                    我们致力于将机构级的量化分析能力平民化。通过大数据清洗与 AI 深度推理，为理性投资者提供可信赖的决策辅助。
+                </p>
+
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted small"><i class="fa-regular fa-comments me-1"></i>交流渠道建设中，可通过「意见反馈」联系我们</span>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-2 offset-lg-1">
+                <h6 class="text-white mb-4 text-uppercase small fw-bold font-tech" style="letter-spacing: 1px; color: #38bdf8 !important;">
+                    <i class="fa-solid fa-layer-group me-2"></i>产品
+                </h6>
+                <a href="/analysis" class="footer-link"><i class="fa-solid fa-chevron-right"></i>股票分析</a>
+                <a href="/opportunities" class="footer-link"><i class="fa-solid fa-chevron-right"></i>机会挖掘</a>
+                <a href="/pricing" class="footer-link"><i class="fa-solid fa-chevron-right"></i>价格方案</a>
+                <a href="/doc" class="footer-link"><i class="fa-solid fa-chevron-right"></i>开发文档</a>
+            </div>
+
+            <div class="col-6 col-lg-2">
+                <h6 class="text-white mb-4 text-uppercase small fw-bold font-tech" style="letter-spacing: 1px; color: #38bdf8 !important;">
+                    <i class="fa-solid fa-database me-2"></i>数据
+                </h6>
+                <a href="/about" class="footer-link"><i class="fa-solid fa-chevron-right"></i>金融大数据</a>
+                <a href="/disclaimer" class="footer-link"><i class="fa-solid fa-chevron-right"></i>数据免责声明</a>
+                <a href="/help" class="footer-link"><i class="fa-solid fa-chevron-right"></i>指标口径说明</a>
+            </div>
+
+            <div class="col-lg-3">
+                <h6 class="text-white mb-4 text-uppercase small fw-bold font-tech" style="letter-spacing: 1px; color: #38bdf8 !important;">
+                    <i class="fa-solid fa-envelope me-2"></i>订阅快讯
+                </h6>
+
+                <form action="#" class="mb-3">
+                    <div class="input-group footer-input-group">
+                        <input type="email" class="form-control footer-input shadow-none" placeholder="Email Address...">
+                        <button class="btn btn-subscribe" type="button"><i class="fa-regular fa-paper-plane"></i></button>
+                    </div>
+                </form>
+
+                <div class="p-3 rounded bg-dark border border-secondary border-opacity-25">
+                    <p class="text-secondary mb-0" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-triangle-exclamation me-1 text-warning"></i>
+                        <strong>风险提示：</strong> 本平台生成的报告仅供参考，不构成任何投资建议。股市有风险，入市需谨慎。
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="border-top border-secondary border-opacity-25 mt-4 pt-3">
+            <div class="d-flex flex-wrap justify-content-center gap-3 gap-md-4 small">
+                <a href="/privacy" class="text-decoration-none text-muted footer-legal">隐私政策</a>
+                <a href="/terms" class="text-decoration-none text-muted footer-legal">服务条款</a>
+                <a href="/disclaimer" class="text-decoration-none text-muted footer-legal">免责声明</a>
+                <a href="/cookies" class="text-decoration-none text-muted footer-legal">Cookie 政策</a>
+                <a href="/refund" class="text-decoration-none text-muted footer-legal">退款政策</a>
+                <a href="/about" class="text-decoration-none text-muted footer-legal">关于我们</a>
+                <a href="/contact" class="text-decoration-none text-muted footer-legal">联系我们</a>
+                <a href="/help" class="text-decoration-none text-muted footer-legal">帮助中心</a>
+                <a href="/feedback" class="text-decoration-none text-muted footer-legal">意见反馈</a>
+            </div>
+        </div>
+
+        <div class="border-top border-secondary border-opacity-25 mt-3 pt-4 d-flex flex-column flex-md-row justify-content-between align-items-center">
+            <div class="text-muted small mb-2 mb-md-0">
+                开发者：ZYJ
+                Copyright © 2026 <span class="text-light">{{ site_name }}</span> All rights reserved.
+            </div>
+            <div class="footer-beian" style="text-align: center; padding: 20px 0; font-size: 14px; color: #666;">
+                <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" style="color: #666; text-decoration: none;">
+                    {{ site.get('ICP_NUMBER') or '豫ICP备2024045985号-1' }}
+                </a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<style>
+    .footer-legal { transition: color .2s; }
+    .footer-legal:hover { color: #38bdf8 !important; }
+</style>

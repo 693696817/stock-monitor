@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% block seo_description %}系统边栏 · 管理后台 - A股棱镜（仅限管理员访问）{% endblock %}
+{% block seo_keywords %}A股棱镜,管理后台,系统管理{% endblock %}
+
+
+{% block robots %}noindex, nofollow{% endblock %}
+
+
+
+{% block title %}系统边栏 - A股棱镜 后台{% endblock %}
+
+{% block content %}
+<style>
+    .sm-shell { display: flex; gap: 18px; align-items: flex-start; }
+    .sm-main { flex: 1; min-width: 0; }
+
+    .sm-group {
+        background: #0f172a; border: 1px solid #1e293b; border-radius: 12px;
+        padding: 16px 18px; margin-bottom: 16px;
+    }
+    .sm-group-head {
+        display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+        padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid #1e293b;
+    }
+    .sm-group-title { color: #fff; font-size: 1rem; font-weight: 700; margin: 0; }
+    .sm-group-desc { color: #64748b; font-size: .8rem; }
+
+    .sm-row {
+        background: #0b1220; border: 1px solid #1e293b; border-radius: 10px;
+        padding: 12px 14px; margin-bottom: 10px;
+        display: flex; gap: 12px; align-items: flex-start;
+    }
+    .sm-row:last-child { margin-bottom: 0; }
+    .sm-row.off { opacity: .5; }
+
+    .sm-ctl { display: flex; flex-direction: column; gap: 6px; width: 52px; flex: none; }
+    .sm-move {
+        background: #1e293b; border: 1px solid #334155; color: #94a3b8;
+        border-radius: 6px; padding: 2px 0; cursor: pointer; font-size: .72rem; line-height: 1.4;
+    }
+    .sm-move:hover:not(:disabled) { color: #38bdf8; border-color: #38bdf8; }
+    .sm-move:disabled { opacity: .3; cursor: not-allowed; }
+
+    .sm-body { flex: 1; min-width: 0; }
+    .sm-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .sm-name { color: #e2e8f0; font-size: .92rem; font-weight: 600; }
+    .sm-key { font-family: ui-monospace, monospace; font-size: 11px; color: #38bdf8; }
+    .sm-desc { color: #64748b; font-size: .8rem; margin-top: 4px; line-height: 1.5; }
+    .sm-src {
+        display: inline-block; margin-top: 6px; font-size: 11px; color: #94a3b8;
+        background: #0f172a; border: 1px solid #243449; border-radius: 999px; padding: 2px 10px;
+    }
+    .sm-opts {
+        display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 10px;
+        padding-top: 10px; border-top: 1px dashed #243449;
+    }
+    .sm-opt { display: flex; align-items: center; gap: 6px; font-size: .82rem; color: #94a3b8; }
+    .sm-opt label { margin: 0; cursor: pointer; }
+    .sm-opt input[type="number"] {
+        width: 78px; background: #0f172a; border: 1px solid #334155; color: #e2e8f0;
+        border-radius: 6px; padding: 2px 8px; font-size: .82rem;
+    }
+    .sm-opt select {
+        background: #0f172a; border: 1px solid #334155; color: #e2e8f0;
+        border-radius: 6px; padding: 2px 8px; font-size: .82rem; max-width: 260px;
+    }
+    .sm-opt .form-check-input { margin-top: 0; cursor: pointer; }
+    .sm-help { color: #475569; font-size: .74rem; }
+
+    .sm-switch { flex: none; padding-top: 2px; }
+    .sm-bar {
+        position: sticky; bottom: 0; background: #0f172a; border: 1px solid #1e293b;
+        border-radius: 12px; padding: 12px 16px; margin-top: 6px;
+        display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .sm-toast {
+        position: fixed; right: 22px; bottom: 22px; z-index: 1080;
+        background: #0f172a; border: 1px solid #334155; color: #e2e8f0;
+        border-radius: 10px; padding: 10px 18px; font-size: .88rem;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, .45); display: none;
+    }
+    .sm-toast.ok { border-color: rgba(52, 211, 153, .5); }
+    .sm-toast.err { border-color: rgba(248, 113, 113, .5); }
+</style>
+
+<div class="admin-shell">
+    {% include 'components/admin_sidebar.html' %}
+    <main class="admin-main">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <h3 class="font-tech mb-0" style="color:#fff;">
+                <i class="fa-solid fa-table-columns text-info me-2"></i>系统边栏
+            </h3>
+            <span class="text-secondary small">全站小模块统一管理：开关 · 排序 · 数据源 · 细节设置</span>
+        </div>
+
+        <div class="tab-help">
+            每个小模块可单独<b>启用/停用</b>、用 ↑↓ <b>调整顺序</b>（同一分组内），并配置条数、数据源等细节项。
+            「数据源」列展示该模块的真实取数口径 —— 前台对外一律显示为「金融大数据」，此处仅后台可见，便于排障。
+            停用某个模块后，对应页面会直接不再渲染该区块。
+        </div>
+
+        {% for p in placements %}
+        <div class="sm-group" data-placement="{{ p.key }}">
+            <div class="sm-group-head">
+                <h6 class="sm-group-title"><i class="fa-solid {{ p.icon }} me-2 text-info"></i>{{ p.name }}</h6>
+                <span class="sm-group-desc">{{ p.desc }}</span>
+            </div>
+
+            {% for key in by_placement.get(p.key, []) %}
+            {% set m = modules.get(key) %}
+            {% set d = defs.get(key, {}) %}
+            {% if m %}
+            <div class="sm-row {% if not m.enabled %}off{% endif %}" data-key="{{ key }}">
+                <div class="sm-ctl">
+                    <button type="button" class="sm-move" data-dir="-1" title="上移"><i class="fa-solid fa-chevron-up"></i></button>
+                    <button type="button" class="sm-move" data-dir="1" title="下移"><i class="fa-solid fa-chevron-down"></i></button>
+                </div>
+
+                <div class="sm-body">
+                    <div class="sm-title">
+                        <span class="sm-name"><i class="fa-solid {{ m.icon }} me-1 text-secondary"></i>{{ m.name }}</span>
+                        <code class="sm-key">{{ m.key }}</code>
+                    </div>
+                    <div class="sm-desc">{{ m.desc }}</div>
+                    <span class="sm-src"><i class="fa-solid fa-database me-1"></i>{{ m.source }}</span>
+
+                    {% if d.get('options') %}
+                    <div class="sm-opts">
+                        {% for o in d['options'] %}
+                        <div class="sm-opt">
+                            {% if o.type == 'bool' %}
+                                <input class="form-check-input" type="checkbox" data-opt="{{ o.key }}"
+                                       id="opt-{{ key }}-{{ o.key }}"
+                                       {% if m.options.get(o.key) %}checked{% endif %}>
+                                <label for="opt-{{ key }}-{{ o.key }}">{{ o.label }}</label>
+                            {% elif o.type == 'int' %}
+                                <label for="opt-{{ key }}-{{ o.key }}">{{ o.label }}</label>
+                                <input type="number" class="sm-num" data-opt="{{ o.key }}" data-type="int"
+                                       id="opt-{{ key }}-{{ o.key }}"
+                                       value="{{ m.options.get(o.key) }}"
+                                       {% if o.get('min') is not none %}min="{{ o['min'] }}"{% endif %}
+                                       {% if o.get('max') is not none %}max="{{ o['max'] }}"{% endif %}>
+                            {% elif o.type == 'select' %}
+                                <label for="opt-{{ key }}-{{ o.key }}">{{ o.label }}</label>
+                                <select data-opt="{{ o.key }}" id="opt-{{ key }}-{{ o.key }}">
+                                    {% for c in o.get('choices', []) %}
+                                    <option value="{{ c.value }}" {% if m.options.get(o.key) == c.value %}selected{% endif %}>{{ c.label }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% else %}
+                                <label for="opt-{{ key }}-{{ o.key }}">{{ o.label }}</label>
+                                <input type="text" data-opt="{{ o.key }}" id="opt-{{ key }}-{{ o.key }}" value="{{ m.options.get(o.key) or '' }}">
+                            {% endif %}
+                            {% if o.get('help') %}<span class="sm-help" title="{{ o['help'] }}">(?)</span>{% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="sm-switch form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch"
+                           data-enabled="1" id="en-{{ key }}" {% if m.enabled %}checked{% endif %}>
+                    <label class="form-check-label small text-secondary" for="en-{{ key }}">启用</label>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endfor %}
+
+        <div class="sm-bar">
+            <span class="text-secondary small">修改后需点击保存；保存即时生效，前台刷新即可看到。</span>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnReset">恢复默认</button>
+                <button type="button" class="btn btn-sm btn-info" id="btnSave">保存设置</button>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="sm-toast" id="smToast"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        const toastEl = document.getElementById('smToast');
+        let toastTimer = null;
+
+        function smToast(msg, ok) {
+            if (!toastEl) return;
+            toastEl.textContent = msg;
+            toastEl.className = 'sm-toast ' + (ok ? 'ok' : 'err');
+            toastEl.style.display = 'block';
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(function () { toastEl.style.display = 'none'; }, 2600);
+        }
+
+        // 分组内上移 / 下移：直接搬 DOM 节点。
+        // order 不从 data 属性读、而是在保存时按 DOM 顺序重新编号 ——
+        // 避免"搬了节点但 order 没跟着变"导致保存后跳回原位。
+        function moveRow(btn) {
+            const row = btn.closest('.sm-row');
+            const dir = parseInt(btn.getAttribute('data-dir'), 10);
+            const sib = dir < 0 ? row.previousElementSibling : row.nextElementSibling;
+            if (!sib || !sib.classList.contains('sm-row')) return;
+            if (dir < 0) {
+                row.parentNode.insertBefore(row, sib);
+            } else {
+                row.parentNode.insertBefore(sib, row);
+            }
+            refreshMoveButtons();
+        }
+
+        function refreshMoveButtons() {
+            document.querySelectorAll('.sm-group').forEach(function (group) {
+                const rows = group.querySelectorAll('.sm-row');
+                rows.forEach(function (row, i) {
+                    row.querySelectorAll('.sm-move').forEach(function (b) {
+                        const dir = parseInt(b.getAttribute('data-dir'), 10);
+                        b.disabled = (dir < 0 && i === 0) || (dir > 0 && i === rows.length - 1);
+                    });
+                });
+            });
+        }
+
+        // 收集全量配置：所有分组、所有行，一个都不能漏 —— 后端是整体覆盖写。
+        function collect() {
+            const out = {};
+            document.querySelectorAll('.sm-group').forEach(function (group) {
+                const rows = group.querySelectorAll('.sm-row');
+                rows.forEach(function (row, i) {
+                    const key = row.getAttribute('data-key');
+                    const enEl = row.querySelector('[data-enabled]');
+                    const opts = {};
+                    row.querySelectorAll('[data-opt]').forEach(function (el) {
+                        const k = el.getAttribute('data-opt');
+                        if (el.type === 'checkbox') {
+                            opts[k] = !!el.checked;
+                        } else if (el.getAttribute('data-type') === 'int') {
+                            const n = parseInt(el.value, 10);
+                            opts[k] = isNaN(n) ? 0 : n;
+                        } else {
+                            opts[k] = el.value;
+                        }
+                    });
+                    out[key] = {
+                        enabled: enEl ? !!enEl.checked : true,
+                        order: (i + 1) * 10,
+                        options: opts
+                    };
+                });
+            });
+            return out;
+        }
+
+        function save(payload, okMsg) {
+            fetch('/api/admin/sidebar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ modules: payload })
+            })
+                .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+                .then(function (res) {
+                    if (res.ok && res.j.status === 'success') {
+                        smToast(okMsg, true);
+                    } else {
+                        smToast('保存失败：' + ((res.j && res.j.detail) || '未知错误'), false);
+                    }
+                })
+                .catch(function (e) { smToast('保存失败：' + e.message, false); });
+        }
+
+        document.querySelectorAll('.sm-move').forEach(function (b) {
+            b.addEventListener('click', function () { moveRow(b); });
+        });
+
+        // 启用开关：给整行加/去 off 样式，视觉上直接区分停用项
+        document.querySelectorAll('.sm-row [data-enabled]').forEach(function (el) {
+            el.addEventListener('change', function () {
+                const row = el.closest('.sm-row');
+                if (row) row.classList.toggle('off', !el.checked);
+            });
+        });
+
+        document.getElementById('btnSave').addEventListener('click', function () {
+            const payload = collect();
+            if (!Object.keys(payload).length) { smToast('没有可保存的模块', false); return; }
+            save(payload, '已保存 ' + Object.keys(payload).length + ' 个小模块配置');
+        });
+
+        document.getElementById('btnReset').addEventListener('click', function () {
+            if (!confirm('确定恢复默认？将清空所有开关、排序与细节设置（不会删除模块本身）。')) return;
+            save({}, '已恢复默认配置');
+            setTimeout(function () { location.reload(); }, 900);
+        });
+
+        refreshMoveButtons();
+    })();
+</script>
+{% endblock %}

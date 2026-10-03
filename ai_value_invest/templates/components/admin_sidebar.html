@@ -1,0 +1,20 @@
+<aside class="admin-sidebar">
+    <div class="brand">A股棱镜 <span>后台</span></div>
+    <nav class="admin-nav">
+        <a class="{% if admin_active == 'dashboard' %}active{% endif %}" href="/admin"><i class="fa-solid fa-gauge-high"></i> 仪表盘</a>
+        <a class="{% if admin_active == 'users' %}active{% endif %}" href="/admin/users"><i class="fa-solid fa-users"></i> 用户</a>
+        <a class="{% if admin_active == 'records' %}active{% endif %}" href="/admin/records"><i class="fa-solid fa-file-lines"></i> 分析记录</a>
+        <a class="{% if admin_active == 'valuation' %}active{% endif %}" href="/admin/valuation"><i class="fa-solid fa-flask"></i> 回测台账</a>
+        <a class="{% if admin_active == 'feedback' %}active{% endif %}" href="/admin/feedback"><i class="fa-solid fa-comments"></i> 反馈管理</a>
+        <a class="{% if admin_active == 'news' %}active{% endif %}" href="/admin/news"><i class="fa-solid fa-bolt"></i> 快讯管理</a>
+        <a class="{% if admin_active == 'orders' %}active{% endif %}" href="/admin/orders"><i class="fa-solid fa-receipt"></i> 会员订单</a>
+        <a class="{% if admin_active == 'redeem' %}active{% endif %}" href="/admin/redeem"><i class="fa-solid fa-ticket"></i> 兑换码管理</a>
+        <a class="{% if admin_active == 'notices' %}active{% endif %}" href="/admin/notices"><i class="fa-solid fa-bell"></i> 通知管理</a>
+        <a class="{% if admin_active == 'invites' %}active{% endif %}" href="/admin/invites"><i class="fa-solid fa-user-plus"></i> 邀请记录</a>
+        <a class="{% if admin_active == 'logs' %}active{% endif %}" href="/admin/logs"><i class="fa-solid fa-shield-halved"></i> 登录日志</a>
+        <a class="{% if admin_active == 'settings' %}active{% endif %}" href="/admin/settings"><i class="fa-solid fa-gear"></i> 系统设置</a>
+        <a class="{% if admin_active == 'sidebar' %}active{% endif %}" href="/admin/sidebar"><i class="fa-solid fa-table-columns"></i> 系统边栏</a>
+        <hr style="border-color: rgba(255,255,255,0.08); margin: 8px 0;">
+        <a href="/"><i class="fa-solid fa-arrow-left"></i> 返回前台</a>
+    </nav>
+</aside>

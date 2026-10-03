@@ -1,0 +1,515 @@
+{% extends "base.html" %}
+
+{% block title %}热榜风向标 - A股异动个股{% endblock %}
+{% block seo_description %}A股棱镜热榜风向标：按热度、涨幅、成交、换手等维度实时排序异动个股，快速定位当天市场关注度最高的 A 股。{% endblock %}
+{% block seo_keywords %}A股棱镜,A股热榜,异动个股,涨停,跌停,资金流向{% endblock %}
+
+
+
+
+
+{% block extra_css %}
+<style>
+    /* --- 页面布局 --- */
+    .hot-container {
+        padding-top: 100px;
+        padding-bottom: 40px;
+    }
+
+    .glass-card {
+        background: rgba(30, 41, 59, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+    }
+
+    /* --- 左侧：热度榜 (Table) --- */
+    .table-custom {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 8px;
+    }
+    .table-custom thead th {
+        color: #94a3b8;
+        font-weight: 500;
+        font-size: 0.85rem;
+        padding: 10px 15px;
+        border: none;
+    }
+    .table-custom tbody tr {
+        background: rgba(255, 255, 255, 0.03);
+        transition: all 0.2s ease;
+    }
+    .table-custom tbody tr:hover {
+        background: rgba(56, 189, 248, 0.1);
+        transform: scale(1.01);
+    }
+    .table-custom td {
+        padding: 15px;
+        vertical-align: middle;
+        border: none;
+        color: #e2e8f0;
+    }
+    .table-custom tbody tr td:first-child { border-radius: 8px 0 0 8px; }
+    .table-custom tbody tr td:last-child { border-radius: 0 8px 8px 0; }
+
+    .rank-badge {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.9rem;
+    }
+    .rank-1 { background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #000; box-shadow: 0 0 10px rgba(245, 158, 11, 0.4); }
+    .rank-2 { background: linear-gradient(135deg, #94a3b8, #cbd5e1); color: #000; }
+    .rank-3 { background: linear-gradient(135deg, #b45309, #d97706); color: #fff; }
+    .rank-other { background: rgba(255,255,255,0.1); color: #94a3b8; font-size: 0.8rem; }
+
+    .heat-bar-bg {
+        width: 90px;
+        height: 6px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    .heat-bar-fill {
+        height: 100%;
+        background: #38bdf8;
+        border-radius: 3px;
+    }
+
+    .price-up { color: #f87171; }
+    .price-down { color: #34d399; }
+
+    .change-tag { padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+    .bg-up { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .bg-down { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+
+    .concept-tag {
+        display: inline-block;
+        padding: 2px 8px;
+        margin: 2px 3px 0 0;
+        background: rgba(56, 189, 248, 0.08);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 10px;
+        color: #7dd3fc;
+        font-size: 0.7rem;
+        white-space: nowrap;
+    }
+
+    .reason-cell {
+        max-width: 220px;
+        font-size: 0.78rem;
+        color: #cbd5e1;
+        line-height: 1.4;
+        cursor: default;
+    }
+    /* 解读被截断时可点击展开完整内容 */
+    .reason-clickable { cursor: pointer; }
+    .reason-clickable:hover { color: #38bdf8; text-decoration: underline; }
+
+    /* 本站热门分析：完整解读保留原始换行与编号结构 */
+    .reason-full {
+        white-space: pre-wrap;
+        word-break: break-word;
+        line-height: 1.75;
+        font-size: 0.86rem;
+        color: #cbd5e1;
+    }
+    .local-hot-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .local-hot-item:last-child { border-bottom: none; }
+    .local-hot-rank {
+        width: 22px; height: 22px; flex: 0 0 22px;
+        border-radius: 5px; display: flex; align-items: center; justify-content: center;
+        font-weight: 800; font-size: 0.72rem; font-family: 'Orbitron', sans-serif;
+        background: rgba(255,255,255,0.1); color: #94a3b8;
+    }
+    .local-hot-rank.top1 { background: linear-gradient(135deg,#f59e0b,#fbbf24); color:#000; }
+    .local-hot-rank.top2 { background: linear-gradient(135deg,#94a3b8,#cbd5e1); color:#000; }
+    .local-hot-rank.top3 { background: linear-gradient(135deg,#b45309,#d97706); color:#fff; }
+
+    /* 概念/行业 列表 */
+    .mini-list-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .mini-list-item:last-child { border-bottom: none; }
+    .mini-bar-bg { width: 100%; height: 5px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+    .mini-bar-fill { height: 100%; background: linear-gradient(90deg,#38bdf8,#818cf8); border-radius: 3px; }
+
+    /* 排行榜序号（TOP3 高亮，加强榜单可读性） */
+    .mini-rank {
+        width: 22px; flex: 0 0 22px; text-align: center;
+        font-weight: 800; font-size: 0.8rem; font-family: 'Orbitron', sans-serif;
+        color: #94a3b8;
+    }
+    .mini-rank.top1 { color: #fbbf24; }
+    .mini-rank.top2 { color: #cbd5e1; }
+    .mini-rank.top3 { color: #d97706; }
+    /* 榜单内股票名（涨幅榜为真实个股，可点击进详情；概念/行业为板块名，不可点） */
+    .mini-name { color: #f1f5f9; font-weight: 700; font-size: 0.85rem; display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    a.mini-name-link { color: #f1f5f9; font-weight: 700; font-size: 0.85rem; text-decoration: none; display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    a.mini-name-link:hover { color: #38bdf8; text-decoration: underline; }
+    /* 全站股票名 hover 下划线（此前 hover-underline 未定义，等效无效果，统一补上） */
+    a.hover-underline:hover { text-decoration: underline; }
+
+    /* 热股表整行可点；第一条避免被理由弹窗覆盖 */
+    .table-custom tbody tr { cursor: pointer; }
+
+</style>
+{% endblock %}
+
+{% block modals %}
+<!-- 上榜解读：完整内容弹窗（截断时点击该条查看） -->
+<div class="modal fade" id="reasonModal" tabindex="-1" aria-labelledby="reasonModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content bg-dark text-white border-secondary">
+            <div class="modal-header border-secondary py-2">
+                <h6 class="modal-title m-0" id="reasonModalLabel">
+                    <i class="fa-solid fa-circle-info me-2 text-info"></i><span id="reasonModalTitle">上榜解读</span>
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body">
+                <div id="reasonModalBody" class="reason-full"></div>
+            </div>
+            <div class="modal-footer border-secondary py-2">
+                <a id="reasonModalLink" href="#" class="btn btn-sm btn-outline-info me-auto" style="display:none;">查看个股详情</a>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container hot-container">
+    <div class="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="text-white fw-bold font-tech mb-1">热榜风向标</h2>
+            <p class="text-muted small m-0">
+                <i class="fa-solid fa-fire text-danger me-1"></i>
+                数据日期 {{ ranks.trade_date or '最新' }}
+                <span class="text-secondary">· 盘中每 2 小时更新，收盘后约 22:30 定稿</span>
+                <span class="text-secondary" id="updateAgo"></span>
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% if sb('hot.ths_rank').enabled %}
+        <div class="col-lg-8">
+            <div class="glass-card">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="text-white fw-bold m-0"><i class="fa-solid fa-ranking-star me-2 text-warning"></i>热股 TOP 20</h5>
+                    <div class="badge bg-dark border border-secondary text-secondary">热股</div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">排名</th>
+                                <th>股票</th>
+                                <th class="text-end">涨跌幅</th>
+                                <th>热度</th>
+                                {% if sb('hot.ths_rank').options.show_reason %}<th>上榜解读</th>{% endif %}
+                            </tr>
+                        </thead>
+                        <tbody id="userRankTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="col-lg-4">
+            <!-- 本站热门分析 TOP N 置顶（用户最常访问的「自己人」在看什么） -->
+            {% if sb('hot.local_rank').enabled %}
+            <div class="glass-card mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h6 class="text-white fw-bold m-0"><i class="fa-solid fa-fire-flame-curved me-2 text-warning"></i>本站热门分析 TOP {{ sb('hot.local_rank').options.limit }}</h6>
+                    <span class="badge bg-dark border border-secondary text-secondary">近 {{ sb('hot.local_rank').options.days }} 天</span>
+                </div>
+                <div id="localHotList"></div>
+            </div>
+            {% endif %}
+
+            <div class="glass-card mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h6 class="text-white fw-bold m-0"><i class="fa-solid fa-arrow-trend-up me-2 text-danger"></i>涨幅榜 TOP 10</h6>
+                    <a href="/market" class="btn btn-sm btn-link text-muted p-0 text-decoration-none" style="font-size: 0.8rem;">更多 ></a>
+                </div>
+                <div id="gainList"></div>
+            </div>
+
+            <div class="glass-card mb-4">
+                <h6 class="text-white fw-bold m-0 mb-2"><i class="fa-solid fa-bolt me-2 text-warning"></i>热门板块 TOP 10</h6>
+                <div id="conceptList"></div>
+            </div>
+
+            <div class="glass-card">
+                <h6 class="text-white fw-bold m-0 mb-2"><i class="fa-solid fa-layer-group me-2 text-info"></i>热门行业 TOP 10</h6>
+                <div id="industryList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const rankData = {{ ranks | tojson | safe }};
+    const userRankData = rankData.hot_stocks || [];
+    const gainData = rankData.top_gainers || [];
+    const conceptData = rankData.hot_concepts || [];
+    const industryData = rankData.hot_industries || [];
+    // 本站热门分析（服务端已按近 N 天聚合，带 1 小时缓存）
+    const localHotData = {{ local_hot | tojson | safe }};
+    // 上榜解读列是否显示（后台「系统边栏 · hot.ths_rank.show_reason」控制）
+    const showReason = {{ sb('hot.ths_rank').options.show_reason | tojson }};
+
+    // 显示「X 分钟前更新」，让用户感知外部热榜数据时效
+    function fmtAgo(ts) {
+        if (!ts) return '';
+        const sec = Math.floor(Date.now() / 1000 - ts);
+        if (sec < 60) return '刚刚更新';
+        if (sec < 3600) return Math.floor(sec / 60) + ' 分钟前更新';
+        if (sec < 86400) return Math.floor(sec / 3600) + ' 小时前更新';
+        return Math.floor(sec / 86400) + ' 天前更新';
+    }
+    (function() {
+        const el = document.getElementById('updateAgo');
+        if (el) el.textContent = ' · ' + fmtAgo(rankData.updated_at || rankData.timestamp);
+    })();
+
+    function renderUserTable() {
+        const tbody = document.getElementById('userRankTable');
+        if (!tbody) return;   // 模块被停用时容器不存在
+        let html = '';
+        if (userRankData.length === 0) {
+            const colSpan = showReason ? 5 : 4;
+            tbody.innerHTML = '<tr><td colspan="' + colSpan + '" class="text-center text-muted py-4">暂无热股数据</td></tr>';
+            return;
+        }
+        const rows = userRankData;
+        rows.forEach((item, index) => {
+            const rank = index + 1;
+            let rankClass = 'rank-other';
+            if (rank === 1) rankClass = 'rank-1';
+            else if (rank === 2) rankClass = 'rank-2';
+            else if (rank === 3) rankClass = 'rank-3';
+
+            const changeVal = parseFloat(item.change);
+            const changeClass = changeVal > 0 ? 'text-danger' : (changeVal < 0 ? 'text-success' : 'text-white');
+            const sign = changeVal > 0 ? '+' : '';
+
+            const conceptTags = (item.concept || []).slice(0, 3).map(function (c) {
+                return '<span class="concept-tag">' + esc(c) + '</span>';
+            }).join('');
+
+            // 上榜解读：接口只在部分记录里填充，没有解读时用「关联概念」兜底，避免整列空白
+            // 表格内压成单行显示（原文含换行），完整内容保留换行放到弹窗里
+            let reasonFull = (item.reason || '').replace(/\s+/g, ' ').trim();
+            let reasonMuted = false;
+            if (!reasonFull) {
+                const cs = (item.concept || []).slice(0, 4);
+                if (cs.length) {
+                    reasonFull = '关联概念：' + cs.join('、');
+                    reasonMuted = true;
+                }
+            }
+            const reason = reasonFull.slice(0, 46);
+            const canExpand = reasonFull.length > 46;
+
+            html += `
+                <tr>
+                    <td><div class="rank-badge ${rankClass}">${rank}</div></td>
+                    <td>
+                        <a href="/stock/${encodeURIComponent(item.code || '')}" class="fw-bold text-white text-decoration-none hover-underline">${esc(item.name)}</a>
+                        <div class="font-mono text-muted" style="font-size:0.75rem;">${esc(item.code)}</div>
+                        ${conceptTags}
+                    </td>
+                    <td class="text-end">
+                        <span class="font-mono ${changeClass}">${item.change === '--' ? '--' : sign + item.change + '%'}</span>
+                        <div class="small text-muted">¥${item.price}</div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="heat-bar-bg me-2" style="max-width: 60px;">
+                                <div class="heat-bar-fill" style="width: ${item.heat}%"></div>
+                            </div>
+                            <span class="font-mono small text-secondary">${item.heat}</span>
+                        </div>
+                    </td>
+                    ${showReason ? `<td>
+                        ${reasonFull
+                            ? `<div class="reason-cell${reasonMuted ? ' text-muted' : ''} reason-clickable" data-idx="${index}" title="点击查看完整解读">${esc(reason)}${reasonFull.length > 46 ? '…' : ''}</div>`
+                            : '<span class="text-muted">—</span>'}
+                    </td>` : ''}
+                </tr>`;
+        });
+        tbody.innerHTML = html;
+    }
+
+    function miniRow(item, rank, clickable) {
+        const changeVal = parseFloat(item.change);
+        const changeClass = changeVal > 0 ? 'text-danger' : (changeVal < 0 ? 'text-success' : 'text-white');
+        const sign = changeVal > 0 ? '+' : '';
+        const heat = item.heat || 0;
+        const topCls = rank === 1 ? ' top1' : (rank === 2 ? ' top2' : (rank === 3 ? ' top3' : ''));
+        // 仅真实个股（涨幅榜）的 name 才可点进详情；概念/行业是板块名，不跳转股票页
+        const nameHtml = (clickable && item.code)
+            ? `<a href="/stock/${encodeURIComponent(item.code)}" class="mini-name-link" title="${esc(item.name)}">${esc(item.name)}</a>`
+            : `<span class="mini-name" title="${esc(item.name)}">${esc(item.name)}</span>`;
+        return `
+            <div class="mini-list-item">
+                <div class="mini-rank${topCls}">${rank}</div>
+                <div style="min-width:0; flex:1;">
+                    <div class="d-flex align-items-center justify-content-between gap-2">
+                        ${nameHtml}
+                        <span class="font-mono small ${changeClass}">${item.change === '--' ? '--' : sign + item.change + '%'}</span>
+                    </div>
+                    <div class="mini-bar-bg"><div class="mini-bar-fill" style="width: ${heat}%"></div></div>
+                </div>
+            </div>`;
+    }
+
+    function renderGain() {
+        const c = document.getElementById('gainList');
+        if (!gainData.length) { c.innerHTML = '<div class="text-center text-muted py-3">暂无涨幅数据</div>'; return; }
+        c.innerHTML = gainData.slice(0, 10).map(function (it, i) { return miniRow(it, i + 1, true); }).join('');
+    }
+    function renderConcept() {
+        const c = document.getElementById('conceptList');
+        if (!conceptData.length) { c.innerHTML = '<div class="text-center text-muted py-3">暂无板块数据</div>'; return; }
+        c.innerHTML = conceptData.slice(0, 10).map(function (it, i) { return miniRow(it, i + 1, false); }).join('');
+    }
+    function renderIndustry() {
+        const c = document.getElementById('industryList');
+        if (!industryData.length) { c.innerHTML = '<div class="text-center text-muted py-3">暂无行业数据</div>'; return; }
+        c.innerHTML = industryData.slice(0, 10).map(function (it, i) { return miniRow(it, i + 1, false); }).join('');
+    }
+
+    // 本站热门分析：近 7 天本地分析次数最多的 10 只个股（数据来自本站数据库，每小时更新）
+    function renderLocalHot() {
+        const c = document.getElementById('localHotList');
+        if (!c) return;
+        if (!localHotData.length) {
+            c.innerHTML = '<div class="text-center text-muted py-3">近 7 天暂无分析记录</div>';
+            return;
+        }
+        const maxCnt = Math.max.apply(null, localHotData.map(function (x) { return x.cnt || 0; })) || 1;
+        c.innerHTML = localHotData.map(function (item, i) {
+            const pct = Math.round((item.cnt || 0) / maxCnt * 100);
+            const topCls = i === 0 ? ' top1' : (i === 1 ? ' top2' : (i === 2 ? ' top3' : ''));
+            return `
+            <div class="local-hot-item">
+                <div class="local-hot-rank${topCls}">${item.rank}</div>
+                <div style="min-width:0; flex:1;">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <a href="/stock/${encodeURIComponent(item.code || '')}" class="text-white fw-bold small text-truncate text-decoration-none hover-underline" style="max-width:130px;">${esc(item.name)}</a>
+                        <span class="font-mono small text-info">${item.cnt} 次</span>
+                    </div>
+                    <div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${pct}%"></div></div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // ---- 上榜解读：点击展开完整内容 ----
+    function reasonTextOf(item) {
+        let text = (item.reason || '').trim();
+        if (!text) {
+            const cs = item.concept || [];
+            text = cs.length ? '关联概念：' + cs.join('、') : '';
+        }
+        return text;
+    }
+
+    let _reasonModalInstance = null;
+    function getReasonModalInstance() {
+        const el = document.getElementById('reasonModal');
+        if (!el) return null;
+        if (!_reasonModalInstance) {
+            _reasonModalInstance = bootstrap.Modal.getOrCreateInstance
+                ? bootstrap.Modal.getOrCreateInstance(el)
+                : new bootstrap.Modal(el);
+        }
+        return _reasonModalInstance;
+    }
+
+    function showReasonModal(item) {
+        const text = reasonTextOf(item);
+        if (!text) return;
+        // 用 textContent 而非 innerHTML：解读是外部接口文本，避免 XSS
+        document.getElementById('reasonModalTitle').textContent =
+            (item.name || '') + (item.code ? '  ' + item.code : '');
+        document.getElementById('reasonModalBody').textContent = text;
+        const link = document.getElementById('reasonModalLink');
+        if (item.code) {
+            link.href = '/stock/' + encodeURIComponent(item.code);
+            link.style.display = '';
+        } else {
+            link.style.display = 'none';
+        }
+        const inst = getReasonModalInstance();
+        if (inst) inst.show();
+    }
+
+    const rankTable = document.getElementById('userRankTable');
+    if (rankTable) {
+        rankTable.addEventListener('click', function (e) {
+            // 点击「上榜解读」单元格：弹出完整解读（不触发整行跳转）
+            const cell = e.target.closest('.reason-clickable');
+            if (cell) {
+                const idx = parseInt(cell.getAttribute('data-idx'), 10);
+                if (!isNaN(idx) && userRankData[idx]) showReasonModal(userRankData[idx]);
+                return;
+            }
+            // 点击整行其它区域（股票名/涨跌幅/热度）：跳转到个股详情
+            const tr = e.target.closest('tr');
+            const a = tr && tr.querySelector('a[href^="/stock/"]');
+            if (a) window.location.href = a.getAttribute('href');
+        });
+    }
+
+    renderUserTable();
+    renderGain();
+    renderConcept();
+    renderIndustry();
+    renderLocalHot();
+
+    // ⚠️ Bootstrap Modal 必须挂在 <body> 下，不能留在 <main> 里。
+    // base.html 的 <main> 有 position:relative; z-index:1，会创建层叠上下文，
+    // 导致 fixed 定位的 modal / backdrop 被限制在 <main> 内，出现「灰色遮罩卡死、点不动」的现象。
+    const reasonModal = document.getElementById('reasonModal');
+    if (reasonModal && reasonModal.parentElement !== document.body) {
+        document.body.appendChild(reasonModal);
+    }
+    // 点击灰色遮罩层关闭弹窗（Bootstrap 默认有时在移出 <main> 后失效，显式兜底）
+    if (reasonModal) {
+        reasonModal.addEventListener('click', function (e) {
+            if (e.target === reasonModal) {
+                const inst = getReasonModalInstance();
+                if (inst) inst.hide();
+            }
+        });
+    }
+</script>
+{% endblock %}

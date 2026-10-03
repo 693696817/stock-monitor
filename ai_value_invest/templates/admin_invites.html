@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block seo_description %}邀请记录 · 管理后台 - A股棱镜（仅限管理员访问）{% endblock %}
+{% block seo_keywords %}A股棱镜,管理后台,系统管理{% endblock %}
+
+
+{% block robots %}noindex, nofollow{% endblock %}
+
+
+
+{% block title %}邀请记录 - A股棱镜 后台{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+    {% include 'components/admin_sidebar.html' %}
+    <main class="admin-main">
+        <h3 class="font-tech mb-4" style="color:#fff;"><i class="fa-solid fa-user-plus text-info me-2"></i>邀请记录</h3>
+
+        <div class="admin-card">
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr><th>时间</th><th>邀请人</th><th>被邀请人</th><th>邀请码</th><th>奖励</th><th>等级</th></tr>
+                    </thead>
+                    <tbody id="inviteRows">
+                        <tr><td colspan="6" class="text-center text-secondary">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <nav id="invitePager" class="mt-3 d-flex justify-content-center"></nav>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let curPage = 1;
+    const PER = 20;
+
+    function fmtTime(v) { return v ? String(v).replace('T', ' ').slice(0, 19) : '-'; }
+    function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+    async function loadInvites() {
+        try {
+            const r = await (await fetch('/api/admin/invites?page=' + curPage + '&per_page=' + PER)).json();
+            const tb = document.getElementById('inviteRows');
+            if (!r.rows || !r.rows.length) {
+                tb.innerHTML = '<tr><td colspan="6" class="text-center text-secondary">暂无邀请记录</td></tr>';
+            } else {
+                tb.innerHTML = r.rows.map(row => {
+                    const reward = '+' + row.reward_days + ' 天 VIP-' + row.reward_level;
+                    return `<tr>
+                        <td class="font-mono" style="font-size:.8rem;">${fmtTime(row.created_at)}</td>
+                        <td>${esc(row.inviter_email)} <span class="text-secondary" style="font-size:.75rem;">(#${row.inviter_id})</span></td>
+                        <td>${esc(row.invitee_email)} <span class="text-secondary" style="font-size:.75rem;">(#${row.invitee_id})</span></td>
+                        <td class="font-mono">${esc(row.invite_code)}</td>
+                        <td><span class="admin-badge badge-vip">${reward}</span></td>
+                        <td>V${row.reward_level}</td>
+                    </tr>`;
+                }).join('');
+            }
+            renderPager(r.total || 0, r.page || 1);
+        } catch (e) {
+            document.getElementById('inviteRows').innerHTML = '<tr><td colspan="6" class="text-center text-danger">加载失败</td></tr>';
+        }
+    }
+
+    function renderPager(total, page) {
+        const pages = Math.max(1, Math.ceil(total / PER));
+        let html = '';
+        if (page > 1) html += `<button class="btn btn-sm btn-outline-info me-1" data-p="${page-1}">上一页</button>`;
+        html += `<span class="text-secondary mx-2" style="align-self:center;">第 ${page} / ${pages} 页（共 ${total} 条）</span>`;
+        if (page < pages) html += `<button class="btn btn-sm btn-outline-info" data-p="${page+1}">下一页</button>`;
+        document.getElementById('invitePager').innerHTML = html;
+    }
+
+    document.addEventListener('click', function (e) {
+        const p = e.target.closest('#invitePager button[data-p]');
+        if (p) { curPage = parseInt(p.getAttribute('data-p'), 10); loadInvites(); }
+    });
+
+    document.addEventListener('DOMContentLoaded', loadInvites);
+</script>
+{% endblock %}

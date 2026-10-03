@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}分析报告存档 - 历史个股研报{% endblock %}
+{% block seo_description %}查看你历史生成的所有 AI 个股研报，按股票代码、模型、日期归档管理，方便后续对比与跟踪。{% endblock %}
+{% block seo_keywords %}A股棱镜,分析报告存档,历史研报,个股研究记录{% endblock %}
+{% block robots %}noindex,nofollow{% endblock %}
+
+
+
+
+
+{% block extra_css %}
+<style>
+    .archive-wrap {
+        max-width: 960px;
+        margin: 0 auto;
+        /* 顶部让出 fixed-top 导航栏（约 70px 高，带 backdrop-filter 会盖住后续同级元素） */
+        padding: 96px 20px 60px;
+    }
+    .archive-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+    .archive-title {
+        color: #f8fafc;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    .archive-meta {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        margin-top: 4px;
+    }
+    .archive-actions .btn { font-size: 0.85rem; }
+    .report-card {
+        background: rgba(19, 27, 46, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        padding: 32px 36px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.28);
+        color: #e2e8f0;
+        line-height: 1.8;
+        font-size: 1.02rem;
+    }
+    .report-card h1, .report-card h2, .report-card h3 {
+        color: #f8fafc;
+        margin: 1.4em 0 0.6em;
+        font-weight: 700;
+    }
+    .report-card h1 { font-size: 1.6rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: .3em; }
+    .report-card h2 { font-size: 1.3rem; }
+    .report-card h3 { font-size: 1.1rem; }
+    .report-card p { margin: 0.7em 0; }
+    .report-card ul, .report-card ol { margin: 0.7em 0 0.7em 1.4em; }
+    .report-card li { margin: 0.3em 0; }
+    .report-card code {
+        background: rgba(148, 163, 184, 0.18);
+        padding: 2px 6px;
+        border-radius: 6px;
+        font-size: 0.92em;
+        color: #fcd34d;
+    }
+    .report-card pre {
+        background: rgba(2, 6, 23, 0.85);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 12px;
+        padding: 16px;
+        overflow-x: auto;
+        color: #e2e8f0;
+    }
+    .report-card table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1em 0;
+    }
+    .report-card th, .report-card td {
+        border: 1px solid rgba(255,255,255,0.12);
+        padding: 8px 12px;
+        text-align: left;
+        font-size: 0.95rem;
+    }
+    .report-card th { background: rgba(56, 189, 248, 0.12); color: #f8fafc; }
+    .report-card blockquote {
+        border-left: 3px solid #38bdf8;
+        margin: 1em 0;
+        padding: 0.4em 1em;
+        color: #cbd5e1;
+        background: rgba(56,189,248,0.06);
+        border-radius: 0 8px 8px 0;
+    }
+    .report-status {
+        text-align: center;
+        color: #94a3b8;
+        padding: 40px 0;
+    }
+    /* 管理员回看他人报告 / 生成失败时的提示条 */
+    .archive-notice {
+        display: flex; align-items: flex-start; gap: 10px;
+        padding: 12px 16px; border-radius: 12px; margin-bottom: 16px;
+        font-size: .92rem; line-height: 1.6;
+    }
+    .archive-notice.admin {
+        background: rgba(56,189,248,0.08);
+        border: 1px solid rgba(56,189,248,0.28);
+        color: #7dd3fc;
+    }
+    .archive-notice.failed {
+        background: rgba(248,113,113,0.08);
+        border: 1px solid rgba(248,113,113,0.28);
+        color: #fca5a5;
+    }
+    @media print {
+        .navbar, .archive-actions, .archive-status { display: none !important; }
+        .report-card { background: #fff; color: #111; border: none; box-shadow: none; }
+        .report-card h1, .report-card h2, .report-card h3, .report-card th { color: #111; }
+        body { background: #fff; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="archive-wrap">
+    <div class="archive-head">
+        <div>
+            <h1 class="archive-title" id="arcTitle">AI 分析报告存档</h1>
+            <div class="archive-meta" id="arcMeta">正在加载…</div>
+        </div>
+        <div class="archive-actions no-print">
+            <a href="/profile" class="btn btn-outline-secondary btn-sm me-2"><i class="fa-solid fa-arrow-left me-1"></i>返回个人中心</a>
+            <button class="btn btn-outline-info btn-sm me-2" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>打印 / 另存为 PDF</button>
+            <a href="/analysis" class="btn btn-outline-success btn-sm"><i class="fa-solid fa-rotate me-1"></i>重新分析</a>
+        </div>
+    </div>
+
+    <div id="arcNotice"></div>
+
+    <div class="report-card" id="arcBody">
+        <div class="report-status"><i class="fa-solid fa-spinner fa-spin me-2"></i>正在读取存档内容…</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const RID = {{ rid }};
+    const bodyEl = document.getElementById('arcBody');
+    const titleEl = document.getElementById('arcTitle');
+    const metaEl = document.getElementById('arcMeta');
+    const noticeEl = document.getElementById('arcNotice');
+
+    function esc(v) {
+        return String(v == null ? '' : v).replace(/[&<>"']/g, c => (
+            { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // 提示条：管理员回看他人报告时标明归属；生成失败时说明原因。
+    // 没有这个提示，管理员会分不清「这是谁的报告」以及「为什么是空的」。
+    function renderNotice(rec) {
+        let html = '';
+        if (rec.is_owner === 0 && (rec.owner_email || rec.owner_nickname)) {
+            html += `<div class="archive-notice admin">
+                <i class="fa-solid fa-user-shield mt-1"></i>
+                <div><b>管理员回看</b>：本报告属于其他用户
+                ${rec.owner_nickname ? `「${esc(rec.owner_nickname)}」` : ''}
+                ${rec.owner_email ? `（${esc(rec.owner_email)}）` : ''}，仅用于排查与质量检查。</div>
+            </div>`;
+        }
+        if (rec.status === 'failed') {
+            html += `<div class="archive-notice failed">
+                <i class="fa-solid fa-triangle-exclamation mt-1"></i>
+                <div><b>该次分析未成功生成</b>（配额已自动退还）。
+                ${rec.error_msg ? `失败原因：${esc(rec.error_msg)}` : ''}
+                下方内容（若有）仅为错误信息，不是研报正文。</div>
+            </div>`;
+        }
+        noticeEl.innerHTML = html;
+    }
+
+    async function loadArchive() {
+        try {
+            const res = await fetch(`/api/analysis/${RID}`);
+            if (res.status === 401) { window.location.href = '/login'; return; }
+            if (res.status === 404) {
+                bodyEl.innerHTML = '<div class="report-status text-warning">未找到该存档记录（可能已被删除，或不属于当前账号）。</div>';
+                metaEl.innerText = '记录不存在';
+                return;
+            }
+            if (!res.ok) throw new Error('加载失败: ' + res.status);
+            const data = await res.json();
+            const rec = data.record || {};
+            renderNotice(rec);
+            if (!rec.report_md) {
+                bodyEl.innerHTML = '<div class="report-status text-muted">该记录没有可回看的正文内容'
+                    + (rec.status === 'failed' ? '（生成失败，无正文）' : '') + '。</div>';
+                metaEl.innerText = `记录 #${rec.id || RID}`;
+                return;
+            }
+            titleEl.innerText = `${rec.stock_name || '股票'} (${rec.stock_code || ''}) 分析报告`;
+            const mode = rec.mode === 'deep' ? '深度' : '普通';
+            const modelPart = rec.model_id ? ` · 模型 ${rec.model_id}` : '';
+            metaEl.innerText = `存档记录 #${rec.id} · ${mode}模式${modelPart} · 生成于 ${rec.created_at || '—'}`;
+            bodyEl.innerHTML = renderMarkdown(rec.report_md);
+        } catch (e) {
+            bodyEl.innerHTML = '<div class="report-status text-danger">读取失败：' + esc(e.message || '未知错误') + '</div>';
+            metaEl.innerText = '读取失败';
+        }
+    }
+    loadArchive();
+</script>
+{% endblock %}

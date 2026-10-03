@@ -1,0 +1,403 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }} · {{ site.get('SITE_NAME') or 'A股棱镜' }}{% endblock %}
+
+{% block seo_description %}{{ page.meta_description }}{% endblock %}
+{% block seo_keywords %}A股棱镜,{{ page.title }}{% endblock %}
+{% block og_description %}{{ page.subtitle }}{% endblock %}
+
+{% block robots %}{% if legal_indexable(page.slug) %}index, follow{% else %}noindex, nofollow{% endif %}{% endblock %}
+
+{% block jsonld %}
+{% if page.meta_jsonld %}
+<script type="application/ld+json">{{ page.meta_jsonld | safe }}</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": {{ _site_name|tojson }},
+  "url": {{ (_site_domain or _cur_url)|tojson }}
+}
+</script>
+{% endif %}
+{% endblock %}
+
+{% block twitter_title %}{{ page.title }}{% endblock %}
+{% block twitter_description %}{{ page.subtitle }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== 法务 / 信息页统一布局 ===== */
+    .legal-hero {
+        padding: 130px 0 40px;
+        position: relative;
+    }
+    .legal-hero::after {
+        content: '';
+        position: absolute;
+        left: 50%; bottom: 0;
+        transform: translateX(-50%);
+        width: 60%; height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(56,189,248,.45), transparent);
+    }
+    .legal-icon {
+        width: 64px; height: 64px;
+        border-radius: 16px;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 1.6rem; color: #38bdf8;
+        background: linear-gradient(135deg, rgba(56,189,248,.12), rgba(129,140,248,.12));
+        border: 1px solid rgba(56,189,248,.25);
+        margin-bottom: 20px;
+    }
+    .legal-title {
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 800;
+        letter-spacing: 1px;
+        font-size: clamp(1.9rem, 4vw, 2.6rem);
+        color: #fff;
+        margin-bottom: 12px;
+    }
+    .legal-sub { color: #94a3b8; font-size: 1.05rem; }
+    .legal-meta {
+        color: #64748b; font-size: .82rem;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* 侧边目录 */
+    .legal-toc {
+        position: sticky;
+        top: 92px;
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+        background: rgba(30,41,59,.45);
+        border: 1px solid var(--border-light);
+        border-radius: 14px;
+        padding: 18px 16px;
+    }
+    .legal-toc h6 {
+        color: #38bdf8; font-size: .72rem; letter-spacing: 1.5px;
+        text-transform: uppercase; font-weight: 700; margin-bottom: 14px;
+        font-family: 'Orbitron', sans-serif;
+    }
+    .toc-link {
+        display: block;
+        color: #94a3b8;
+        text-decoration: none;
+        font-size: .88rem;
+        padding: 8px 12px;
+        border-radius: 8px;
+        border-left: 2px solid transparent;
+        transition: all .2s;
+        line-height: 1.45;
+    }
+    .toc-link:hover { color: #fff; background: rgba(56,189,248,.08); }
+    .toc-link.active {
+        color: #38bdf8;
+        background: rgba(56,189,248,.1);
+        border-left-color: #38bdf8;
+        font-weight: 600;
+    }
+    /* 同页其他页面快捷入口 */
+    .toc-pages { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border-light); }
+    .toc-page-link {
+        display: flex; align-items: center; gap: 8px;
+        color: #94a3b8; text-decoration: none; font-size: .85rem;
+        padding: 6px 12px; border-radius: 8px; transition: all .2s;
+    }
+    .toc-page-link:hover { color: #fff; background: rgba(255,255,255,.04); }
+    .toc-page-link.current { color: #38bdf8; background: rgba(56,189,248,.1); }
+    .toc-page-link i { width: 16px; text-align: center; font-size: .8em; }
+
+    /* 正文 */
+    .legal-body { background: rgba(30,41,59,.35); border: 1px solid var(--border-light); border-radius: 16px; padding: 36px 40px; }
+    .legal-section { scroll-margin-top: 100px; }
+    .legal-section + .legal-section { margin-top: 42px; }
+    .legal-section h2 {
+        font-size: 1.22rem;
+        color: #fff;
+        font-weight: 700;
+        padding-bottom: 12px;
+        margin-bottom: 18px;
+        border-bottom: 1px solid rgba(56,189,248,.22);
+        display: flex; align-items: center; gap: 10px;
+    }
+    .legal-section h2::before {
+        content: ''; width: 4px; height: 18px; border-radius: 2px;
+        background: linear-gradient(180deg, #38bdf8, #818cf8);
+        flex-shrink: 0;
+    }
+    .legal-body p { color: #cbd5e1; line-height: 1.9; margin-bottom: 14px; }
+    .legal-body ul, .legal-body ol { color: #cbd5e1; line-height: 1.9; padding-left: 22px; }
+    .legal-body li { margin-bottom: 8px; }
+    .legal-body strong { color: #38bdf8; }
+    .legal-body code {
+        background: rgba(56,189,248,.12); color: #7dd3fc;
+        padding: 2px 7px; border-radius: 5px; font-size: .88em;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .legal-body a { color: #38bdf8; text-decoration: none; border-bottom: 1px dashed rgba(56,189,248,.4); }
+    .legal-body a:hover { border-bottom-style: solid; }
+
+    /* 表格 */
+    .legal-table-wrap { overflow-x: auto; margin: 18px 0 22px; }
+    .legal-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .9rem; min-width: 520px; }
+    .legal-table th {
+        background: rgba(56,189,248,.12); color: #7dd3fc;
+        font-weight: 600; text-align: left; padding: 11px 14px;
+        border-bottom: 1px solid rgba(56,189,248,.3); white-space: nowrap;
+    }
+    .legal-table td {
+        padding: 11px 14px; color: #cbd5e1; vertical-align: top;
+        border-bottom: 1px solid rgba(255,255,255,.06); line-height: 1.7;
+    }
+    .legal-table tbody tr:hover td { background: rgba(56,189,248,.05); }
+
+    /* 提示框 */
+    .legal-callout {
+        border-radius: 12px; padding: 16px 18px; margin: 18px 0;
+        display: flex; gap: 12px; align-items: flex-start; line-height: 1.8;
+        font-size: .95rem; border: 1px solid;
+    }
+    .legal-callout > i { margin-top: 3px; flex-shrink: 0; }
+    .legal-callout p { margin-bottom: 8px; }
+    .legal-callout p:last-child { margin-bottom: 0; }
+    .legal-callout.info   { background: rgba(56,189,248,.08);  border-color: rgba(56,189,248,.28);  color: #bae6fd; }
+    .legal-callout.info   > i { color: #38bdf8; }
+    .legal-callout.warn   { background: rgba(251,191,36,.08);  border-color: rgba(251,191,36,.3);   color: #fde68a; }
+    .legal-callout.warn   > i { color: #fbbf24; }
+    .legal-callout.danger { background: rgba(248,113,113,.09); border-color: rgba(248,113,113,.32);  color: #fecaca; }
+    .legal-callout.danger > i { color: #f87171; }
+    .legal-callout strong { color: #fff; }
+
+    /* FAQ 折叠 */
+    .faq-item { border: 1px solid var(--border-light); border-radius: 12px; margin-bottom: 12px; overflow: hidden; background: rgba(15,23,42,.4); }
+    .faq-q {
+        padding: 15px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 14px;
+        color: #fff; font-weight: 600; font-size: .97rem; transition: background .2s; user-select: none;
+    }
+    .faq-q:hover { background: rgba(56,189,248,.06); }
+    .faq-q i { color: #38bdf8; transition: transform .25s; font-size: .85em; flex-shrink: 0; }
+    .faq-item.open .faq-q { background: rgba(56,189,248,.08); }
+    .faq-item.open .faq-q i { transform: rotate(180deg); }
+    .faq-a { display: none; padding: 0 20px 16px; color: #cbd5e1; line-height: 1.9; font-size: .94rem; }
+    .faq-a p { margin-bottom: 0; }
+
+    /* 顶部待补全提示（仅运营者需要看到） */
+    .legal-todo {
+        background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.35);
+        color: #fde68a; border-radius: 12px; padding: 14px 18px; margin-bottom: 24px;
+        font-size: .88rem; line-height: 1.7;
+    }
+
+    /* 底部相关页面 */
+    .legal-nav-card {
+        background: rgba(30,41,59,.45); border: 1px solid var(--border-light);
+        border-radius: 14px; padding: 16px 18px; height: 100%;
+        text-decoration: none; display: block; transition: all .25s;
+    }
+    .legal-nav-card:hover { border-color: rgba(56,189,248,.4); transform: translateY(-3px); background: rgba(30,41,59,.75); }
+    .legal-nav-card .lnc-icon { color: #38bdf8; font-size: 1.1rem; margin-bottom: 10px; }
+    .legal-nav-card .lnc-title { color: #fff; font-weight: 600; font-size: .98rem; margin-bottom: 4px; }
+    .legal-nav-card .lnc-sub { color: #64748b; font-size: .82rem; line-height: 1.5; }
+
+    .back-top {
+        position: fixed; right: 26px; bottom: 26px; width: 44px; height: 44px;
+        border-radius: 50%; background: rgba(30,41,59,.9); border: 1px solid rgba(56,189,248,.35);
+        color: #38bdf8; display: none; align-items: center; justify-content: center;
+        cursor: pointer; z-index: 999; backdrop-filter: blur(8px);
+    }
+    .back-top.show { display: flex; }
+    .back-top:hover { background: rgba(56,189,248,.18); }
+
+    @media (max-width: 991.98px) {
+        .legal-body { padding: 26px 20px; }
+        .legal-toc { position: static; max-height: none; margin-bottom: 24px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="legal-hero">
+    <div class="container">
+        <div class="text-center">
+            <div class="legal-icon"><i class="{{ page.icon }}"></i></div>
+            {% if page.badge %}<div class="badge-tech mb-3">{{ page.badge }}</div>{% endif %}
+            <h1 class="legal-title">{{ page.title }}</h1>
+            <p class="legal-sub mb-2">{{ page.subtitle }}</p>
+            <div class="legal-meta">
+                <i class="fa-regular fa-clock me-1"></i>最后更新：{{ page.updated }}
+                <span class="mx-2">·</span>生效日期：{{ page.updated }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container pb-5">
+    {% if todo_fields %}
+    <div class="legal-todo">
+        <i class="fa-solid fa-pen-to-square me-2"></i>
+        <strong>运营者提示（访客可忽略）：</strong>
+        以下信息尚未填写，页面中以「【待填写…】」占位 —— {{ todo_fields | join('、') }}。
+        请修改 <code>legal_pages.py</code> 顶部的 <code>OPERATOR</code> 字典后，全站 8 个页面会同步生效。
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <!-- 侧边目录 -->
+        <div class="col-lg-3">
+            <nav class="legal-toc">
+                <h6><i class="fa-solid fa-list me-2"></i>目录</h6>
+                {% for sec in page.sections %}
+                    <a href="#{{ sec.id }}" class="toc-link" data-toc="{{ sec.id }}">{{ sec.title }}</a>
+                {% endfor %}
+
+                <div class="toc-pages">
+                    <h6 class="mb-2"><i class="fa-solid fa-folder-open me-2"></i>相关页面</h6>
+                    {% for slug in order %}
+                        {% set p = all_pages.get(slug) %}
+                        {% if p %}
+                        <a href="/{{ slug }}" class="toc-page-link {% if slug == page.slug %}current{% endif %}">
+                            <i class="{{ p.icon }}"></i>{{ p.title }}
+                        </a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </nav>
+        </div>
+
+        <!-- 正文 -->
+        <div class="col-lg-9">
+            <article class="legal-body">
+                {% for sec in page.sections %}
+                <section class="legal-section" id="{{ sec.id }}">
+                    <h2>{{ sec.title }}</h2>
+
+                    {% for blk in sec.blocks %}
+
+                        {% if blk['type'] == 'p' %}
+                            <p>{{ blk['html'] | safe }}</p>
+
+                        {% elif blk['type'] == 'list' %}
+                            {% if blk['ordered'] %}
+                            <ol>{% for it in blk['items'] %}<li>{{ it | safe }}</li>{% endfor %}</ol>
+                            {% else %}
+                            <ul>{% for it in blk['items'] %}<li>{{ it | safe }}</li>{% endfor %}</ul>
+                            {% endif %}
+
+                        {% elif blk['type'] == 'table' %}
+                            <div class="legal-table-wrap">
+                                <table class="legal-table">
+                                    <thead><tr>{% for h in blk['head'] %}<th>{{ h | safe }}</th>{% endfor %}</tr></thead>
+                                    <tbody>
+                                    {% for row in blk['rows'] %}
+                                        <tr>{% for c in row %}<td>{{ c | safe }}</td>{% endfor %}</tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        {% elif blk['type'] == 'callout' %}
+                            {% set icon = 'fa-circle-exclamation' %}
+                            {% if blk['kind'] == 'info' %}{% set icon = 'fa-circle-info' %}{% endif %}
+                            {% if blk['kind'] == 'warn' %}{% set icon = 'fa-triangle-exclamation' %}{% endif %}
+                            <div class="legal-callout {{ blk['kind'] }}">
+                                <i class="fa-solid {{ icon }}"></i>
+                                <div>{{ blk['html'] | safe }}</div>
+                            </div>
+
+                        {% elif blk['type'] == 'faq' %}
+                            {% for q, a in blk['items'] %}
+                            <div class="faq-item">
+                                <div class="faq-q"><span>{{ q | safe }}</span><i class="fa-solid fa-chevron-down"></i></div>
+                                <div class="faq-a"><p>{{ a | safe }}</p></div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                </section>
+                {% endfor %}
+            </article>
+
+            <!-- 底部：其他法务页面入口 -->
+            <div class="row g-3 mt-4">
+                {% for slug in order %}
+                    {% if slug != page.slug %}
+                        {% set p = all_pages.get(slug) %}
+                        {% if p %}
+                        <div class="col-6 col-lg-4">
+                            <a href="/{{ slug }}" class="legal-nav-card">
+                                <div class="lnc-icon"><i class="{{ p.icon }}"></i></div>
+                                <div class="lnc-title">{{ p.title }}</div>
+                                <div class="lnc-sub">{{ p.subtitle }}</div>
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <p class="text-secondary small text-center mt-4 mb-0" style="line-height:1.8;">
+                如对以上内容有疑问，请通过
+                <a href="/feedback" class="text-info text-decoration-none">意见反馈</a> 或
+                <a href="/contact" class="text-info text-decoration-none">联系我们</a> 告知我们。
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="back-top" id="backTop" title="回到顶部"><i class="fa-solid fa-arrow-up"></i></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // 目录点击平滑滚动
+    document.querySelectorAll('.toc-link').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+            const el = document.querySelector(this.getAttribute('href'));
+            if (el) {
+                e.preventDefault();
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                history.replaceState(null, '', this.getAttribute('href'));
+            }
+        });
+    });
+
+    // 滚动高亮当前章节
+    const links = Array.prototype.slice.call(document.querySelectorAll('.toc-link'));
+    const sections = links.map(function (a) { return document.getElementById(a.dataset.toc); }).filter(Boolean);
+    function highlight() {
+        const pos = window.scrollY + 130;
+        let current = sections[0];
+        sections.forEach(function (s) { if (s && s.offsetTop <= pos) current = s; });
+        links.forEach(function (a) {
+            a.classList.toggle('active', !!current && a.dataset.toc === current.id);
+        });
+    }
+    window.addEventListener('scroll', highlight, { passive: true });
+    highlight();
+
+    // 支持 #锚点 直接定位
+    if (location.hash) {
+        const el = document.querySelector(location.hash);
+        if (el) setTimeout(function () { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 120);
+    }
+
+    // FAQ 折叠
+    document.querySelectorAll('.faq-item').forEach(function (item) {
+        item.querySelector('.faq-q').addEventListener('click', function () {
+            const ans = item.querySelector('.faq-a');
+            const open = item.classList.toggle('open');
+            ans.style.display = open ? 'block' : 'none';
+        });
+    });
+
+    // 回到顶部
+    const bt = document.getElementById('backTop');
+    bt.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    window.addEventListener('scroll', function () {
+        bt.classList.toggle('show', window.scrollY > 400);
+    }, { passive: true });
+});
+</script>
+{% endblock %}

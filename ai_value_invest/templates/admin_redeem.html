@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+{% block seo_description %}兑换码管理 · 管理后台 - A股棱镜（仅限管理员访问）{% endblock %}
+{% block seo_keywords %}A股棱镜,管理后台,兑换码{% endblock %}
+
+
+{% block robots %}noindex, nofollow{% endblock %}
+
+
+{% block title %}兑换码管理 - A股棱镜 后台{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+    {% include 'components/admin_sidebar.html' %}
+    <main class="admin-main">
+        <h3 class="font-tech mb-4" style="color:#fff;"><i class="fa-solid fa-ticket text-info me-2"></i>兑换码管理</h3>
+
+        <!-- 概览（全站累计，不随下方筛选变化 —— 明确标注，避免被误读成筛选结果） -->
+        <div class="row g-3 mb-1" id="statRow">
+            <div class="col-6 col-md-3"><div class="admin-card text-center"><div class="text-secondary" style="font-size:.8rem;">总生成</div><div id="stTotal" style="font-size:1.4rem;color:#fff;">-</div></div></div>
+            <div class="col-6 col-md-3"><div class="admin-card text-center"><div class="text-secondary" style="font-size:.8rem;">未使用</div><div id="stUnused" style="font-size:1.4rem;color:#34d399;">-</div></div></div>
+            <div class="col-6 col-md-3"><div class="admin-card text-center"><div class="text-secondary" style="font-size:.8rem;">已使用</div><div id="stUsed" style="font-size:1.4rem;color:#f87171;">-</div></div></div>
+            <div class="col-6 col-md-3"><div class="admin-card text-center"><div class="text-secondary" style="font-size:.8rem;">已作废</div><div id="stVoided" style="font-size:1.4rem;color:#94a3b8;">-</div></div></div>
+        </div>
+        <div class="text-secondary mb-3" style="font-size:.72rem;">以上为全站累计统计，不随下方筛选条件变化。</div>
+
+        <!-- 生成 -->
+        <div class="admin-card mb-3">
+            <h5 class="mb-3" style="color:#fff;">批量生成</h5>
+            <div class="row g-2">
+                <div class="col-6 col-md-3">
+                    <label class="form-label text-secondary" style="font-size:.8rem;">套餐</label>
+                    <select id="rdPlan" class="form-select"></select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label text-secondary" style="font-size:.8rem;">规格</label>
+                    <select id="rdSku" class="form-select"></select>
+                </div>
+                <div class="col-4 col-md-2">
+                    <label class="form-label text-secondary" style="font-size:.8rem;">数量（1-500）</label>
+                    <input id="rdCount" type="number" class="form-control" value="10" min="1" max="500">
+                </div>
+                <div class="col-4 col-md-2">
+                    <label class="form-label text-secondary" style="font-size:.8rem;">码有效期（天，0=长期）</label>
+                    <input id="rdExpire" type="number" class="form-control" value="0" min="0" max="3650">
+                </div>
+                <div class="col-4 col-md-2">
+                    <label class="form-label text-secondary" style="font-size:.8rem;">备注（渠道/活动）</label>
+                    <input id="rdRemark" class="form-control" placeholder="选填">
+                </div>
+            </div>
+            <div class="mt-3 d-flex align-items-center flex-wrap">
+                <button id="rdGen" class="btn btn-info">生成兑换码</button>
+                <!-- 权益预告由服务端 /api/admin/redeem/preview 给出，前端不再自己猜 -->
+                <span id="rdSpec" class="text-secondary ms-3" style="font-size:.85rem;">读取中...</span>
+            </div>
+            <div id="rdResult" class="mt-3" style="display:none;">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <span style="color:#fff;">批次 <span id="rdBatch" class="font-mono"></span> · <span id="rdCount2"></span> 张 · 权益：<span id="rdSpecText" class="text-info"></span></span>
+                    <span class="mt-2 mt-md-0">
+                        <button id="rdCopyRaw" class="btn btn-sm btn-outline-info me-2">复制（无横线·供上架）</button>
+                        <button id="rdCopyAll" class="btn btn-sm btn-outline-info me-2">复制（带横线）</button>
+                        <button id="rdExport" class="btn btn-sm btn-outline-info">导出本批 CSV</button>
+                    </span>
+                </div>
+                <textarea id="rdCodes" class="form-control font-mono mt-2" rows="6" readonly style="font-size:.8rem;"></textarea>
+                <div class="text-warning mt-2" style="font-size:.75rem;">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>此窗口关闭后不再展示完整码列表，请立即复制或导出。
+                </div>
+            </div>
+        </div>
+
+        <!-- 列表 -->
+        <div class="admin-card">
+            <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+                <h5 class="mb-0" style="color:#fff;">兑换码列表</h5>
+                <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0">
+                    <select id="fltStatus" class="form-select form-select-sm" style="width:auto;">
+                        <option value="">全部状态</option>
+                        <option value="0">未使用</option>
+                        <option value="1">已使用</option>
+                        <option value="2">已作废</option>
+                    </select>
+                    <input id="fltBatch" class="form-control form-control-sm" style="width:150px;" placeholder="批次号">
+                    <input id="fltKw" class="form-control form-control-sm" style="width:180px;" placeholder="码 / 套餐关键词">
+                    <button id="btnSearch" class="btn btn-sm btn-outline-info">搜索</button>
+                    <button id="btnReset" class="btn btn-sm btn-outline-secondary">重置</button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="chkAll" title="全选本页未使用的码"></th>
+                            <th>兑换码</th><th>套餐 / 规格</th><th>权益</th><th>状态</th>
+                            <th>使用人</th><th>兑换时间</th><th>有效期</th><th>批次</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rdRows">
+                        <tr><td colspan="9" class="text-center text-secondary">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-3 d-flex justify-content-between align-items-center flex-wrap">
+                <div class="d-flex align-items-center gap-2">
+                    <button id="btnVoid" class="btn btn-sm btn-outline-danger">作废选中</button>
+                    <span id="selInfo" class="text-secondary" style="font-size:.75rem;"></span>
+                </div>
+                <nav id="rdPager" class="mt-2 mt-md-0"></nav>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ⚠️ Jinja 的 tojson 会被引擎转义，JSON 里带引号时 |safe 是必需的（否则 JS 直接语法错误）。
+    const PLANS = {{ plans | tojson | safe }};
+    let curPage = 1;
+    const PER = 20;
+    let lastBatch = '';
+    // 本批生成的两种形态：带横线给人看，无横线给渠道上架（用户粘贴时不用手动删横线）
+    let lastCodesRaw = [];
+    let lastCodesFmt = [];
+
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    // 属性值必须连引号一起转义：esc() 只处理 &<>，放进 data-code="..." 里
+    // 遇到含引号的值会提前闭合属性（虽然码本身是 base32，但套餐名/备注来自管理员自由输入）。
+    function escAttr(s) {
+        return esc(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function fmtTime(v) { return v ? String(v).replace('T', ' ').slice(0, 19) : '-'; }
+
+    function usablePlans() {
+        return (PLANS || []).filter(function (p) {
+            return p && p.type !== 'free' && (p.prices || []).length > 0;
+        });
+    }
+    function currentPlan() {
+        const key = document.getElementById('rdPlan').value;
+        return usablePlans().filter(function (p) { return p.key === key; })[0] || null;
+    }
+
+    function fillPlans() {
+        const sel = document.getElementById('rdPlan');
+        const list = usablePlans();
+        sel.innerHTML = list.map(function (p) {
+            return '<option value="' + escAttr(p.key) + '">' + esc(p.name) + '</option>';
+        }).join('');
+        if (!list.length) {
+            sel.innerHTML = '<option value="">（无可用套餐）</option>';
+        }
+        fillSkus();
+    }
+
+    function fillSkus() {
+        const p = currentPlan();
+        const sel = document.getElementById('rdSku');
+        if (!p) { sel.innerHTML = '<option value="0">-</option>'; loadPreview(); return; }
+        sel.innerHTML = (p.prices || []).map(function (pr, i) {
+            return '<option value="' + i + '">' + esc(pr.label) + ' ' + esc(pr.price) + '</option>';
+        }).join('');
+        loadPreview();
+    }
+
+    // 权益预告一律问服务端要：前端自己用正则猜标签（「年」/「深度」）猜错过 ——
+    // 体验包「10次普通 + 2次深度」被猜成纯深度包。权威只在 _resolve_redeem_spec 一处。
+    let previewToken = 0;
+    async function loadPreview() {
+        const planKey = document.getElementById('rdPlan').value;
+        const sku = document.getElementById('rdSku').value || '0';
+        const my = ++previewToken;
+        const el = document.getElementById('rdSpec');
+        if (!planKey) { el.textContent = ''; return; }
+        el.textContent = '读取中...';
+        try {
+            const r = await (await fetch('/api/admin/redeem/preview?plan_key=' +
+                encodeURIComponent(planKey) + '&sku_index=' + encodeURIComponent(sku))).json();
+            if (my !== previewToken) return;   // 快速切换套餐时丢弃过期响应，防结果串台
+            el.textContent = r && r.status === 'success'
+                ? ('将发放：' + r.text)
+                : ('不支持发码：' + ((r && r.message) || '未知原因'));
+        } catch (e) {
+            if (my === previewToken) el.textContent = '预告读取失败';
+        }
+    }
+
+    async function generate() {
+        const btn = document.getElementById('rdGen');
+        const planKey = document.getElementById('rdPlan').value;
+        if (!planKey) { alert('没有可用套餐，请先在「系统设置 → 价格方案」配置'); return; }
+        const count = parseInt(document.getElementById('rdCount').value || '1', 10);
+        // 前端先校验，别把明显越界的请求打到服务端（服务端仍有 500 上限兜底）
+        if (!(count >= 1 && count <= 500)) { alert('数量需在 1-500 之间'); return; }
+        const expireDays = parseInt(document.getElementById('rdExpire').value || '0', 10);
+        if (expireDays < 0 || expireDays > 3650) { alert('有效期需在 0-3650 天之间'); return; }
+
+        btn.disabled = true;
+        btn.textContent = '生成中...';
+        try {
+            const r = await (await fetch('/api/admin/redeem/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    plan_key: planKey,
+                    sku_index: parseInt(document.getElementById('rdSku').value || '0', 10),
+                    count: count,
+                    expire_days: expireDays,
+                    remark: document.getElementById('rdRemark').value || ''
+                })
+            })).json();
+            if (!r || r.status !== 'success') {
+                alert((r && r.detail) || (r && r.message) || '生成失败');
+                return;
+            }
+            lastBatch = r.batch_no || '';
+            lastCodesRaw = r.raw_codes || [];
+            lastCodesFmt = r.codes || [];
+            document.getElementById('rdBatch').textContent = lastBatch;
+            document.getElementById('rdCount2').textContent = r.count || 0;
+            document.getElementById('rdSpecText').textContent = r.spec_text || '';
+            document.getElementById('rdCodes').value = lastCodesFmt.join('\n');
+            document.getElementById('rdResult').style.display = '';
+            // 回到第 1 页：新生成的码按 id 倒序排在最前，停在第 3 页会看不到刚生成的批次
+            curPage = 1;
+            loadList();
+        } catch (e) {
+            alert('生成失败：网络错误');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '生成兑换码';
+        }
+    }
+
+    function selectedCodes() {
+        const out = [];
+        (document.querySelectorAll('#rdRows input[data-code]') || []).forEach(function (c) {
+            if (c.checked) out.push(c.getAttribute('data-code'));
+        });
+        return out;
+    }
+
+    function updateSelInfo() {
+        const n = selectedCodes().length;
+        const el = document.getElementById('selInfo');
+        if (el) el.textContent = n ? ('已选 ' + n + ' 张') : '';
+    }
+
+    function resetChkAll() {
+        const a = document.getElementById('chkAll');
+        if (a) a.checked = false;   // 翻页/刷新后必须清掉，否则「全选」框与实际勾选对不上
+        updateSelInfo();
+    }
+
+    async function voidCodes(codes) {
+        if (!codes.length) { alert('请先勾选要作废的兑换码'); return; }
+        if (!confirm('确认作废 ' + codes.length + ' 张？\n已使用、已作废的码不会被改变。\n此操作不可撤销。')) return;
+        try {
+            const r = await (await fetch('/api/admin/redeem/void', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ codes: codes })
+            })).json();
+            if (!r || r.status !== 'success') {
+                alert((r && r.detail) || '作废失败');
+                return;
+            }
+            alert(r.message || '操作完成');
+            loadList();
+        } catch (e) {
+            alert('作废失败：网络错误');
+        }
+    }
+
+    function renderStats(st) {
+        if (!st) return;
+        document.getElementById('stTotal').textContent = st.total || 0;
+        document.getElementById('stUnused').textContent = st.unused || 0;
+        document.getElementById('stUsed').textContent = st.used || 0;
+        document.getElementById('stVoided').textContent = st.voided || 0;
+    }
+
+    async function loadList() {
+        const st = document.getElementById('fltStatus').value;
+        const kw = document.getElementById('fltKw').value || '';
+        const bt = document.getElementById('fltBatch').value || '';
+        const url = '/api/admin/redeem/list?page=' + curPage + '&per_page=' + PER +
+                    '&status=' + encodeURIComponent(st) +
+                    '&batch=' + encodeURIComponent(bt) +
+                    '&kw=' + encodeURIComponent(kw);
+        try {
+            const r = await (await fetch(url)).json();
+            const tb = document.getElementById('rdRows');
+            renderStats(r.stats);
+            if (!r.rows || !r.rows.length) {
+                tb.innerHTML = '<tr><td colspan="9" class="text-center text-secondary">暂无数据</td></tr>';
+            } else {
+                tb.innerHTML = r.rows.map(function (row) {
+                    // 已过期是派生状态（status 仍是 0），必须单独渲染，
+                    // 否则管理员会把一批过期码当成可卖库存。
+                    let badge, cls;
+                    if (row.status === 1) { badge = '已使用'; cls = 'badge-vip'; }
+                    else if (row.status === 2) { badge = '已作废'; cls = 'badge-free'; }
+                    else if (row.expired) { badge = '已过期'; cls = 'badge-free'; }
+                    else { badge = '未使用'; cls = 'badge-free'; }
+                    const canVoid = row.status === 0;   // 过期码也允许作废（回收库存）
+                    return '<tr>' +
+                        '<td>' + (canVoid ? '<input type="checkbox" data-code="' + escAttr(row.code) + '">' : '') + '</td>' +
+                        '<td class="font-mono" style="font-size:.78rem;">' +
+                            esc(row.code_display || row.code) +
+                            '<i class="fa-regular fa-copy ms-2" style="cursor:pointer;opacity:.6;" ' +
+                            'data-copy="' + escAttr(row.code) + '" title="复制此码"></i></td>' +
+                        '<td>' + esc(row.plan_name) + '<div class="text-secondary" style="font-size:.75rem;">' + esc(row.sku_label) + '</div></td>' +
+                        '<td>' + esc(row.benefit_text || '-') + '</td>' +
+                        '<td><span class="admin-badge ' + cls + '">' + badge + '</span></td>' +
+                        '<td>' + (row.used_by ? ('#' + row.used_by) : '-') + '</td>' +
+                        '<td class="font-mono" style="font-size:.78rem;">' + fmtTime(row.used_at) + '</td>' +
+                        '<td class="font-mono" style="font-size:.78rem;">' + (row.expire_at ? fmtTime(row.expire_at) : '长期') + '</td>' +
+                        '<td class="font-mono" style="font-size:.75rem;">' + esc(row.batch_no) + '</td>' +
+                        '</tr>';
+                }).join('');
+            }
+            renderPager(r.total || 0, r.page || 1);
+            resetChkAll();
+        } catch (e) {
+            document.getElementById('rdRows').innerHTML =
+                '<tr><td colspan="9" class="text-center text-danger">加载失败</td></tr>';
+        }
+    }
+
+    function renderPager(total, page) {
+        const pages = Math.max(1, Math.ceil(total / PER));
+        let html = '';
+        if (page > 1) html += '<button class="btn btn-sm btn-outline-info me-1" data-p="' + (page - 1) + '">上一页</button>';
+        html += '<span class="text-secondary mx-2" style="align-self:center;">第 ' + page + ' / ' + pages + ' 页（共 ' + total + ' 条）</span>';
+        if (page < pages) html += '<button class="btn btn-sm btn-outline-info" data-p="' + (page + 1) + '">下一页</button>';
+        document.getElementById('rdPager').innerHTML = html;
+    }
+
+    function copyText(text, okMsg) {
+        // navigator.clipboard 在非 HTTPS 下不可用（本站经映射也可能非 HTTPS），
+        // 必须保留 execCommand 兜底，否则「复制」按钮在某些环境点了没反应。
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () { alert(okMsg); },
+                                                     function () { fallbackCopy(text, okMsg); });
+        } else {
+            fallbackCopy(text, okMsg);
+        }
+    }
+    function fallbackCopy(text, okMsg) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+        document.body.removeChild(ta);
+        alert(ok ? okMsg : '复制失败，请手动选择文本复制');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        fillPlans();
+        loadList();
+
+        document.getElementById('rdPlan').addEventListener('change', fillSkus);
+        document.getElementById('rdSku').addEventListener('change', loadPreview);
+        document.getElementById('rdGen').addEventListener('click', generate);
+
+        document.getElementById('rdCopyRaw').addEventListener('click', function () {
+            if (!lastCodesRaw.length) { alert('请先生成'); return; }
+            copyText(lastCodesRaw.join('\n'), '已复制 ' + lastCodesRaw.length + ' 个码（无横线）');
+        });
+        document.getElementById('rdCopyAll').addEventListener('click', function () {
+            const ta = document.getElementById('rdCodes');
+            if (!ta.value) { alert('请先生成'); return; }
+            ta.select();
+            try { document.execCommand('copy'); alert('已复制'); } catch (e) { fallbackCopy(ta.value, '已复制'); }
+        });
+        // 导出本批「全部」而不是只导未使用的：文案写的是「导出本批」，
+        // 只导未使用的会让对账时缺一段（后台导出接口 status 参数留空即全部）。
+        document.getElementById('rdExport').addEventListener('click', function () {
+            if (!lastBatch) { alert('请先生成'); return; }
+            window.location.href = '/api/admin/redeem/export?batch=' + encodeURIComponent(lastBatch);
+        });
+        document.getElementById('btnSearch').addEventListener('click', function () { curPage = 1; loadList(); });
+        document.getElementById('btnReset').addEventListener('click', function () {
+            document.getElementById('fltStatus').value = '';
+            document.getElementById('fltBatch').value = '';
+            document.getElementById('fltKw').value = '';
+            curPage = 1;
+            loadList();
+        });
+        ['fltStatus', 'fltBatch'].forEach(function (id) {
+            document.getElementById(id).addEventListener('change', function () { curPage = 1; loadList(); });
+        });
+        // 回车即搜索：输入框不绑这个，管理员敲完回车没反应会以为页面卡了
+        ['fltKw', 'fltBatch'].forEach(function (id) {
+            document.getElementById(id).addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { curPage = 1; loadList(); }
+            });
+        });
+        document.getElementById('btnVoid').addEventListener('click', function () { voidCodes(selectedCodes()); });
+        document.getElementById('chkAll').addEventListener('change', function () {
+            const on = this.checked;
+            (document.querySelectorAll('#rdRows input[data-code]') || []).forEach(function (c) { c.checked = on; });
+            updateSelInfo();
+        });
+        // 勾选变化用事件委托：行是 innerHTML 动态生成的，直接绑在元素上会在翻页后失效
+        document.getElementById('rdRows').addEventListener('change', function (e) {
+            if (e.target && e.target.matches('input[data-code]')) updateSelInfo();
+        });
+    });
+
+    document.addEventListener('click', function (e) {
+        const p = e.target.closest('#rdPager button[data-p]');
+        if (p) { curPage = parseInt(p.getAttribute('data-p'), 10); loadList(); return; }
+        const c = e.target.closest('i[data-copy]');
+        if (c) { copyText(c.getAttribute('data-copy'), '已复制'); }
+    });
+</script>
+{% endblock %}

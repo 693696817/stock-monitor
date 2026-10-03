@@ -1,0 +1,717 @@
+{% extends "base.html" %}
+{% block seo_description %}用户管理 · 管理后台 - A股棱镜（仅限管理员访问）{% endblock %}
+{% block seo_keywords %}A股棱镜,管理后台,系统管理{% endblock %}
+
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block title %}用户管理 - A股棱镜 后台{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+    {% include 'components/admin_sidebar.html' %}
+    <main class="admin-main">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="font-tech mb-0" style="color:#fff;"><i class="fa-solid fa-users text-info me-2"></i>用户管理</h3>
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-secondary font-mono small" id="totalInfo">-</div>
+                <button class="btn btn-info btn-sm font-tech" onclick="openCreate()"><i class="fa-solid fa-user-plus me-1"></i>添加用户</button>
+            </div>
+        </div>
+
+        <div class="admin-card p-0" style="overflow:hidden;">
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th><th>邮箱</th><th>昵称</th><th>会员</th><th>手机号</th>
+                            <th>积分</th><th>管理员</th><th>状态</th><th>注册时间</th><th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userRows">
+                        <tr><td colspan="10" class="text-center text-secondary">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center p-3" id="pager">
+                <button class="btn btn-outline-secondary btn-sm" id="prevBtn">上一页</button>
+                <span class="text-secondary small" id="pageInfo">第 1 页</span>
+                <button class="btn btn-outline-secondary btn-sm" id="nextBtn">下一页</button>
+            </div>
+        </div>
+    </main>
+</div>
+
+{% endblock %}
+
+{% block modals %}
+<!-- 编辑用户弹窗 -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:#1b2233;color:#e6edf3;border-color:#2a3550;">
+            <div class="modal-header" style="border-color:#2a3550;">
+                <h5 class="modal-title font-tech"><i class="fa-solid fa-user-edit text-info me-2"></i>编辑用户 #<span id="editIdLabel"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId">
+                <div class="mb-3">
+                    <label class="form-label small text-secondary">UID（用户ID / 主键）</label>
+                    <input type="number" class="form-control" id="editUid" min="1" placeholder="用户唯一 ID">
+                    <div class="form-text text-warning small" id="editUidHint" style="display:none;">⚠ 修改 UID 会级联更新该用户全部分析记录、反馈、登录日志、会员订单、支付订单、邀请关系等，且不可撤销。如修改当前登录账号的 UID，系统会自动更新会话。</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-secondary">邮箱</label>
+                    <input type="email" class="form-control" id="editEmail" placeholder="邮箱">
+
+                    <div class="form-text small" id="editEmailHint" style="display:none; color:#fbbf24;">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                        该账号为手机号注册，邮箱由手机号派生且不可修改；要改登录账号请改下方手机号。
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-secondary">昵称</label>
+                    <input type="text" class="form-control" id="editNickname" placeholder="昵称">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-secondary">手机号</label>
+                    <input type="text" class="form-control" id="editPhone" placeholder="手机号（留空解绑）">
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label small text-secondary">会员等级</label>
+                        <select class="form-select" id="editLevel">
+                            <option value="0">免费</option>
+                            <option value="1">VIP-1</option>
+                            <option value="2">VIP-2</option>
+                        </select>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label small text-secondary">会员有效期</label>
+                        <input type="date" class="form-control" id="editExpiry" title="留空 = 终身">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label small text-secondary">积分</label>
+                        <input type="number" class="form-control" id="editPoints" min="0" value="0">
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label small text-secondary">状态</label>
+                        <select class="form-select" id="editStatus">
+                            <option value="1">正常</option>
+                            <option value="0">禁用</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="editPhoneVerified">
+                    <label class="form-check-label small text-secondary">手机号已验证</label>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="editIsAdmin">
+                    <label class="form-check-label small text-secondary">管理员</label>
+                </div>
+                <div class="mb-1">
+                    <label class="form-label small text-secondary">重置密码（留空则不修改）</label>
+                    <input type="text" class="form-control" id="editPassword" placeholder="留空 = 不改密码" autocomplete="off">
+                </div>
+            </div>
+            <div class="modal-footer" style="border-color:#2a3550;">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-info btn-sm" onclick="saveEdit()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加用户弹窗 -->
+<div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:#1b2233;color:#e6edf3;border-color:#2a3550;">
+            <div class="modal-header" style="border-color:#2a3550;">
+                <h5 class="modal-title font-tech"><i class="fa-solid fa-user-plus text-info me-2"></i>添加用户</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label small text-secondary">邮箱 <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" id="createEmail" placeholder="登录邮箱（唯一）">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-secondary">初始密码 <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="createPassword" placeholder="至少 6 位" autocomplete="new-password">
+                        <button class="btn btn-outline-secondary btn-sm" type="button" onclick="genCreatePwd()">随机生成</button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-secondary">昵称</label>
+                    <input type="text" class="form-control" id="createNickname" placeholder="留空则默认取邮箱前缀">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-secondary">手机号</label>
+                    <input type="text" class="form-control" id="createPhone" placeholder="手机号（留空不绑定）">
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label small text-secondary">会员等级</label>
+                        <select class="form-select" id="createLevel">
+                            <option value="0">免费</option>
+                            <option value="1">VIP-1</option>
+                            <option value="2">VIP-2</option>
+                        </select>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label small text-secondary">会员有效期</label>
+                        <input type="date" class="form-control" id="createExpiry" title="留空 = 终身">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label small text-secondary">积分</label>
+                        <input type="number" class="form-control" id="createPoints" min="0" value="0">
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label small text-secondary">状态</label>
+                        <select class="form-select" id="createStatus">
+                            <option value="1">正常</option>
+                            <option value="0">禁用</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="createPhoneVerified">
+                    <label class="form-check-label small text-secondary">手机号已验证</label>
+                </div>
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="createIsAdmin">
+                    <label class="form-check-label small text-secondary">设为管理员</label>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-color:#2a3550;">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-info btn-sm" onclick="saveCreate()">创建</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 用户详情（画像下钻）弹窗 -->
+<div class="modal fade" id="userDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="background:#1b2233;color:#e6edf3;border-color:#2a3550;">
+            <div class="modal-header" style="border-color:#2a3550;">
+                <h5 class="modal-title font-tech"><i class="fa-solid fa-user-magnifying-glass text-info me-2"></i>用户画像 #<span id="detailIdLabel"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detailBody">
+                <div class="text-center text-secondary py-5">加载中...</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let page = 1;
+    const perPage = 20;
+    const userMap = {};
+
+    function fmtDate(v) {
+        if (!v) return '-';
+        return String(v).replace('T', ' ').slice(0, 16);
+    }
+
+    function fmtExpiry(v) {
+        if (!v) return '终身';
+        return String(v).slice(0, 10);
+    }
+
+    async function loadUsers() {
+        try {
+            const resp = await fetch(`/api/admin/users?page=${page}&per_page=${perPage}`);
+            if (resp.status === 401) {
+                alert('会话已失效，请重新登录');
+                window.location.href = '/login';
+                return;
+            }
+            if (!resp.ok) {
+                document.getElementById('totalInfo').textContent = `加载失败（HTTP ${resp.status}）`;
+                tb.innerHTML = '<tr><td colspan="10" class="text-center text-danger">用户列表加载失败，请刷新重试</td></tr>';
+                return;
+            }
+            const r = await resp.json();
+            const tb = document.getElementById('userRows');
+            document.getElementById('totalInfo').textContent = `共 ${r.total ?? 0} 个用户`;
+            document.getElementById('pageInfo').textContent = `第 ${r.page ?? page} 页 / 共 ${Math.max(1, Math.ceil((r.total ?? 0) / (r.per_page || perPage)))} 页`;
+            if (!r.rows || !r.rows.length) {
+                tb.innerHTML = '<tr><td colspan="10" class="text-center text-secondary">暂无用户</td></tr>';
+                return;
+            }
+            for (const u of r.rows) userMap[u.id] = u;
+            tb.innerHTML = r.rows.map(u => {
+                const tier = u.membership_level >= 1
+                    ? `<span class="admin-badge badge-vip">VIP-${u.membership_level}</span>`
+                    : `<span class="admin-badge badge-free">免费</span>`;
+                const admin = u.is_admin ? `<span class="admin-badge badge-admin">管理员</span>` : '-';
+                const status = u.status == 0
+                    ? `<span class="admin-badge badge-free">禁用</span>`
+                    : `<span class="admin-badge badge-vip">正常</span>`;
+                // ⚠️ 邮箱/昵称/手机号都是用户可控数据，必须转义后再拼进 innerHTML
+                //    （否则改个昵称就能在管理员会话里执行脚本并提权为管理员）
+                const phone = u.phone
+                    ? `${esc(u.phone)}${u.phone_verified ? ' <i class="fa-solid fa-circle-check text-info" title="已验证"></i>' : ''}`
+                    : '-';
+                return `<tr>
+                    <td>${u.id}</td>
+                    <td>${esc(u.email_display ?? u.email) || '-'}</td>
+                    <td>${esc(u.nickname) || '-'}</td>
+                    <td>${tier}</td>
+                    <td class="font-mono" style="font-size:.8rem;">${phone}</td>
+                    <td>${u.points ?? 0}</td>
+                    <td>${admin}</td>
+                    <td>${status}</td>
+                    <td class="font-mono" style="font-size:.8rem;">${fmtDate(u.created_at)}</td>
+                    <td>
+                        <button class="btn btn-outline-info btn-sm py-0 px-2" onclick="openDetail(${u.id})">详情</button>
+                        <button class="btn btn-outline-info btn-sm py-0 px-2" onclick="openEdit(${u.id})">编辑</button>
+                        <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="deleteUser(${u.id})">删除</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    function openEdit(id) {
+        const u = userMap[id];
+        if (!u) return;
+        document.getElementById('editId').value = u.id;
+        document.getElementById('editIdLabel').textContent = u.id;
+        document.getElementById('editUid').value = u.id;
+        document.getElementById('editUidHint').style.display = 'none';
+        // 手机号注册的账号：邮箱是由手机号派生的占位值，改了会让账号登不上，禁用输入
+        const isPhoneAcct = !!u.email && String(u.email).endsWith('@phone.local');
+        const emailInput = document.getElementById('editEmail');
+        emailInput.value = isPhoneAcct ? (u.phone || '') : (u.email || '');
+        emailInput.disabled = isPhoneAcct;
+        document.getElementById('editEmailHint').style.display = isPhoneAcct ? 'block' : 'none';
+        document.getElementById('editNickname').value = u.nickname || '';
+        document.getElementById('editPhone').value = u.phone || '';
+        document.getElementById('editLevel').value = u.membership_level ?? 0;
+        document.getElementById('editExpiry').value = fmtExpiry(u.membership_expiry) === '终身' ? '' : String(u.membership_expiry).slice(0, 10);
+        document.getElementById('editPoints').value = u.points ?? 0;
+        document.getElementById('editPhoneVerified').checked = !!u.phone_verified;
+        document.getElementById('editIsAdmin').checked = !!u.is_admin;
+        document.getElementById('editStatus').value = (u.status == 0) ? 0 : 1;
+        document.getElementById('editPassword').value = '';
+        getEditModal().show();
+    }
+
+    let editModalInst = null;
+    function getEditModal() {
+        if (!editModalInst) editModalInst = new bootstrap.Modal(document.getElementById('editModal'));
+        return editModalInst;
+    }
+
+    // ---- 添加用户 ----
+    let createModalInst = null;
+    function getCreateModal() {
+        if (!createModalInst) createModalInst = new bootstrap.Modal(document.getElementById('createModal'));
+        return createModalInst;
+    }
+
+    function openCreate() {
+        document.getElementById('createEmail').value = '';
+        document.getElementById('createNickname').value = '';
+        document.getElementById('createPhone').value = '';
+        document.getElementById('createPassword').value = '';
+        document.getElementById('createExpiry').value = '';
+        document.getElementById('createPoints').value = 0;
+        document.getElementById('createLevel').value = 0;
+        document.getElementById('createStatus').value = 1;
+        document.getElementById('createPhoneVerified').checked = false;
+        document.getElementById('createIsAdmin').checked = false;
+        getCreateModal().show();
+    }
+
+    function genCreatePwd() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+        let s = '';
+        for (let i = 0; i < 10; i++) s += chars[Math.floor(Math.random() * chars.length)];
+        document.getElementById('createPassword').value = s;
+    }
+
+    async function saveCreate() {
+        const email = document.getElementById('createEmail').value.trim();
+        const password = document.getElementById('createPassword').value;
+        if (!email) { alert('请填写邮箱'); return; }
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { alert('邮箱格式不正确'); return; }
+        if (!password) { alert('请填写初始密码'); return; }
+        if (password.length < 6) { alert('密码至少 6 位'); return; }
+        const body = {
+            email: email,
+            password: password,
+            nickname: document.getElementById('createNickname').value.trim(),
+            phone: document.getElementById('createPhone').value.trim(),
+            phone_verified: document.getElementById('createPhoneVerified').checked ? 1 : 0,
+            membership_level: parseInt(document.getElementById('createLevel').value, 10),
+            membership_expiry: document.getElementById('createExpiry').value,
+            points: parseInt(document.getElementById('createPoints').value, 10) || 0,
+            is_admin: document.getElementById('createIsAdmin').checked ? 1 : 0,
+            status: parseInt(document.getElementById('createStatus').value, 10),
+        };
+        try {
+            const resp = await fetch('/api/admin/users/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const d = await resp.json().catch(() => ({}));
+            if (resp.ok && d.status === 'success') {
+                const inst = bootstrap.Modal.getInstance(document.getElementById('createModal'));
+                if (inst) inst.hide();
+                loadUsers();
+                alert('用户创建成功' + (body.is_admin ? '（已设为管理员）' : ''));
+            } else {
+                alert('创建失败：' + (d.detail || d.msg || '未知错误'));
+            }
+        } catch (e) {
+            alert('网络错误，请稍后重试');
+        }
+    }
+
+    // UID 变更时显示风险提示（弹窗在 modals 块、晚于本脚本渲染，故在 DOMContentLoaded 内绑定）
+    function bindUidHint() {
+        const eu = document.getElementById('editUid');
+        if (!eu) return;
+        eu.addEventListener('input', function () {
+            const orig = parseInt(document.getElementById('editId').value, 10);
+            const cur = parseInt(this.value, 10);
+            document.getElementById('editUidHint').style.display = (cur !== orig) ? 'block' : 'none';
+        });
+    }
+
+    async function saveEdit() {
+        const id = parseInt(document.getElementById('editId').value, 10);
+        const newUidRaw = document.getElementById('editUid').value.trim();
+        const newUid = newUidRaw === '' ? null : parseInt(newUidRaw, 10);
+        // UID 变更二次确认（高风险：级联更新关联表，不可撤销）
+        if (newUid !== null && newUid !== id) {
+            if (!confirm(`警告：你正在将用户 UID 由 ${id} 修改为 ${newUid}。\n\n该操作会级联更新此用户全部分析记录、反馈、登录日志、会员订单、支付订单、邀请关系等，且不可撤销。\n\n确认修改吗？`)) {
+                return;
+            }
+        }
+        // ⚠️ 手机号账号：输入框被禁用、里面装的是手机号，绝不能当 email 提交
+        //    （会把占位邮箱 p<手机号>@phone.local 覆盖成裸手机号，账号从此登不上）。
+        //    传 null = 该字段不参与更新（update_user_admin 语义）。
+        const emailInput = document.getElementById('editEmail');
+        const emailVal = emailInput.disabled ? null : emailInput.value.trim();
+        const body = {
+            email: emailVal,
+            nickname: document.getElementById('editNickname').value.trim(),
+            phone: document.getElementById('editPhone').value.trim(),
+            phone_verified: document.getElementById('editPhoneVerified').checked ? 1 : 0,
+            membership_level: parseInt(document.getElementById('editLevel').value, 10),
+            membership_expiry: document.getElementById('editExpiry').value,
+            points: parseInt(document.getElementById('editPoints').value, 10) || 0,
+            is_admin: document.getElementById('editIsAdmin').checked ? 1 : 0,
+            status: parseInt(document.getElementById('editStatus').value, 10),
+            password: document.getElementById('editPassword').value,
+            new_uid: newUid,
+        };
+        try {
+            const resp = await fetch(`/api/admin/users/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const d = await resp.json().catch(() => ({}));
+            if (resp.ok && d.status === 'success') {
+                const inst = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+                if (inst) inst.hide();
+                loadUsers();
+                alert(newUid !== null && newUid !== id ? `已保存，UID 已变更为 ${newUid}` : '已保存');
+            } else {
+                alert('保存失败：' + (d.detail || d.msg || '未知错误'));
+            }
+        } catch (e) {
+            alert('网络错误，请稍后重试');
+        }
+    }
+
+    async function deleteUser(id) {
+        const u = userMap[id] || {};
+        const name = u.email_display || u.email || u.nickname || ('#' + id);
+        if (!confirm(`确定删除用户 ${name}？此操作不可恢复，该用户关联的分析记录、反馈、订单、登录日志等也会一并删除。`)) return;
+        try {
+            const resp = await fetch(`/api/admin/users/${id}/delete`, { method: 'POST' });
+            const d = await resp.json().catch(() => ({}));
+            if (resp.ok && d.status === 'success') {
+                loadUsers();
+                alert('已删除');
+            } else {
+                alert('删除失败：' + (d.detail || d.msg || '未知错误'));
+            }
+        } catch (e) {
+            alert('网络错误，请稍后重试');
+        }
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', function () {
+        if (page > 1) { page--; loadUsers(); }
+    });
+    document.getElementById('nextBtn').addEventListener('click', function () {
+        page++; loadUsers();
+    });
+
+    // ---- 用户详情（画像下钻） ----
+    let detailUid = null;
+
+    function fmtD(v) {
+        if (!v) return '-';
+        return String(v).slice(0, 10);
+    }
+
+    function tierBadge(level) {
+        return level >= 1
+            ? `<span class="admin-badge badge-vip">VIP-${level}</span>`
+            : `<span class="admin-badge badge-free">免费</span>`;
+    }
+
+    function kv(label, value, extraClass) {
+        return `<div class="col-6 col-md-3 mb-3">
+            <div class="small text-secondary mb-1">${label}</div>
+            <div class="${extraClass || ''}" style="color:#e2e8f0;">${value}</div>
+        </div>`;
+    }
+
+    function sectionCard(title, icon, bodyHtml) {
+        return `<div class="mb-3" style="background:rgba(30,41,59,.5);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px;">
+            <div class="font-tech mb-3" style="color:#fff;font-size:.95rem;"><i class="fa-solid ${icon} text-info me-2"></i>${title}</div>
+            ${bodyHtml}
+        </div>`;
+    }
+
+    async function openDetail(id) {
+        detailUid = id;
+        document.getElementById('detailIdLabel').textContent = id;
+        document.getElementById('detailBody').innerHTML = '<div class="text-center text-secondary py-5">加载中...</div>';
+        new bootstrap.Modal(document.getElementById('userDetailModal')).show();
+        await loadDetail();
+    }
+
+    async function loadDetail() {
+        try {
+            const resp = await fetch(`/api/admin/user/${detailUid}`);
+            if (!resp.ok) {
+                document.getElementById('detailBody').innerHTML = `<div class="text-center text-danger py-4">加载失败（HTTP ${resp.status}）</div>`;
+                return;
+            }
+            const r = await resp.json();
+            renderDetail(r.profile);
+        } catch (e) {
+            document.getElementById('detailBody').innerHTML = '<div class="text-center text-danger py-4">加载失败，请重试</div>';
+        }
+    }
+
+    function renderDetail(p) {
+        const u = p.user || {};
+        const s = p.stats || {};
+        const isPhoneAcct = !!u.email && String(u.email).endsWith('@phone.local');
+        const accountDisplay = u.email_display || u.email || '-';
+        const admin = u.is_admin ? '<span class="admin-badge badge-admin">管理员</span>' : '<span class="admin-badge badge-free">普通</span>';
+        const status = u.status == 0 ? '<span class="admin-badge badge-free">禁用</span>' : '<span class="admin-badge badge-vip">正常</span>';
+
+        let html = '';
+
+        // ---- 基本信息 + 配额 ----
+        html += sectionCard('基本信息', 'fa-id-card', `
+            <div class="row">
+                ${kv('UID', u.id)}
+                ${kv('账号', esc(accountDisplay))}
+                ${kv('昵称', esc(u.nickname) || '-')}
+                ${kv('手机号', esc(u.phone_masked || u.phone) || '-')}
+                ${kv('会员', tierBadge(u.membership_level) + ' <span class="text-secondary small">' + fmtD(u.membership_expiry) + '</span>')}
+                ${kv('积分', u.points ?? 0)}
+                ${kv('角色', admin)}
+                ${kv('状态', status)}
+                ${kv('邀请码', esc(u.invite_code) || '-')}
+                ${kv('被邀请人', p.inviter ? esc(p.inviter.nickname || p.inviter.email || ('#' + p.inviter.id)) : '-')}
+                ${kv('注册时间', fmtDate(u.created_at))}
+                ${kv('最近登录', fmtDate(u.last_login_at))}
+            </div>
+            <div class="small text-secondary mb-2">分析统计：成功 ${s.analyses_ok ?? 0} / 累计 ${s.analyses_total ?? 0} / 今日 ${s.analyses_today ?? 0} · 邀请 ${s.invited_count ?? 0} 人 · 订单 ${s.orders_count ?? 0} · 反馈 ${s.feedback_count ?? 0}</div>
+        `);
+
+        // ---- 配额调整 + 流水（P0-2） ----
+        const bn = u.bonus_normal ?? 0, bd = u.bonus_deep ?? 0;
+        html += sectionCard('配额调整（一次性赠送余量）', 'fa-coins', `
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="admin-badge badge-admin">普通分析余量 ${bn}</span>
+                <span class="admin-badge badge-vip">深度分析余量 ${bd}</span>
+                <span class="text-secondary small">手动加减会写入审计流水，不可撤销</span>
+            </div>
+            <div class="row g-2 align-items-end">
+                <div class="col-6 col-md-2">
+                    <label class="form-label small text-secondary">普通 ±</label>
+                    <input type="number" class="form-control" id="adjNormal" value="0" step="1">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small text-secondary">深度 ±</label>
+                    <input type="number" class="form-control" id="adjDeep" value="0" step="1">
+                </div>
+                <div class="col-12 col-md-5">
+                    <label class="form-label small text-secondary">原因</label>
+                    <input type="text" class="form-control" id="adjReason" placeholder="例如：活动补偿 / 客服申诉 / 误扣返还">
+                </div>
+                <div class="col-12 col-md-3">
+                    <button class="btn btn-info btn-sm w-100" onclick="adjustBonus()">确认调整</button>
+                </div>
+            </div>
+            <div class="mt-3" id="bonusLogs"></div>
+        `);
+
+        // ---- 分析历史 ----
+        const analyses = (p.analyses || []).map(a => {
+            const st = (a.status === 'failed')
+                ? '<span class="admin-badge badge-free" style="background:rgba(255,95,86,.12);color:#ff5f56;border-color:rgba(255,95,86,.3);">失败</span>'
+                : '<span class="admin-badge badge-admin">成功</span>';
+            const mode = a.mode === 'deep' ? '深度' : '普通';
+            return `<tr>
+                <td class="font-mono" style="font-size:.8rem;">${fmtDate(a.created_at)}</td>
+                <td>${esc(a.stock_name) || '-'} <span class="text-secondary small font-mono">${esc(a.stock_code) || ''}</span></td>
+                <td>${mode}</td>
+                <td>${st}</td>
+            </tr>`;
+        }).join('') || '<tr><td colspan="4" class="text-center text-secondary">暂无分析记录</td></tr>';
+        html += sectionCard('最近分析记录', 'fa-file-lines', `
+            <table class="admin-table"><thead><tr><th>时间</th><th>标的</th><th>模式</th><th>状态</th></tr></thead><tbody>${analyses}</tbody></table>
+        `);
+
+        // ---- 会员订单 ----
+        const orders = (p.orders || []).map(o => {
+            const ps = { 0: '待付', 1: '已付', 2: '退款', 3: '关闭' }[o.payment_status] || o.payment_status;
+            return `<tr>
+                <td class="font-mono" style="font-size:.8rem;">${fmtDate(o.created_at)}</td>
+                <td class="font-mono" style="font-size:.8rem;">${esc(o.order_no)}</td>
+                <td>${o.plan_code || '-'}</td>
+                <td>¥${o.amount ?? 0}</td>
+                <td>${ps}</td>
+                <td>${fmtD(o.start_at)} ~ ${fmtD(o.end_at)}</td>
+            </tr>`;
+        }).join('') || '<tr><td colspan="6" class="text-center text-secondary">暂无订单</td></tr>';
+        html += sectionCard('会员订单', 'fa-receipt', `
+            <table class="admin-table"><thead><tr><th>时间</th><th>订单号</th><th>方案</th><th>金额</th><th>状态</th><th>有效期</th></tr></thead><tbody>${orders}</tbody></table>
+        `);
+
+        // ---- 邀请记录 ----
+        const invites = (p.invites || []).map(iv => {
+            const name = iv.invitee_nickname || iv.invitee_email || iv.invitee_phone || ('#' + iv.invitee_id);
+            return `<tr>
+                <td class="font-mono" style="font-size:.8rem;">${fmtDate(iv.created_at)}</td>
+                <td>${esc(name)} <span class="text-secondary small">(#${iv.invitee_id})</span></td>
+                <td>+${iv.reward_days ?? 0} 天</td>
+                <td>VIP-${iv.reward_level ?? 0}</td>
+            </tr>`;
+        }).join('') || '<tr><td colspan="4" class="text-center text-secondary">暂无邀请记录</td></tr>';
+        html += sectionCard('邀请记录（TA 邀请的下家）', 'fa-user-plus', `
+            <table class="admin-table"><thead><tr><th>时间</th><th>被邀请人</th><th>奖励天数</th><th>奖励等级</th></tr></thead><tbody>${invites}</tbody></table>
+        `);
+
+        // ---- 登录日志 ----
+        const logs = (p.login_logs || []).map(l => {
+            const ok = l.success === 1
+                ? '<span class="admin-badge badge-admin">成功</span>'
+                : '<span class="admin-badge badge-free" style="background:rgba(255,95,86,.12);color:#ff5f56;border-color:rgba(255,95,86,.3);">失败</span>';
+            return `<tr>
+                <td class="font-mono" style="font-size:.8rem;">${fmtDate(l.created_at)}</td>
+                <td>${ok}</td>
+                <td class="font-mono" style="font-size:.8rem;">${esc(l.ip) || '-'}</td>
+                <td>${esc(l.reason) || '-'}</td>
+            </tr>`;
+        }).join('') || '<tr><td colspan="4" class="text-center text-secondary">暂无登录日志</td></tr>';
+        html += sectionCard('登录日志', 'fa-shield-halved', `
+            <table class="admin-table"><thead><tr><th>时间</th><th>结果</th><th>IP</th><th>原因</th></tr></thead><tbody>${logs}</tbody></table>
+        `);
+
+        // ---- 反馈 ----
+        const fbs = (p.feedback || []).map(f => {
+            const st = { 0: '待处理', 1: '开发中', 2: '已上线' }[f.status] || f.status;
+            return `<tr>
+                <td class="font-mono" style="font-size:.8rem;">${fmtDate(f.created_at)}</td>
+                <td>${esc(f.type) || '-'}</td>
+                <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(f.title)}">${esc(f.title) || '-'}</td>
+                <td>${f.votes ?? 0}</td>
+                <td>${st}</td>
+            </tr>`;
+        }).join('') || '<tr><td colspan="5" class="text-center text-secondary">暂无反馈</td></tr>';
+        html += sectionCard('用户反馈', 'fa-comments', `
+            <table class="admin-table"><thead><tr><th>时间</th><th>类型</th><th>标题</th><th>票数</th><th>状态</th></tr></thead><tbody>${fbs}</tbody></table>
+        `);
+
+        document.getElementById('detailBody').innerHTML = html;
+        renderBonusLogs(p.bonus_logs || []);
+    }
+
+    function renderBonusLogs(logs) {
+        const box = document.getElementById('bonusLogs');
+        if (!box) return;
+        if (!logs || !logs.length) {
+            box.innerHTML = '<div class="small text-secondary">暂无配额流水</div>';
+            return;
+        }
+        box.innerHTML = `<div class="small text-secondary mb-1">最近流水</div>
+            <table class="admin-table"><thead><tr><th>时间</th><th>普通±</th><th>深度±</th><th>调整后(普通/深度)</th><th>原因</th></tr></thead><tbody>
+            ${logs.map(l => {
+                const dn = l.delta_normal > 0 ? '+' + l.delta_normal : l.delta_normal;
+                const dd = l.delta_deep > 0 ? '+' + l.delta_deep : l.delta_deep;
+                const dnCol = l.delta_normal >= 0 ? 'text-danger' : 'text-success';
+                const ddCol = l.delta_deep >= 0 ? 'text-danger' : 'text-success';
+                return `<tr>
+                    <td class="font-mono" style="font-size:.8rem;">${fmtDate(l.created_at)}</td>
+                    <td class="${dnCol}">${dn}</td>
+                    <td class="${ddCol}">${dd}</td>
+                    <td>${l.bonus_normal_after ?? 0} / ${l.bonus_deep_after ?? 0}</td>
+                    <td>${esc(l.reason) || '-'}</td>
+                </tr>`;
+            }).join('')}
+            </tbody></table>`;
+    }
+
+    async function adjustBonus() {
+        const dn = parseInt(document.getElementById('adjNormal').value, 10) || 0;
+        const dd = parseInt(document.getElementById('adjDeep').value, 10) || 0;
+        const reason = document.getElementById('adjReason').value.trim();
+        if (dn === 0 && dd === 0) { alert('请填写调整量（至少一个非 0）'); return; }
+        if (!confirm(`确认调整配额？普通 ${dn >= 0 ? '+' : ''}${dn}，深度 ${dd >= 0 ? '+' : ''}${dd}。此操作写入审计流水。`)) return;
+        try {
+            const resp = await fetch(`/api/admin/user/${detailUid}/bonus`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ delta_normal: dn, delta_deep: dd, reason })
+            });
+            const d = await resp.json().catch(() => ({}));
+            if (resp.ok && d.status === 'success') {
+                document.getElementById('adjNormal').value = 0;
+                document.getElementById('adjDeep').value = 0;
+                document.getElementById('adjReason').value = '';
+                loadDetail();
+            } else {
+                alert('调整失败：' + (d.detail || d.msg || '未知错误'));
+            }
+        } catch (e) { alert('网络错误'); }
+    }
+
+    // 在完整 DOM 解析后初始化：确保弹窗（modals 块）已渲染，避免顶层 getElementById 取到 null 而中断脚本
+    function initUsersPage() {
+        bindUidHint();
+        loadUsers();
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initUsersPage);
+    } else {
+        initUsersPage();
+    }
+</script>
+{% endblock %}

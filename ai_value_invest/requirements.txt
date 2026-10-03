@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+jinja2
+python-multipart
+openai
+python-dotenv
+tushare
+akshare
+pandas
+numpy
+pymysql
+DBUtils
+cryptography
+xhtml2pdf
+Pillow
+httpx
+weasyprint

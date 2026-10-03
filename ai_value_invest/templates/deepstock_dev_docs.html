@@ -1,0 +1,363 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    {% set site = request.app.state.site if (request and request.app.state and request.app.state.site) else {} %}
+    {% set _site_domain = (site.get('SITE_DOMAIN') or '').rstrip('/') %}
+
+    {% set _cur_url = (_site_domain + '/doc') if _site_domain else (request.url.scheme ~ '://' ~ request.url.netloc ~ '/doc') %}
+
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A股棱镜 (DeepStock) 开发核心文档</title>
+    <meta name="description" content="A股棱镜 (DeepStock) 开发核心文档：模块结构、数据链路、接口约定与部署说明。">
+    <meta name="keywords" content="A股棱镜,DeepStock,开发文档,系统架构,接口约定">
+    <link rel="canonical" href="{{ _cur_url }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            padding-bottom: 50px;
+        }
+        .sidebar {
+            position: sticky;
+            top: 20px;
+            height: calc(100vh - 40px);
+            overflow-y: auto;
+            border-right: 1px solid #ddd;
+            padding-right: 20px;
+        }
+        .nav-link {
+            color: #555;
+            font-size: 0.9rem;
+            padding: 4px 0;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #0d6efd;
+            font-weight: 600;
+        }
+        .nav-item .nav-link {
+            padding-left: 15px;
+        }
+        .doc-section {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            scroll-margin-top: 20px;
+        }
+        h1 { font-weight: 800; color: #0f172a; margin-bottom: 30px; }
+        h2 { font-weight: 700; color: #1e293b; border-bottom: 2px solid #38bdf8; padding-bottom: 10px; margin-top: 0; margin-bottom: 20px; }
+        h3 { font-weight: 600; color: #334155; margin-top: 25px; font-size: 1.25rem; }
+        h4 { font-weight: 600; color: #475569; font-size: 1.1rem; margin-top: 15px; }
+
+        pre {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        code { font-family: 'Consolas', 'Monaco', monospace; color: #e65661; }
+        .badge-tech { background: #e0f2fe; color: #0284c7; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+
+        .table-custom th { background-color: #f1f5f9; }
+        .color-box {
+            display: inline-block;
+            width: 16px; height: 16px;
+            border-radius: 4px;
+            vertical-align: middle;
+            margin-right: 5px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row g-0">
+        <div class="col-md-3 col-lg-2 d-none d-md-block">
+            <nav class="sidebar">
+                <h5 class="mb-3 ps-3 fw-bold">目录导航</h5>
+                <ul class="nav flex-column">
+                    <li class="nav-item"><a class="nav-link" href="#overview">1. 项目概览</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#tech-stack">2. 技术栈架构</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#design-system">3. 视觉设计系统</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#frontend-modules">4. 前端模块详解</a>
+                        <ul class="nav flex-column ms-2">
+                            <li class="nav-item"><a class="nav-link" href="#fe-base">4.1 基础骨架</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#fe-analysis">4.2 分析终端</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#fe-market">4.3 市场全景</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#fe-hot">4.4 热门个股</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#fe-opp">4.5 机会捕捉</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#fe-news">4.6 市场快讯</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#fe-risk">4.7 风险预警</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#fe-user">4.8 用户系统</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="#backend-api">5. 后端 API 规范</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#ai-prompt">6. AI 提示词工程</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#deployment">7. 部署与配置</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="col-md-9 col-lg-10 p-4">
+
+            <div class="text-center mb-5">
+                <h1 class="display-5">A股棱镜 (DeepStock) 开发文档 <span class="badge bg-primary fs-6 align-middle">v1.0</span></h1>
+                <p class="lead text-muted">基于本站实际开发代码整理 | 赛博朋克金融分析终端</p>
+            </div>
+
+            <section id="overview" class="doc-section">
+                <h2>1. 项目概览 (Project Overview)</h2>
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <th style="width: 150px;">项目名称</th>
+                            <td>A股棱镜 股票智能分析平台 (DeepStock)</td>
+                        </tr>
+                        <tr>
+                            <th>核心定位</th>
+                            <td>基于“大数据清洗 + 大模型推理”的 A 股垂直领域价值投资分析系统。</td>
+                        </tr>
+                        <tr>
+                            <th>设计风格</th>
+                            <td><strong>理性赛博朋克</strong>：深色模式、玻璃拟态、微光特效、专业数据可视化。</td>
+                        </tr>
+                        <tr>
+                            <th>核心功能</th>
+                            <td>个股深度分析、市场全景监控、AI 机会挖掘、风险预警、7x24快讯流。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="tech-stack" class="doc-section">
+                <h2>2. 技术栈架构 (Tech Stack)</h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>前端 (Frontend)</h4>
+                        <ul>
+                            <li><strong>HTML5 / CSS3</strong>：语义化标签，自定义 CSS 变量系统。</li>
+                            <li><strong>Framework</strong>：Bootstrap 5 (用于栅格布局和基础组件)。</li>
+                            <li><strong>JavaScript</strong>：Vanilla JS (原生)，无重型框架依赖。</li>
+                            <li><strong>Libraries</strong>：
+                                <ul>
+                                    <li><code>Chart.js</code>：绘制 K 线缩略图、情绪曲线、资金柱状图。</li>
+                                    <li><code>Marked.js</code>：Markdown 转 HTML (用于渲染 AI 报告)。</li>
+                                    <li><code>FontAwesome 6</code>：图标库。</li>
+                                </ul>
+                            </li>
+                            <li><strong>Fonts</strong>：Plus Jakarta Sans (正文), Orbitron (数字/科技感标题), JetBrains Mono (代码/数据)。</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h4>后端 (Backend)</h4>
+                        <ul>
+                            <li><strong>Framework</strong>：Python FastAPI (异步/高性能)。</li>
+                            <li><strong>Template Engine</strong>：Jinja2 (服务端渲染 HTML 模板)。</li>
+                            <li><strong>AI Engine</strong>：Volcengine (DeepSeek-V3) API，流式响应。</li>
+                            <li><strong>Data Source</strong>：金融大数据接口（核心财务 / 行情 / 资金流）。</li>
+                            <li><strong>Utilities</strong>：<code>WeasyPrint</code> (HTML 转 PDF), <code>Pandas</code> (数据清洗)。</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="design-system" class="doc-section">
+                <h2>3. 视觉设计系统 (Design System)</h2>
+                <p>系统采用统一的 CSS 变量定义在 <code>base.html</code> 中。</p>
+
+                <h4>色彩规范</h4>
+                <ul class="list-unstyled">
+                    <li><span class="color-box" style="background:#0f172a"></span> <code>--bg-body: #0f172a</code> (午夜蓝背景)</li>
+                    <li><span class="color-box" style="background:rgba(30,41,59,0.6)"></span> <code>--bg-card: rgba(30, 41, 59, 0.6)</code> (玻璃卡片背景)</li>
+                    <li><span class="color-box" style="background:#38bdf8"></span> <code>--text-highlight: #38bdf8</code> (极客蓝/品牌色)</li>
+                    <li><span class="color-box" style="background:#94a3b8"></span> <code>--text-sub: #94a3b8</code> (次级文本，高对比度灰)</li>
+                    <li><span class="color-box" style="background:#f87171"></span> <code>Text-Up: #f87171</code> (A股涨/利好/高风险)</li>
+                    <li><span class="color-box" style="background:#34d399"></span> <code>Text-Down: #34d399</code> (A股跌/利空/低风险)</li>
+                </ul>
+
+                <h4>UI 组件特征</h4>
+                <ul>
+                    <li><strong>玻璃拟态 (Glassmorphism)</strong>：使用 <code>backdrop-filter: blur(12px)</code> 和半透明边框。</li>
+                    <li><strong>微光特效</strong>：按钮和卡片使用 <code>box-shadow</code> 和渐变边框模拟发光。</li>
+                    <li><strong>呼吸灯</strong>：使用 CSS Keyframes (<code>pulse-green</code>, <code>pulse-red</code>) 指示实时状态。</li>
+                </ul>
+            </section>
+
+            <section id="frontend-modules" class="doc-section">
+                <h2>4. 前端模块详解</h2>
+                <p>所有页面均位于 <code>templates/</code> 目录下，核心逻辑由 <code>base.html</code> 继承。</p>
+
+                <h3 id="fe-base">4.1 基础骨架 (base.html)</h3>
+                <ul>
+                    <li><strong>SEO 优化</strong>：包含动态 Title, Description, Keywords block，以及 OG/Twitter Cards 标签。</li>
+                    <li><strong>组件拆分</strong>：
+                        <ul>
+                            <li><code>components/header.html</code>：响应式导航栏，Logo (芯片+K线组合)，SEO 语义化标签。</li>
+                            <li><code>components/footer.html</code>：多列布局，包含订阅框（玻璃质感）、社交链接、版权信息。</li>
+                        </ul>
+                    </li>
+                    <li><strong>资源加载</strong>：预加载 (Preconnect) CDN 资源，统一引入 Bootstrap/FontAwesome。</li>
+                </ul>
+
+                <h3 id="fe-analysis">4.2 分析终端 (analysis.html)</h3>
+                <p><span class="badge-tech">核心功能</span> 模拟专业金融终端的交互体验。</p>
+                <ul>
+                    <li><strong>悬浮控制台</strong>：顶部输入框，支持回车搜索。</li>
+                    <li><strong>状态机</strong>：待机 -> 等待服务端响应 (真实) -> 流式生成中 (真实) -> 完成。</li>
+                    <li><strong>真实事件驱动进度</strong>：进度条只由真实事件推进 —— 请求发出 8% → 服务端响应头到达 35% → 收到首个流式分片 60% → 按已输出字数渐进至 95% → 流结束 100%。早期版本的固定时间轴假进度（未返回就显示 95%、文案写死上游数据源名称）已移除。</li>
+                    <li><strong>流式渲染</strong>：使用 <code>fetch</code> 读取流，<code>TextDecoder</code> 解码，<code>Marked.js</code> 实时渲染 Markdown。</li>
+                    <li><strong>PDF 导出</strong>：调用后端接口将当前 HTML 转为 PDF 下载。</li>
+                </ul>
+
+                <h3 id="fe-market">4.3 市场全景 (market_overview.html)</h3>
+                <ul>
+                    <li><strong>指数看板</strong>：三大指数（上证/深证/创业板）卡片，集成 Chart.js Sparkline (迷你图)，数据为 <code>index_daily</code> 近 20 日真实收盘序列，线条颜色按当日真实涨跌取红/绿。</li>
+                    <li><strong>成交额 / 龙虎榜家数</strong>：来自 <code>index_daily.amount</code> 与 <code>top_list</code> 当日条数，均为真实值。</li>
+                    <li><strong>情绪指数</strong>：Chart.js 橙色渐变曲线，横轴为近 30 个交易日（T-N ~ 最新），数据为上证指数真实收盘；右上角徽章为服务端计算的真实情绪值（0-100）与标签。</li>
+                    <li><strong>资金流向</strong>：柱状图展示北向资金（沪股通/深股通/合计）真实净流入，单位亿元。</li>
+                    <li><strong>涨跌家数</strong>：当前数据接口未提供全市场涨跌家数，页面已明确标注并以「沪/深成交额 + 北向资金 + 龙虎榜家数」呈现市场活跃度，不使用估算值冒充。</li>
+                </ul>
+
+                <h3 id="fe-hot">4.4 热门个股 (hot_stocks.html)</h3>
+                <ul>
+                    <li><strong>双榜单设计</strong>：
+                        <ul>
+                            <li>左侧：<strong>用户热度榜</strong>（平台内搜索次数），前三名金银铜徽章。</li>
+                            <li>右侧：<strong>市场行情榜</strong>（龙虎榜净买入排名），价格/涨跌幅由 <code>daily</code> 最新日线补全。</li>
+                        </ul>
+                    </li>
+                    <li><strong>无价格模拟</strong>：早期版本存在的 <code>startLiveSimulation()</code>（每 1.5s 随机微调价格并闪烁）已删除——它会伪造行情跳动，与"全部真实数据"原则冲突。</li>
+                    <li><strong>概念云</strong>：展示当前热门概念（如人形机器人、低空经济）。</li>
+                </ul>
+
+                <h3 id="fe-opp">4.5 机会捕捉 (opportunities.html)</h3>
+                <ul>
+                    <li><strong>AI 机会卡片</strong>：结构化展示（逻辑 + 确信度徽章 + 关联个股）。</li>
+                    <li><strong>仪表盘动画</strong>：CSS 实现的半圆仪表盘，指针加载时带摆动动画。</li>
+                    <li><strong>互动投票</strong>：看涨/看跌投票按钮。</li>
+                    <li><strong>板块/概念排行</strong>：带涨跌幅和主力资金数据的列表。</li>
+                </ul>
+
+                <h3 id="fe-news">4.6 市场快讯 (news_flash.html)</h3>
+                <ul>
+                    <li><strong>时间轴布局</strong>：左侧线条串联新闻流。</li>
+                    <li><strong>AI 增强</strong>：每条新闻附带 <code>ai-analysis-box</code>，包含情感标签（利好/利空/中性）和 DeepSeek 简评。</li>
+                    <li><strong>定时刷新</strong>：页面每 5 分钟重新调用 <code>/api/news</code> 真实刷新一次，并把「更新于 HH:MM:SS」写回顶部；不再使用每秒跳动的本地时钟冒充实时。</li>
+                </ul>
+
+                <h3 id="fe-risk">4.7 风险预警 (risk_warning.html)</h3>
+                <ul>
+                    <li><strong>DEFCON 仪表盘</strong>：顶部展示高危/中危/政策风险数量，高危卡片带红色呼吸灯。</li>
+                    <li><strong>风险卡片</strong>：顶部色条区分等级（红/橙/蓝），底部附带 AI 风险评估结论。</li>
+                    <li><strong>瀑布流加载</strong>：卡片带 <code>slideUp</code> 进场动画。</li>
+                </ul>
+
+                <h3 id="fe-user">4.8 用户系统</h3>
+                <ul>
+                    <li><strong>登录 (login.html) / 注册 (register.html)</strong>：
+                        <ul>
+                            <li>独立页面，不继承 base.html。</li>
+                            <li>沉浸式深蓝背景 + 玻璃拟态表单。</li>
+                            <li>交互：密码明文切换、验证码倒计时、协议强制勾选。</li>
+                        </ul>
+                    </li>
+                    <li><strong>个人中心 (profile.html)</strong>：
+                        <ul>
+                            <li>Dashboard 布局：展示头像、VIP 等级、积分。</li>
+                            <li>权益进度条：双色进度条展示普通/深度分析剩余次数。</li>
+                            <li>分析记录：最近分析过的股票列表。</li>
+                        </ul>
+                    </li>
+                    <li><strong>价格方案 (pricing.html)</strong>：
+                        <ul>
+                            <li>三列卡片布局（免费/VIP1/VIP2）。</li>
+                            <li>VIP2 推荐高亮（缩放+发光）。</li>
+                            <li>FAQ 折叠面板。</li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+
+            <section id="backend-api" class="doc-section">
+                <h2>5. 后端 API 规范 (FastAPI)</h2>
+                <p>基于 <code>main.py</code> 的路由定义。</p>
+
+                <h4>页面路由 (Page Routes)</h4>
+                <table class="table table-sm table-striped">
+                    <thead><tr><th>Method</th><th>Path</th><th>Template</th><th>Context</th></tr></thead>
+                    <tbody>
+                        <tr><td>GET</td><td><code>/</code></td><td>home.html</td><td>active_page='home'</td></tr>
+                        <tr><td>GET</td><td><code>/analysis</code></td><td>analysis.html</td><td>active_page='analysis'</td></tr>
+                        <tr><td>GET</td><td><code>/market</code></td><td>market_overview.html</td><td>active_page='market'</td></tr>
+                        <tr><td>GET</td><td><code>/hot</code></td><td>hot_stocks.html</td><td>active_page='hot'</td></tr>
+                        <tr><td>GET</td><td><code>/opportunities</code></td><td>opportunities.html</td><td>active_page='opportunities'</td></tr>
+                        <tr><td>GET</td><td><code>/news</code></td><td>news_flash.html</td><td>active_page='news'</td></tr>
+                        <tr><td>GET</td><td><code>/risks</code></td><td>risk_warning.html</td><td>active_page='risks'</td></tr>
+                        <tr><td>GET</td><td><code>/pricing</code></td><td>pricing.html</td><td>active_page='pricing'</td></tr>
+                        <tr><td>GET</td><td><code>/login</code></td><td>login.html</td><td>hide_nav=True, hide_footer=True</td></tr>
+                        <tr><td>GET</td><td><code>/register</code></td><td>register.html</td><td>hide_nav=True, hide_footer=True</td></tr>
+                        <tr><td>GET</td><td><code>/profile</code></td><td>profile.html</td><td>active_page='profile'</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>功能接口 (Functional APIs)</h4>
+                <ul>
+                    <li>
+                        <strong>分析接口</strong> <code>POST /api/analyze</code>
+                        <br>输入: <code>{ query: "600519" }</code>
+                        <br>输出: <code>StreamingResponse (text/html)</code> - 流式返回 Markdown 片段。
+                    </li>
+                    <li>
+                        <strong>PDF 导出</strong> <code>POST /api/export-pdf</code>
+                        <br>输入: <code>{ html_content: "...", stock_name: "..." }</code>
+                        <br>输出: <code>{ download_url: "/api/export-pdf/download/{filename}" }</code>
+                        <br>下载: <code>GET /api/export-pdf/download/{filename}</code>（需登录）
+                    </li>
+                </ul>
+            </section>
+
+            <section id="ai-prompt" class="doc-section">
+                <h2>6. AI 提示词工程 (Prompt Engineering)</h2>
+                <p>这是生成研报的灵魂，在 <code>ai_service.py</code> 中实现。</p>
+                <div class="alert alert-secondary">
+                    <strong>System Prompt:</strong><br>
+                    "你是由‘A股棱镜’开发的首席金融分析师，信奉格雷厄姆与巴菲特的价值投资理念，同时精通技术面趋势分析。你的任务是根据传入的JSON数据，撰写一份逻辑严密、数据详实、观点犀利的深度研报。<br>
+                    【核心原则】<br>
+                    1. 客观性：所有结论必须基于数据，拒绝模棱两可的废话。<br>
+                    2. 本土化：严格遵守中国A股‘红涨绿跌’的色彩规范。<br>
+                    3. 格式化：直接输出纯HTML代码，严禁输出Markdown标记，只输出报告主体的 div 结构。<br>
+                    4. 样式内嵌：使用内联CSS或 style 标签，确保报告在纯白背景下依然美观。"
+                </div>
+            </section>
+
+            <section id="deployment" class="doc-section">
+                <h2>7. 部署与配置</h2>
+                <h4>环境变量 (.env)</h4>
+                <pre><code>DATA_API_KEY=your_data_api_key
+DATA_CHANNEL=default
+AI_API_KEY=your_ai_api_key
+AI_ENDPOINT=your_endpoint_id</code></pre>
+
+                <h4>启动命令</h4>
+                <pre><code>uvicorn main:app --host 0.0.0.0 --port 8000 --reload</code></pre>
+            </section>
+
+            <div class="text-center text-muted mt-5">
+                <small>文档生成时间: 2026-01-03 | Generated by A股棱镜 Coding Assistant</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

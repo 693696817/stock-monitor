@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+
+{% block title %}全维风险监控中心 - A股异常预警{% endblock %}
+{% block seo_description %}A股棱镜全维风险监控：实时跟踪财务异常、股东减持、监管措施等风险信号，提前发现投资隐患。{% endblock %}
+{% block seo_keywords %}A股棱镜,风险监控,异常预警,财务排雷,A股风险{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* --- 布局容器 --- */
+    .risk-container {
+        padding-top: 100px;
+        padding-bottom: 40px;
+    }
+
+    /* --- 1. 顶部统计仪表盘 --- */
+    .stats-row {
+        margin-bottom: 30px;
+    }
+    .stat-card {
+        background: rgba(30, 41, 59, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.3s;
+        height: 100%;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        background: rgba(30, 41, 59, 0.8);
+    }
+
+    /* 统计数字样式 */
+    .stat-num {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .stat-label {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    /* 图标背景 */
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    /* 颜色变体 */
+    .risk-high { color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+    .risk-mid  { color: #f59e0b; border-color: rgba(245, 158, 11, 0.3); }
+    .risk-info { color: #38bdf8; border-color: rgba(56, 189, 248, 0.3); }
+
+    .bg-icon-red { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    .bg-icon-orange { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    .bg-icon-blue { background: rgba(56, 189, 248, 0.1); color: #38bdf8; }
+
+    /* 呼吸灯特效 - 用于高风险计数 */
+    .pulse-red {
+        animation: pulse-red-anim 2s infinite;
+    }
+    @keyframes pulse-red-anim {
+        0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    /* --- 2. 过滤器与标题栏 --- */
+    .filter-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    .risk-breadth-bar {
+        background: rgba(255,255,255,.04);
+        border: 1px solid rgba(255,255,255,.08);
+        border-radius: 10px;
+        padding: 12px 16px;
+    }
+
+    .filter-btn-group {
+        background: rgba(15, 23, 42, 0.6);
+        padding: 5px;
+        border-radius: 50px;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    .filter-btn {
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        padding: 8px 24px;
+        border-radius: 40px;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+    .filter-btn.active {
+        background: #38bdf8;
+        color: #0f172a;
+        font-weight: 700;
+        box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+    }
+    .last-update {
+        font-family: 'JetBrains Mono', monospace;
+        color: #64748b;
+        font-size: 0.8rem;
+    }
+
+    /* --- 3. 风险卡片 (核心) --- */
+    .risk-card {
+        background: rgba(30, 41, 59, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-top: 3px solid #64748b; /* 默认灰色，JS会改 */
+        border-radius: 12px;
+        margin-bottom: 20px;
+        overflow: hidden;
+        transition: all 0.3s;
+        opacity: 0; /* 动画初始状态 */
+        animation: slideUp 0.5s forwards;
+    }
+
+    .risk-card:hover {
+        background: rgba(30, 41, 59, 0.8);
+        transform: translateY(-3px);
+    }
+
+    /* 卡片顶部不同颜色的定义 */
+    .card-border-red { border-top-color: #ef4444; box-shadow: 0 -5px 15px -8px rgba(239, 68, 68, 0.3); }
+    .card-border-orange { border-top-color: #f59e0b; box-shadow: 0 -5px 15px -8px rgba(245, 158, 11, 0.3); }
+    .card-border-blue { border-top-color: #38bdf8; box-shadow: 0 -5px 15px -8px rgba(56, 189, 248, 0.3); }
+
+    .card-header-row {
+        padding: 20px 25px 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .risk-badge {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+    .badge-high { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-mid { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-info { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+
+    .risk-target {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .card-body {
+        padding: 0 25px 20px;
+    }
+
+    .risk-summary {
+        color: #e2e8f0;
+        font-size: 0.95rem;
+        margin-bottom: 15px;
+        line-height: 1.6;
+    }
+
+    /* AI 分析区域 */
+    .ai-insight-box {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        padding: 15px;
+        border-left: 2px solid; /* 颜色由JS控制 */
+    }
+    .ai-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 700;
+    }
+
+    @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container risk-container">
+
+    <div class="row stats-row g-3">
+        <div class="col-md-3">
+            <div class="stat-card risk-high">
+                <div>
+                    <span class="stat-label">个股高危预警</span>
+                    <div class="stat-num" id="countStock">0</div>
+                </div>
+                <div class="stat-icon bg-icon-red pulse-red">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card risk-mid">
+                <div>
+                    <span class="stat-label">资金面出逃</span>
+                    <div class="stat-num" id="countCapital">0</div>
+                </div>
+                <div class="stat-icon bg-icon-orange">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card risk-info">
+                <div>
+                    <span class="stat-label">价格异动</span>
+                    <div class="stat-num" id="countPrice">0</div>
+                </div>
+                <div class="stat-icon bg-icon-blue">
+                    <i class="fa-solid fa-arrow-trend-down"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="border-color: #64748b;">
+                <div>
+                    <span class="stat-label">当日监控事件</span>
+                    <div class="stat-num text-white" id="countTotal">0</div>
+                </div>
+                <div class="stat-icon" style="background: rgba(255,255,255,0.05); color: #fff;">
+                    <i class="fa-solid fa-eye"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="risk-breadth-bar mb-4" id="riskBreadth" style="display:none;">
+        <div class="d-flex flex-wrap align-items-center gap-3 small">
+            <span class="text-muted"><i class="fa-solid fa-layer-group me-1"></i>全市场宽度</span>
+            <span>上涨 <b style="color:#f87171;" id="bdUp">-</b></span>
+            <span>下跌 <b style="color:#34d399;" id="bdDown">-</b></span>
+            <span>平盘 <b class="text-light" id="bdFlat">-</b></span>
+            <span>跌停 <b style="color:#34d399;" id="bdLimitDown">-</b></span>
+            <span class="text-muted">共 <b class="text-light" id="bdTotal">-</b> 只 · 下跌占比 <b id="bdDownRatio">-</b></span>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <div class="d-flex align-items-center">
+            <h4 class="text-white fw-bold m-0 me-4 font-tech"><i class="fa-solid fa-shield-halved me-2 text-warning"></i>风险事件流</h4>
+            <div class="filter-btn-group d-none d-md-flex">
+                <button class="filter-btn active" data-cat="all" onclick="filterRisks('all', event)">全部风险</button>
+                <button class="filter-btn" data-cat="capital" onclick="filterRisks('capital', event)">资金面</button>
+                <button class="filter-btn" data-cat="price" onclick="filterRisks('price', event)">价格异动</button>
+                <button class="filter-btn" data-cat="valuation" onclick="filterRisks('valuation', event)">估值风险</button>
+                <button class="filter-btn" data-cat="policy" onclick="filterRisks('policy', event)">政策解读</button>
+            </div>
+        </div>
+        <div class="last-update">
+            <i class="fa-solid fa-rotate me-2"></i>数据时间: <span id="updateTime">{{ risk.update_time or '--' }}</span>
+            <span class="ms-2 text-info">· 交易日 {{ risk.trade_date or '--' }} · 数据源 金融大数据</span>
+        </div>
+    </div>
+
+    <div class="row" id="riskCardContainer">
+        </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // --- 真实后端数据（由服务端从金融大数据接口注入） ---
+    const risksData = {{ risk.risks | tojson }};
+    const COUNTS = {{ risk.counts | tojson }};
+    const BREADTH = {{ (risk.breadth or none) | tojson }};
+
+    const container = document.getElementById('riskCardContainer');
+
+    // --- 渲染逻辑 ---
+    // 筛选维度改为 cat（资金面 capital / 价格异动 price / 估值 risk valuation / 政策 policy），
+    // 比原来的 type（stock/industry/policy）更贴合「风险从哪来」这个问题的答案。
+    function renderRisks(filterType) {
+        container.innerHTML = '';
+
+        let filteredData = risksData;
+        if (filterType !== 'all') {
+            // 同时兼容旧的 type 维度（行业下行等条目不带 cat）
+            filteredData = risksData.filter(item => (item.cat || item.type) === filterType);
+        }
+
+        if (!filteredData.length) {
+            container.innerHTML = '<div class="col-12 text-center text-muted py-5">当前筛选条件下暂无风险事件</div>';
+            return;
+        }
+
+        filteredData.forEach((item, index) => {
+            // 样式映射
+            let style = {};
+            if (item.level === 'high') {
+                style = { border: 'card-border-red', badge: 'badge-high', badgeText: '高风险', text: 'text-danger', aiBorder: '#ef4444' };
+            } else if (item.level === 'mid') {
+                style = { border: 'card-border-orange', badge: 'badge-mid', badgeText: '中风险', text: 'text-warning', aiBorder: '#f59e0b' };
+            } else {
+                style = { border: 'card-border-blue', badge: 'badge-info', badgeText: '政策解读', text: 'text-info', aiBorder: '#38bdf8' };
+            }
+
+            // 图标映射（按风险来源维度：资金/价格/估值/政策/行业）
+            const cat = item.cat || item.type;
+            const ICONS = {
+                capital: '<i class="fa-solid fa-coins me-2"></i>',
+                price: '<i class="fa-solid fa-arrow-trend-down me-2"></i>',
+                valuation: '<i class="fa-solid fa-ruler-combined me-2"></i>',
+                policy: '<i class="fa-solid fa-scale-balanced me-2"></i>',
+                industry: '<i class="fa-solid fa-industry me-2"></i>',
+            };
+            const icon = ICONS[cat] || '<i class="fa-solid fa-chart-line me-2"></i>';
+
+            const delay = index * 0.1; // 瀑布流动画延迟
+
+            // ⚠️ 条目内容来自外部数据接口（股票名/新闻标题等），一律先 esc() 再拼 HTML
+            const html = `
+                <div class="col-lg-6 col-xl-4">
+                    <div class="risk-card ${style.border}" style="animation-delay: ${delay}s">
+                        <div class="card-header-row">
+                            <div class="risk-target">
+                                ${icon} ${esc(item.target)}
+                            </div>
+                            <span class="risk-badge ${style.badge}">${style.badgeText}</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-muted small mb-2"><i class="fa-regular fa-clock me-1"></i>${esc(item.time)}</div>
+                            <h5 class="text-white fw-bold mb-3">${esc(item.title)}</h5>
+                            <p class="risk-summary">${esc(item.summary)}</p>
+
+                            <div class="ai-insight-box" style="border-left-color: ${style.aiBorder}">
+                                <div class="ai-label ${style.text}">
+                                    <i class="fa-solid fa-robot"></i> AI 风险评估
+                                </div>
+                                <p class="mb-0 small text-light opacity-75">${esc(item.ai_insight)}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        });
+    }
+
+    // --- 交互逻辑 ---
+    // event 显式传入：`event.target` 在内联 onclick 里指向的是按钮本身，
+    // 但按钮内含文本节点时 target 可能是子元素，这里用 closest 兜底。
+    window.filterRisks = function(type, ev) {
+        const btns = document.querySelectorAll('.filter-btn');
+        btns.forEach(b => b.classList.remove('active'));
+        const src = (ev && ev.target) ? ev.target.closest('.filter-btn') : null;
+        if (src) src.classList.add('active');
+        else if (btns.length) btns[0].classList.add('active');
+        renderRisks(type);
+    };
+
+    // --- 全市场宽度 + 顶部统计 ---
+    function renderBreadthAndCounts() {
+        const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+        set('countStock', COUNTS.stock ?? 0);
+        set('countCapital', COUNTS.capital ?? 0);
+        set('countPrice', COUNTS.price ?? 0);
+        set('countTotal', COUNTS.total ?? 0);
+
+        const b = BREADTH;
+        const bar = document.getElementById('riskBreadth');
+        if (b && b.total && bar) {
+            set('bdUp', b.up); set('bdDown', b.down); set('bdFlat', b.flat);
+            set('bdLimitDown', b.limit_down); set('bdTotal', b.total);
+            set('bdDownRatio', b.down_ratio);
+            bar.style.display = 'block';
+        }
+    }
+
+    // --- 初始化 ---
+    function init() {
+        renderRisks('all');
+        renderBreadthAndCounts();   // 统计与全市场宽度（真实，来自服务端）
+        // 「数据时间」由服务端渲染真实抓取时刻，这里不再用本地时钟冒充实时刷新
+    }
+
+    init();
+
+</script>
+{% endblock %}

@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block seo_description %}快讯管理 · 管理后台 - A股棱镜（仅限管理员访问）{% endblock %}
+{% block seo_keywords %}A股棱镜,管理后台,系统管理{% endblock %}
+
+
+{% block robots %}noindex, nofollow{% endblock %}
+
+
+
+{% block title %}快讯管理 - A股棱镜 后台{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+    {% include 'components/admin_sidebar.html' %}
+    <main class="admin-main">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="font-tech mb-0" style="color:#fff;"><i class="fa-solid fa-bolt text-info me-2"></i>快讯管理</h3>
+            <div class="btn-group" role="group">
+                <button class="btn btn-sm btn-outline-secondary news-filter active" data-f="all">全部</button>
+                <button class="btn btn-sm btn-outline-warning news-filter" data-f="1">已置顶</button>
+                <button class="btn btn-sm btn-outline-info news-filter" data-f="0">未置顶</button>
+            </div>
+        </div>
+
+        <div class="admin-card p-0" style="overflow:hidden;">
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>时间</th><th>标题</th><th>情感</th><th>重大</th><th>点赞</th><th>浏览</th><th>置顶</th><th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="newsRows">
+                        <tr><td colspan="8" class="text-center text-secondary">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center p-3">
+                <button class="btn btn-outline-secondary btn-sm" id="prevBtn">上一页</button>
+                <span class="text-secondary small" id="pageInfo">第 1 页</span>
+                <button class="btn btn-outline-secondary btn-sm" id="nextBtn">下一页</button>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- 快讯详情弹窗 -->
+<div class="modal fade" id="newsDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="background:#1b2233;color:#e6edf3;border-color:#2a3550;">
+            <div class="modal-header" style="border-color:#2a3550;">
+                <h5 class="modal-title font-tech"><i class="fa-solid fa-bolt text-info me-2"></i>快讯详情</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex flex-wrap gap-2 mb-3" id="detailMeta"></div>
+                <h6 id="detailTitle" class="mb-3" style="color:#fff;"></h6>
+                <div id="detailContent" class="mb-3" style="line-height:1.7;font-size:.92rem;"></div>
+                <div id="detailAiComment" class="p-3 mb-2" style="background:rgba(56,189,248,.08);border-left:3px solid #38bdf8;border-radius:8px;display:none;">
+                    <div class="small text-info mb-1"><i class="fa-solid fa-wand-magic-sparkles me-1"></i>AI 洞察</div>
+                    <div id="detailAiCommentText" style="font-size:.9rem;"></div>
+                </div>
+                <div id="detailTags" class="small text-secondary"></div>
+            </div>
+            <div class="modal-footer" style="border-color:#2a3550;">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let page = 1;
+    const perPage = 20;
+    let curFilter = 'all';
+
+    const SENT = {
+        bull: { t: '利好', c: '#ff5f56' },
+        bear: { t: '利空', c: '#2ecc71' },
+        neutral: { t: '中性', c: '#94a3b8' }
+    };
+
+    function fmtTime(v) {
+        if (!v) return '-';
+        return String(v).replace('T', ' ').slice(0, 16);
+    }
+
+    async function loadNews() {
+        try {
+            const params = new URLSearchParams({ page, per_page: perPage });
+            if (curFilter !== 'all') params.set('pinned', curFilter);
+            const resp = await fetch('/api/admin/news?' + params.toString());
+            if (resp.status === 401) {
+                alert('会话已失效，请重新登录');
+                window.location.href = '/login';
+                return;
+            }
+            if (!resp.ok) {
+                document.getElementById('newsRows').innerHTML = '<tr><td colspan="8" class="text-center text-danger">加载失败（HTTP ' + resp.status + '）</td></tr>';
+                return;
+            }
+            const r = await resp.json();
+            const tb = document.getElementById('newsRows');
+            document.getElementById('pageInfo').textContent = `第 ${r.page ?? page} 页 / 共 ${Math.max(1, Math.ceil((r.total ?? 0) / perPage))} 页`;
+            if (!r.rows || !r.rows.length) {
+                tb.innerHTML = '<tr><td colspan="8" class="text-center text-secondary">暂无快讯</td></tr>';
+                return;
+            }
+            tb.innerHTML = r.rows.map(n => {
+                const s = SENT[n.sentiment] || SENT.neutral;
+                const sentBadge = `<span class="admin-badge" style="background:${s.c}22;color:${s.c};border:1px solid ${s.c}44;">${s.t}</span>`;
+                const imp = n.important ? '<span class="admin-badge badge-admin">重大</span>' : '-';
+                const pinnedBadge = n.pinned
+                    ? '<span class="admin-badge badge-admin"><i class="fa-solid fa-thumbtack me-1"></i>置顶</span>'
+                    : '<span class="admin-badge badge-free">普通</span>';
+                const title = (n.title || n.content || '').slice(0, 60);
+                return `<tr>
+                    <td class="font-mono" style="font-size:.8rem;">${n.date ? n.date + ' ' : ''}${n.time || ''}</td>
+                    <td style="max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(n.title || n.content || '')}">${esc(title)}</td>
+                    <td>${sentBadge}</td>
+                    <td>${imp}</td>
+                    <td>${n.likes ?? 0}</td>
+                    <td>${n.views ?? 0}</td>
+                    <td>${pinnedBadge}</td>
+                    <td>
+                        <button class="btn btn-outline-info btn-sm py-0 px-2" onclick="openDetail(${n.gid})">详情</button>
+                        <button class="btn btn-outline-warning btn-sm py-0 px-2" onclick="togglePin(${n.gid}, ${!n.pinned})">${n.pinned ? '取消置顶' : '置顶'}</button>
+                        <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="delNews(${n.gid})">删除</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    async function openDetail(gid) {
+        try {
+            const r = await (await fetch('/api/admin/news/' + gid)).json();
+            const n = r.news || {};
+            const s = SENT[n.sentiment] || SENT.neutral;
+            document.getElementById('detailMeta').innerHTML = [
+                `<span class="admin-badge" style="background:${s.c}22;color:${s.c};border:1px solid ${s.c}44;">${s.t}</span>`,
+                n.important ? '<span class="admin-badge badge-admin">重大</span>' : '',
+                n.pinned ? '<span class="admin-badge badge-admin">置顶</span>' : '',
+                `<span class="admin-badge badge-free">点赞 ${n.likes ?? 0} · 浏览 ${n.views ?? 0}</span>`
+            ].join('');
+            document.getElementById('detailTitle').textContent = n.title || '（无标题）';
+            document.getElementById('detailContent').textContent = n.content || '';
+            const ai = document.getElementById('detailAiComment');
+            if (n.ai_comment) {
+                ai.style.display = 'block';
+                document.getElementById('detailAiCommentText').textContent = n.ai_comment;
+            } else {
+                ai.style.display = 'none';
+            }
+            const tags = (n.tags || []).join(' · ');
+            document.getElementById('detailTags').textContent = tags ? '标签：' + tags : '';
+            new bootstrap.Modal(document.getElementById('newsDetailModal')).show();
+        } catch (e) {
+            alert('详情加载失败');
+        }
+    }
+
+    async function togglePin(gid, pinned) {
+        try {
+            const resp = await fetch(`/api/admin/news/${gid}/pin`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pinned })
+            });
+            const d = await resp.json().catch(() => ({}));
+            if (resp.ok && d.status === 'success') {
+                loadNews();
+            } else {
+                alert('操作失败：' + (d.detail || '未知错误'));
+            }
+        } catch (e) { alert('网络错误'); }
+    }
+
+    async function delNews(gid) {
+        if (!confirm('确定删除这条快讯？删除后不可恢复。')) return;
+        try {
+            const resp = await fetch(`/api/admin/news/${gid}/delete`, { method: 'POST' });
+            const d = await resp.json().catch(() => ({}));
+            if (resp.ok && d.status === 'success') {
+                loadNews();
+            } else {
+                alert('删除失败：' + (d.detail || '未知错误'));
+            }
+        } catch (e) { alert('网络错误'); }
+    }
+
+    document.addEventListener('click', function (e) {
+        const f = e.target.closest('.news-filter');
+        if (f) {
+            document.querySelectorAll('.news-filter').forEach(b => b.classList.remove('active'));
+            f.classList.add('active');
+            curFilter = f.getAttribute('data-f');
+            page = 1;
+            loadNews();
+        }
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => { if (page > 1) { page--; loadNews(); } });
+    document.getElementById('nextBtn').addEventListener('click', () => { page++; loadNews(); });
+
+    document.addEventListener('DOMContentLoaded', loadNews);
+</script>
+{% endblock %}

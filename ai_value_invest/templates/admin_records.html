@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block seo_description %}分析记录 · 管理后台 - A股棱镜（仅限管理员访问）{% endblock %}
+{% block seo_keywords %}A股棱镜,管理后台,系统管理{% endblock %}
+
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block title %}分析记录 - A股棱镜 后台{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+    {% include 'components/admin_sidebar.html' %}
+    <main class="admin-main">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="font-tech mb-0" style="color:#fff;"><i class="fa-solid fa-file-lines text-info me-2"></i>分析记录</h3>
+            <div class="btn-group btn-group-sm" role="group">
+                <button class="btn btn-outline-secondary active" data-mode="">全部</button>
+                <button class="btn btn-outline-secondary" data-mode="normal">普通</button>
+                <button class="btn btn-outline-secondary" data-mode="deep">深度</button>
+            </div>
+        </div>
+
+        <div class="admin-card p-0" style="overflow:hidden;">
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th><th>用户</th><th>股票</th><th>代码</th><th>模式</th>
+                            <th>模型</th><th>状态</th><th>时间</th><th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordRows">
+                        <tr><td colspan="9" class="text-center text-secondary">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center p-3">
+                <button class="btn btn-outline-secondary btn-sm" id="prevBtn">上一页</button>
+                <span class="text-secondary small" id="pageInfo">第 1 页</span>
+                <button class="btn btn-outline-secondary btn-sm" id="nextBtn">下一页</button>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let page = 1;
+    const perPage = 20;
+    let modeFilter = '';
+
+    function fmtDate(v) {
+        if (!v) return '-';
+        return String(v).replace('T', ' ').slice(0, 16);
+    }
+
+    function esc(v) {
+        return String(v == null ? '' : v).replace(/[&<>"']/g, c => (
+            { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // 状态徽标：失败记录没有正文，必须让管理员在点开前就知道，
+    // 否则点进去只看到空白页，无法判断是「没生成」还是「加载出错」。
+    function statusBadge(status) {
+        return status === 'failed'
+            ? '<span class="admin-badge" style="background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.3);">失败</span>'
+            : '<span class="admin-badge" style="background:rgba(52,211,153,.12);color:#34d399;border:1px solid rgba(52,211,153,.3);">成功</span>';
+    }
+
+    async function loadRecords() {
+        try {
+            const url = `/api/admin/records?page=${page}&per_page=${perPage}` + (modeFilter ? `&mode=${modeFilter}` : '');
+            const r = await (await fetch(url)).json();
+            const tb = document.getElementById('recordRows');
+            document.getElementById('pageInfo').textContent = `第 ${r.page} 页 / 共 ${Math.max(1, Math.ceil(r.total / r.per_page))} 页`;
+            if (!r.rows || !r.rows.length) {
+                tb.innerHTML = '<tr><td colspan="9" class="text-center text-secondary">暂无记录</td></tr>';
+                return;
+            }
+            tb.innerHTML = r.rows.map(row => {
+                const mode = row.mode === 'deep'
+                    ? '<span class="admin-badge badge-admin">深度</span>'
+                    : '<span class="admin-badge badge-free">普通</span>';
+                return `<tr>
+                    <td>${row.id}</td>
+
+                    <td>${esc(row.email_display ?? row.email) || '匿名'}</td>
+                    <td>${esc(row.stock_name) || '-'}</td>
+                    <td>${esc(row.stock_code) || '-'}</td>
+                    <td>${mode}</td>
+                    <td class="small text-secondary">${esc(row.model_id) || '-'}</td>
+                    <td>${statusBadge(row.status)}</td>
+                    <td class="font-mono" style="font-size:.8rem;">${fmtDate(row.created_at)}</td>
+                    <td><a class="btn btn-sm btn-outline-info" style="white-space:nowrap;"
+                           href="/analysis/archive/${row.id}" target="_blank" rel="noopener"
+                           title="回看该报告的正文">查看</a></td>
+                </tr>`;
+            }).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    document.querySelectorAll('.btn-group [data-mode]').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.btn-group [data-mode]').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            modeFilter = this.getAttribute('data-mode');
+            page = 1;
+            loadRecords();
+        });
+    });
+    document.getElementById('prevBtn').addEventListener('click', function () { if (page > 1) { page--; loadRecords(); } });
+    document.getElementById('nextBtn').addEventListener('click', function () { page++; loadRecords(); });
+
+    document.addEventListener('DOMContentLoaded', loadRecords);
+</script>
+{% endblock %}

@@ -1,0 +1,712 @@
+{% extends "base.html" %}
+
+{% block title %}价格方案 - A股棱镜{% endblock %}
+{% block seo_description %}A股棱镜提供免费版、VIP 会员与按量付费包多种方案，满足从入门到深度研究者的不同需求。{% endblock %}
+{% block seo_keywords %}A股棱镜,价格方案,A股研究工具,VIP会员,股票分析套餐{% endblock %}
+
+{% block jsonld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "怎么开通会员？为什么不能直接在线支付？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "开通共四步：在本页选好套餐与周期，前往合作店铺下单付款，收货后拿到一组卡密，回本站「个人中心 → 会员与订单」粘贴卡密兑换，权益即时到账。本站暂未接入站内在线支付，统一采用卡密兑换方式开通。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "会员还没到期就续费，剩余天数会浪费吗？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "不会。未到期续费会把新天数叠加到原到期日之后，可以放心提前续费。会员已过期后再续费，则从续费当天起算。续费时若新套餐等级更高会立即升级；若等级更低，当前等级保持不变直到到期，不会中途降级。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "免费版有哪些权益？注册赠送怎么用？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "免费版每日可用 2 次普通分析，并支持个股、大盘多角度普通分析、基础数据查询与投资机会查询。注册即自动赠送 5 次普通分析 + 1 次深度分析，属于一次性余量，不按日重置，在个人中心「今日剩余」中可见。此外免费版每月还可免费体验 1 次深度分析（按自然月重置）。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "会员有月卡 / 年卡吗？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "VIP-1 与 VIP-2 均提供月卡与年卡两种周期，年卡相对月卡更优惠（如 VIP-1 月卡 ¥19.9、年卡 ¥99，相当于立省 ¥140）。页面顶部切换周期即可看到对应价格。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "按量付费包和会员有什么区别？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "会员是按期订阅、每日享有固定次数；按量付费包为一次性购买的新人体验包（¥9.9，10 次普通分析 + 2 次深度分析），无时间限制、用完即止，与会员每日额度并存、不互相抵扣，适合低频与临时需求用户。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "VIP-1 和 VIP-2 有什么区别？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "两者解锁的功能范围完全一致（深度技术 / 深度价值分析视角、VIP 专属后端模型、无限次 PDF 研报导出、会员到期站内提醒），差别在每日分析额度：VIP-1 为普通 5 次 / 深度 2 次每天，VIP-2 为普通 10 次 / 深度 5 次每天，约为 VIP-1 的两倍，适合高频研究用户。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "卡密提示「已被使用 / 已作废 / 已过期」怎么办？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "同一张卡密只能使用一次。若提示已使用，请确认是否已在其他账号兑换过；若提示已作废或已过期，通常是渠道侧回收或超过卡密有效期，请联系售出渠道处理。请务必通过正规渠道购买。"
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "可以退款吗？",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "卡密属数字商品，一经售出使用即完成交付，原则上不予退款。未使用的卡密请联系售出渠道协商。建议先使用免费版（含每月 1 次深度体验）确认是否满足需求，再决定购买。"
+      }
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": {{ _site_name|tojson }},
+  "url": {{ (_site_domain or _cur_url)|tojson }}
+}
+</script>
+{% endblock %}
+
+{% block description %}
+A股棱镜提供免费版、VIP-1、VIP-2 与按量付费包多种价格方案，满足从入门到专业投资者的不同需求。注册即送普通分析5次+深度分析1次。
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* --- 页面专属样式 --- */
+    .pricing-header {
+        padding: 100px 0 60px;
+        text-align: center;
+        position: relative;
+    }
+    .pricing-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+    }
+    .pricing-toggle {
+        display: inline-flex;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50px;
+        padding: 4px;
+        position: relative;
+        margin-top: 20px;
+    }
+    .toggle-btn {
+        padding: 8px 24px;
+        border-radius: 50px;
+        color: #94a3b8;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 0.9rem;
+        font-weight: 500;
+        background: transparent;
+        border: none;
+    }
+    .toggle-btn.active {
+        background: #38bdf8;
+        color: #0f172a;
+        font-weight: 700;
+        box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+    }
+    .pricing-card {
+        background: rgba(30, 41, 59, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 40px 30px;
+        height: 100%;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    .pricing-card:hover {
+        transform: translateY(-10px);
+        border-color: rgba(56, 189, 248, 0.3);
+        background: rgba(30, 41, 59, 0.7);
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+    }
+    .pricing-card.popular {
+        background: linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+        border: 1px solid rgba(56, 189, 248, 0.5);
+        box-shadow: 0 0 30px rgba(56, 189, 248, 0.15);
+    }
+    .popular-badge {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #38bdf8;
+        color: #0f172a;
+        padding: 4px 16px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        border-radius: 0 0 10px 10px;
+        letter-spacing: 1px;
+    }
+    .price-tag {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #fff;
+        margin: 20px 0 4px;
+    }
+    .price-period {
+        font-size: 1rem;
+        color: #94a3b8;
+        font-weight: 400;
+    }
+    .price-note {
+        min-height: 1.2rem;
+        font-size: 0.85rem;
+    }
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 24px 0;
+        flex-grow: 1;
+    }
+    .feature-list li {
+        margin-bottom: 12px;
+        color: #cbd5e1;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+    }
+    .feature-list li i { margin-right: 10px; }
+    .check-icon { color: #38bdf8; }
+    .check-icon-gray { color: #475569; }
+    .btn-plan {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        font-weight: 600;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.05);
+        color: #fff;
+        transition: all 0.3s;
+    }
+    .btn-plan:hover { background: rgba(255,255,255,0.1); border-color: #fff; }
+    .btn-plan:disabled { opacity: 0.55; cursor: default; }
+    .btn-plan-primary {
+        background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
+        border: none;
+        box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+    }
+    .btn-plan-primary:hover { opacity: 0.9; transform: scale(1.02); }
+    .section-title { color: #fff; font-weight: 800; }
+    .mission-section {
+        margin-top: 80px;
+        background: linear-gradient(135deg, #1e3a8a 0%, #172554 100%);
+        padding: 80px 0;
+        position: relative;
+        overflow: hidden;
+    }
+    .mission-bg-decoration {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-image: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.05) 0%, transparent 20%);
+        pointer-events: none;
+    }
+    .feature-grid-icon {
+        width: 48px; height: 48px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.25rem; margin-bottom: 20px;
+    }
+    .accordion-item {
+        background: rgba(30, 41, 59, 0.4);
+        border: 1px solid rgba(255,255,255,0.05);
+        margin-bottom: 10px;
+        border-radius: 8px !important;
+        overflow: hidden;
+    }
+    .accordion-button { background: transparent; color: #fff; font-weight: 500; box-shadow: none !important; }
+    .accordion-button:not(.collapsed) { background: rgba(56, 189, 248, 0.1); color: #38bdf8; }
+    .accordion-button::after { filter: invert(1); }
+    .accordion-body { color: #94a3b8; font-size: 0.9rem; }
+
+    /* --- 购买引导区 --- */
+    .buy-guide {
+        background: linear-gradient(135deg, rgba(30,58,138,0.35) 0%, rgba(15,23,42,0.6) 100%);
+        border: 1px solid rgba(56, 189, 248, 0.25);
+        border-radius: 16px;
+        padding: 22px 24px;
+    }
+    .buy-step {
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 12px;
+        padding: 14px 16px;
+        height: 100%;
+    }
+    .buy-step-no {
+        width: 26px; height: 26px;
+        border-radius: 50%;
+        background: #38bdf8;
+        color: #0f172a;
+        font-weight: 800;
+        font-size: .85rem;
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 8px;
+    }
+    .btn-plan-primary {
+        background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
+        border: none;
+        box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+    }
+    /* a 标签版的按钮要保留 .btn-plan 的盒模型（padding/radius），只复写配色 */
+    a.btn-plan, a.btn-plan-primary {
+        display: inline-flex;
+        text-decoration: none;
+        color: #fff;
+        padding: 12px;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all .3s;
+    }
+    a.btn-plan { border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); }
+    a.btn-plan:hover { background: rgba(255,255,255,0.1); border-color: #fff; color: #fff; }
+    a.btn-plan-primary { border: 1px solid transparent; }
+    a.btn-plan-primary:hover { opacity: .9; color: #fff; }
+</style>
+{% endblock %}
+
+{% set SHOP_URL = 'https://wzyp.cn/shop/OORWYAL7' %}
+
+{% set REDEEM_PATH = '/profile#membership' %}
+
+{% block content %}
+
+<div class="container pricing-header">
+    <div class="badge-tech font-mono mb-3">
+        <i class="fa-solid fa-gem me-2"></i>解锁专业投资战力
+    </div>
+    <h1 class="pricing-title font-tech">简单透明的价格方案</h1>
+    <p class="text-muted" style="max-width: 620px; margin: 0 auto;">
+        从免费体验到 VIP会员 深度分析，A股棱镜提供多种股票分析套餐，一站式 A股研究工具助您在 A 股市场挖掘价值。注册即送 <strong class="text-info">5 次普通分析 + 1 次深度分析</strong>，无隐藏费用。
+    </p>
+
+    {% if period_labels and period_labels | length > 0 %}
+    <div class="pricing-toggle">
+        {% for lb in period_labels %}
+        <button class="toggle-btn {% if loop.index0 == 0 %}active{% endif %}" data-period="{{ loop.index0 }}"
+                onclick="switchPeriod({{ loop.index0 }})">{{ lb }}</button>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<div class="container pb-4">
+    <div class="buy-guide">
+        <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+            <i class="fa-solid fa-circle-info text-info"></i>
+            <strong class="text-white">如何开通会员</strong>
+            <span class="text-secondary" style="font-size:.8rem;">在合作店铺购买卡密 → 回本站兑换，权益立即到账</span>
+        </div>
+
+        <div class="mb-3 p-2 px-3 rounded-3"
+             style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); font-size:.82rem;">
+            {% if member.logged_in and member.active %}
+                <i class="fa-solid fa-crown text-warning me-2"></i>
+                您当前为 <strong class="text-white">{{ member.level_name }}</strong>，
+                {% if member.lifetime %}
+                    <strong class="text-white">长期有效</strong>
+                {% else %}
+                    有效期至 <strong class="text-white">{{ member.expiry }}</strong>
+                    <span class="text-secondary">（剩余 {{ member.days_left }} 天）</span>
+                {% endif %}
+                <a href="{{ REDEEM_PATH }}" class="text-info text-decoration-none ms-2">兑换 / 续费 <i class="fa-solid fa-arrow-right ms-1"></i></a>
+            {% elif member.logged_in %}
+                <i class="fa-regular fa-user me-2 text-secondary"></i>
+                <span class="text-secondary">您尚未开通会员（或会员已过期）。购买卡密后回到</span>
+                <a href="{{ REDEEM_PATH }}" class="text-info text-decoration-none">个人中心 → 会员与订单</a>
+                <span class="text-secondary">兑换即可。</span>
+            {% else %}
+                <i class="fa-regular fa-circle-user me-2 text-secondary"></i>
+                <span class="text-secondary">兑换会员需要登录账号：</span>
+                <a href="/login?next=/pricing" class="text-info text-decoration-none">登录</a>
+                <span class="text-secondary">后再购买，权益才会挂到您账号下。</span>
+            {% endif %}
+        </div>
+        <div class="row g-3">
+            <div class="col-6 col-lg-3">
+                <div class="buy-step">
+                    <div class="buy-step-no">1</div>
+                    <div class="text-white small fw-bold mb-1">选择套餐</div>
+                    <div class="text-secondary" style="font-size:.78rem;">在上面挑好档位与周期（{% for lb in period_labels %}{{ lb }}{% if not loop.last %} / {% endif %}{% endfor %}）</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="buy-step">
+                    <div class="buy-step-no">2</div>
+                    <div class="text-white small fw-bold mb-1">店铺下单</div>
+                    <div class="text-secondary" style="font-size:.78rem;">前往合作店铺付款，收货后获得一组卡密</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="buy-step">
+                    <div class="buy-step-no">3</div>
+                    <div class="text-white small fw-bold mb-1">回站兑换</div>
+                    <div class="text-secondary" style="font-size:.78rem;">个人中心 → 会员与订单 → 粘贴卡密兑换</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="buy-step">
+                    <div class="buy-step-no">4</div>
+                    <div class="text-white small fw-bold mb-1">即时到账</div>
+                    <div class="text-secondary" style="font-size:.78rem;">权益秒到，未到期的续费会叠加到原到期日之后</div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <a href="{{ SHOP_URL }}" target="_blank" rel="noopener noreferrer" class="btn btn-plan-primary"
+               style="width:auto;padding:10px 22px;">
+                <i class="fa-solid fa-bag-shopping me-2"></i>前往店铺选购
+            </a>
+            <a href="{{ REDEEM_PATH }}" class="btn btn-plan" style="width:auto;padding:10px 22px;">
+                <i class="fa-solid fa-ticket me-2"></i>我已购买，去兑换
+            </a>
+            <span class="text-secondary align-self-center" style="font-size:.75rem;">
+                卡密仅在本站兑换有效，请妥善保管；同一卡密只能使用一次。
+            </span>
+        </div>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="row g-4 align-items-stretch">
+        {% for p in sub_plans %}
+        <div class="col-lg-4 d-flex">
+            <div class="pricing-card {% if p.popular %}popular{% endif %} {% if p.type == 'subscription' %}sub{% endif %} flex-grow-1"
+                 {% if p.type == 'subscription' and p.prices %}data-prices='{{ p.prices | tojson }}'{% endif %}>
+                {% if p.popular %}<div class="popular-badge">MOST POPULAR</div>{% endif %}
+                <div class="text-center">
+                    <h4 class="fw-bold text-white">{{ p.name }}</h4>
+                    <p class="text-muted small">{{ p.tagline }}</p>
+                    <div class="price-tag">
+                        {% if p.type == 'subscription' and p.prices %}
+                            <span class="pp">{{ p.prices[0].price }}</span><span class="price-period">{{ p.prices[0].unit }}</span>
+                        {% else %}
+                            {{ p.price_from }}<span class="price-period">{{ p.period }}</span>
+                        {% endif %}
+                    </div>
+                    {% if p.type == 'subscription' and p.prices and p.prices[0].note %}
+                        <div class="price-note text-info">{{ p.prices[0].note }}</div>
+                    {% else %}
+                        <div class="price-note">&nbsp;</div>
+                    {% endif %}
+                </div>
+                <hr style="border-color: {% if p.popular %}rgba(56,189,248,0.3){% else %}rgba(255,255,255,0.1){% endif %};">
+                <ul class="feature-list">
+                    {% for f in p.features %}
+                    <li>
+                        {% if f.on %}<i class="fa-solid fa-check check-icon"></i>{% else %}<i class="fa-solid fa-xmark check-icon-gray"></i>{% endif %}
+                        <span class="{% if not f.on %}text-muted text-decoration-line-through{% endif %}">{{ f.text }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <!-- 按钮一律导向「店铺购买 / 回站兑换」，不再有站内直接开通：
+                     早期这里调 /api/membership/upgrade 直接发会员且不校验支付，
+                     等于人人可白嫖 VIP-2，整个变现体系失效。该接口现已拒绝服务。 -->
+                {% set target_level = 1 if p.key == 'vip1' else 2 %}
+                {% if p.type == 'subscription' %}
+                    {% if member.active and member.level == target_level %}
+
+                        <div class="mb-2 text-center" style="font-size:.76rem;">
+                            <span class="text-info"><i class="fa-solid fa-circle-check me-1"></i>已开通 ·
+                                {% if member.lifetime %}长期有效{% else %}有效期至 {{ member.expiry }}{% endif %}</span>
+                            {% if member.expiry and member.days_left >= 0 %}<div class="text-secondary">剩余 {{ member.days_left }} 天</div>{% endif %}
+                        </div>
+                        <a href="{{ SHOP_URL }}" target="_blank" rel="noopener noreferrer"
+                           class="btn btn-plan {% if p.popular %}btn-plan-primary{% endif %} d-flex align-items-center justify-content-center">
+                            续费会员 <i class="fa-solid fa-bag-shopping ms-2"></i>
+                        </a>
+                    {% elif member.active and member.level > target_level %}
+
+                        <div class="mb-2 text-center" style="font-size:.76rem;">
+                            <span class="text-secondary">您已开通 {{ member.level_name }}（更高等级）</span>
+                        </div>
+                        <button class="btn btn-plan" disabled>无需降级购买</button>
+                    {% elif member.logged_in and member.level > 0 and member.level < target_level %}
+                        <div class="mb-2 text-center" style="font-size:.76rem;">
+                            <span class="text-secondary">当前 {{ member.level_name }} · 升级后额度即时生效</span>
+                        </div>
+                        <a href="{{ SHOP_URL }}" target="_blank" rel="noopener noreferrer"
+                           class="btn btn-plan {% if p.popular %}btn-plan-primary{% endif %} d-flex align-items-center justify-content-center">
+                            升级到 VIP-{{ target_level }} <i class="fa-solid fa-bag-shopping ms-2"></i>
+                        </a>
+                    {% else %}
+                        <a href="{{ SHOP_URL }}" target="_blank" rel="noopener noreferrer"
+                           class="btn btn-plan {% if p.popular %}btn-plan-primary{% endif %} d-flex align-items-center justify-content-center">
+                            {{ p.button.text }} <i class="fa-solid fa-bag-shopping ms-2"></i>
+                        </a>
+                    {% endif %}
+                {% elif p.button.action == 'contact' %}
+                    <button class="btn btn-plan" onclick="alert('如有批量采购、渠道合作等需求，请联系商务微信');">{{ p.button.text }}</button>
+                {% else %}
+                    <button class="btn btn-plan" disabled>
+                        {% if member.active %}已升级至 {{ member.level_name }}{% else %}{{ p.button.text }}{% endif %}
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% if payg_plans %}
+<section class="mission-section" style="background: linear-gradient(135deg, #0f2027 0%, #172554 100%);">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="badge-tech font-mono mb-2"><i class="fa-solid fa-coins me-2"></i>按量付费包</div>
+            <h2 class="fw-bold text-white section-title">不想开会员？单次购买也行</h2>
+            <p class="text-muted">按需购买，用完即止，无时间限制，适合低频与临时需求。</p>
+        </div>
+        <div class="row g-4 justify-content-center">
+            {% for p in payg_plans %}
+            <div class="col-lg-5">
+                <div class="pricing-card" style="background: rgba(15,23,42,0.7);">
+                    <div class="text-center">
+                        <h4 class="fw-bold text-white">{{ p.name }}</h4>
+                        <p class="text-muted small">{{ p.tagline }}</p>
+                    </div>
+                    <hr style="border-color: rgba(255,255,255,0.1);">
+                    <ul class="feature-list">
+                        {% for pr in p.prices %}
+                        <li>
+                            <i class="fa-solid fa-tag check-icon"></i>
+                            <span><strong>{{ pr.label }}</strong>：{{ pr.price }}{{ pr.unit }}{% if pr.note %} <span class="text-info">（{{ pr.note }}）</span>{% endif %}</span>
+                        </li>
+                        {% endfor %}
+                        {% for f in p.features %}
+                        <li>
+                            {% if f.on %}<i class="fa-solid fa-check check-icon"></i>{% else %}<i class="fa-solid fa-xmark check-icon-gray"></i>{% endif %}
+                            <span class="{% if not f.on %}text-muted text-decoration-line-through{% endif %}">{{ f.text }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <!-- 按量包同样走店铺：不提供站内直接开通通道 -->
+                    <a href="{{ SHOP_URL }}" target="_blank" rel="noopener noreferrer"
+                       class="btn btn-plan btn-plan-primary d-flex align-items-center justify-content-center">
+                        前往店铺购买 <i class="fa-solid fa-bag-shopping ms-2"></i>
+                    </a>
+                    <a href="{{ REDEEM_PATH }}" class="btn btn-link btn-sm text-info mt-2 text-decoration-none" style="font-size:.78rem;">
+                        已购买？点此兑换 <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<div class="container py-5">
+    <div class="text-center mb-5 pt-4">
+        <h3 class="fw-bold text-white mb-2">平台实况</h3>
+        <p class="text-muted">以下数据来自本站真实统计，随业务变化实时更新</p>
+    </div>
+    <div class="row g-4 text-center">
+        <div class="col-6 col-md-3">
+            <div class="p-4 rounded-4" style="background: var(--bg-card);">
+                <div class="text-primary mb-2"><i class="fa-solid fa-database fa-2x"></i></div>
+                <h3 class="fw-bold text-white">{{ '{:,}'.format(site_stats.stock_count or 0) }}</h3>
+                <p class="text-muted small m-0">覆盖 A 股标的</p>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="p-4 rounded-4" style="background: var(--bg-card);">
+                <div class="text-success mb-2"><i class="fa-solid fa-robot fa-2x"></i></div>
+                <h3 class="fw-bold text-white">{{ model_count or 0 }} 款 / {{ pref_count or 0 }} 视角</h3>
+                <p class="text-muted small m-0">可选模型与投资视角</p>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="p-4 rounded-4" style="background: var(--bg-card);">
+                <div class="text-info mb-2"><i class="fa-solid fa-file-lines fa-2x"></i></div>
+                <h3 class="fw-bold text-white">{{ '{:,}'.format(site_stats.report_count or 0) }}</h3>
+                <p class="text-muted small m-0">累计生成研报</p>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="p-4 rounded-4" style="background: var(--bg-card);">
+                <div class="text-warning mb-2"><i class="fa-solid fa-newspaper fa-2x"></i></div>
+                <h3 class="fw-bold text-white">{{ '{:,}'.format(site_stats.news_count or 0) }}</h3>
+                <p class="text-muted small m-0">快讯库条目（每小时更新）</p>
+            </div>
+        </div>
+    </div>
+    <p class="text-center text-secondary small mt-3 mb-0">
+        <i class="fa-solid fa-circle-info me-1"></i>
+        本站不承诺任何分析准确率或投资收益，详见<a href="/disclaimer" class="text-info text-decoration-none">《免责声明》</a>。
+    </p>
+</div>
+
+<div class="container py-5 mb-5" style="max-width: 800px;">
+    <div class="text-center mb-5">
+        <h3 class="fw-bold text-white">常见问题</h3>
+    </div>
+    <div class="accordion" id="faqAccordion">
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq0">
+                    <i class="fa-regular fa-circle-question me-2 opacity-50"></i> 怎么开通会员？为什么不能直接在线支付？
+                </button>
+            </h2>
+            <div id="faq0" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    开通共四步：① 在本页选好套餐与周期 → ② 前往合作店铺下单付款 → ③ 收货后拿到一组卡密 → ④ 回本站「个人中心 → 会员与订单」粘贴卡密兑换，权益即时到账。
+                    本站暂未接入站内在线支付，统一采用卡密兑换方式开通。
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                    <i class="fa-regular fa-circle-question me-2 opacity-50"></i> 会员还没到期就续费，剩余天数会浪费吗？
+                </button>
+            </h2>
+            <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    不会。未到期续费会把新天数<strong>叠加到原到期日之后</strong>，您可以放心提前续费。会员已过期后再续费，则从续费当天起算。
+                    另外，续费时若新套餐等级更高会立即升级；若等级更低，当前等级会保持不变直到到期（不会中途降级）。
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                    <i class="fa-regular fa-circle-question me-2 opacity-50"></i> 免费版有哪些权益？注册赠送怎么用？
+                </button>
+            </h2>
+            <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    免费版每日可用 2 次普通分析，并支持个股 / 大盘多角度普通分析、基础数据查询与投资机会查询。注册即自动赠送 <strong>5 次普通分析 + 1 次深度分析</strong>，属于一次性余量，不按日重置，在个人中心「今日剩余」中可见。此外免费版每月还可免费体验 1 次深度分析（按自然月重置）。
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                    <i class="fa-regular fa-circle-question me-2 opacity-50"></i> 会员有月卡 / 年卡吗？
+                </button>
+            </h2>
+            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    VIP-1 与 VIP-2 均提供<strong>月卡</strong>与<strong>年卡</strong>两种周期，年卡相对月卡更优惠
+                    （如 VIP-1 月卡 ¥19.9、年卡 ¥99，相当于<strong>立省 ¥140</strong>）。页面顶部切换周期即可看到对应价格。
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">
+                    <i class="fa-regular fa-circle-question me-2 opacity-50"></i> VIP-1 和 VIP-2 有什么区别？
+                </button>
+            </h2>
+            <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    两者<strong>解锁的功能范围完全一致</strong>（深度技术 / 深度价值分析视角、VIP 专属后端模型、无限次 PDF 研报导出、会员到期站内提醒），
+                    差别在<strong>每日分析额度</strong>：VIP-1 为普通 5 次 / 深度 2 次每天，VIP-2 为普通 10 次 / 深度 5 次每天（约为 VIP-1 的两倍）。
+                    如果您每天要跑多份深度研报，选 VIP-2 更划算。
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                    <i class="fa-regular fa-circle-question me-2 opacity-50"></i> 按量付费包和会员有什么区别？
+                </button>
+            </h2>
+            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    会员是按期订阅、每日享有固定次数；按量付费包是一次性购买的<strong>新人体验包 ¥9.9（10 次普通分析 + 2 次深度分析）</strong>，
+                    无时间限制、用完即止，且与会员每日额度<strong>并存、不互相抵扣</strong>，适合低频与临时需求用户。
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                    <i class="fa-regular fa-circle-question me-2 opacity-50"></i> 卡密提示「已被使用 / 已作废 / 已过期」怎么办？
+                </button>
+            </h2>
+            <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    同一张卡密<strong>只能使用一次</strong>。若提示已使用，请确认是否已在其他账号兑换过；
+                    若提示已作废或已过期，通常是渠道侧回收或超过卡密有效期，请联系售出渠道处理。
+                    本站无法为已在渠道侧作废的卡密补发，请务必通过正规渠道购买。
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                    <i class="fa-regular fa-circle-question me-2 opacity-50"></i> 可以退款吗？
+                </button>
+            </h2>
+            <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    卡密属数字商品，一经售出使用即完成交付，原则上不予退款。未使用的卡密请联系售出渠道协商。
+                    建议先使用免费版（含每月 1 次深度体验）确认是否满足需求，再决定购买。
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 周期切换（月卡 / 年卡 …）：按钮与价格都由后台 PRICING_PLANS 生成，这里只按序号取值。
+    // 规格数量可在后台增删，写死索引会串价，故统一 clamp 到最后一档。
+    function switchPeriod(idx) {
+        document.querySelectorAll('.pricing-toggle .toggle-btn').forEach(function (b, i) {
+            b.classList.toggle('active', i === idx);
+        });
+        document.querySelectorAll('.pricing-card.sub').forEach(function (card) {
+            try {
+                const prices = JSON.parse(card.getAttribute('data-prices') || '[]');
+                if (!prices.length) return;
+                const pr = prices[Math.min(idx, prices.length - 1)];
+                const pp = card.querySelector('.pp');
+                const period = card.querySelector('.price-period');
+                const note = card.querySelector('.price-note');
+                if (pp) pp.textContent = pr.price;
+                if (period) period.textContent = pr.unit;
+                if (note) note.textContent = pr.note || '';
+            } catch (e) { /* ignore */ }
+        });
+    }
+
+    // 开通会员：已移除 upgradePlan()。
+    // 原先它调 /api/membership/upgrade —— 该接口不校验支付、登录即可白拿 VIP，
+    // 是资损后门，现服务端已拒绝。购买与兑换统一走页面上的「前往店铺 / 去兑换」按钮。
+</script>
+{% endblock %}

@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% block title %}研报复盘 - 我的判断准不准 - {{ site.get('SITE_NAME') or 'A股棱镜' }}{% endblock %}
+{% block seo_description %}查看你在 A股棱镜 做过的每一次 AI 研报判断：当时的评分、结论与合理估值区间，对比事后真实涨跌，验证 AI 的判断是否可靠。{% endblock %}
+{% block seo_noindex %}1{% endblock %}
+
+{% block extra_css %}
+<style>
+.vd-wrap { max-width: var(--container-max); margin: 0 auto; padding: 100px 20px 60px; }
+.vd-head { margin-bottom: 28px; }
+.vd-head h1 { font-size: var(--text-2xl); margin-bottom: 8px; }
+.vd-head p { color: var(--text-secondary); font-size: var(--text-sm); max-width: 760px; }
+
+.vd-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-4); margin-bottom: 28px; }
+.vd-stat {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md); padding: var(--space-5); box-shadow: var(--shadow-sm);
+}
+.vd-stat .k { font-size: var(--text-xs); color: var(--text-secondary); letter-spacing: var(--tracking-wide); }
+.vd-stat .v { font-size: var(--text-2xl); font-weight: 700; color: var(--text-primary); margin-top: 6px;
+              font-variant-numeric: tabular-nums; }
+.vd-stat .v small { font-size: var(--text-sm); color: var(--text-tertiary); font-weight: 400; }
+
+.vd-card {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg); padding: var(--space-6); margin-bottom: var(--space-6);
+    box-shadow: var(--shadow-sm);
+}
+.vd-card > h2 { font-size: var(--text-lg); margin-bottom: 4px; }
+.vd-card > .sub { font-size: var(--text-xs); color: var(--text-tertiary); margin-bottom: var(--space-4); }
+
+.vd-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--text-sm); }
+.vd-table th { text-align: left; padding: var(--space-2) var(--space-3); color: var(--text-secondary);
+               font-size: var(--text-xs); font-weight: 600; border-bottom: 1px solid var(--border-default); }
+.vd-table td { padding: var(--space-3); border-bottom: 1px solid var(--border-subtle);
+               font-variant-numeric: tabular-nums; color: var(--text-body); }
+.vd-table tbody tr:hover { background: rgba(56,189,248,.05); }
+.vd-table a { color: var(--brand-300); text-decoration: none; }
+.vd-table a:hover { text-decoration: underline; }
+
+.up { color: var(--up) !important; }
+.down { color: var(--down) !important; }
+.flat { color: var(--flat) !important; }
+
+.pill { display: inline-block; padding: 2px 9px; border-radius: var(--radius-full);
+        font-size: var(--text-2xs); font-weight: 600; border: 1px solid var(--border-default); }
+.pill-low { color: var(--down); border-color: rgba(52,211,153,.35); background: var(--down-a); }
+.pill-fair { color: var(--text-secondary); }
+.pill-high { color: var(--up); border-color: rgba(248,113,113,.35); background: var(--up-a); }
+
+.bar { height: 5px; border-radius: var(--radius-full); background: rgba(148,163,184,.18); overflow: hidden; min-width: 70px; }
+.bar > i { display: block; height: 100%; background: var(--brand-gradient); border-radius: var(--radius-full); }
+
+.empty { text-align: center; padding: var(--space-16) var(--space-4); color: var(--text-secondary); }
+.empty h3 { color: var(--text-primary); margin-bottom: 8px; }
+.empty .btn-cta { display: inline-block; margin-top: var(--space-4); padding: 10px 22px;
+                   background: var(--brand-gradient); color: #06121f; font-weight: 600;
+                   border-radius: var(--radius-sm); text-decoration: none; }
+@media (max-width: 768px) {
+    .vd-wrap { padding: 88px 14px 40px; }
+    .vd-table { font-size: var(--text-xs); }
+    .vd-table th:nth-child(n+5), .vd-table td:nth-child(n+5) { display: none; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vd-wrap">
+
+    <div class="vd-head">
+        <h1>研报复盘 · 我的判断准不准</h1>
+        <p>这里记录你在本站做过的每一次深度研报判断，并把它们和<strong>事后真实涨跌</strong>摆在一起。
+           收益数据由系统每个交易日收盘后自动回填（20 / 60 / 120 / 250 个交易日），
+           刚分析完的票还在观察期，进度会显示在状态列里。</p>
+    </div>
+
+{% set ov = vd.overall or {} %}
+{% set total = ov.total or 0 %}
+
+{% if total == 0 %}
+    <div class="vd-card">
+        <div class="empty">
+            <h3>还没有可复盘的判断</h3>
+            <p>做一次深度研报后，系统会在这里持续跟踪它的后续走势，<br>
+               等数据成熟后就能看到「当时说贵了，后来跌了多少」。</p>
+            <a class="btn-cta" href="/">去分析第一只股票</a>
+        </div>
+    </div>
+{% else %}
+
+    <div class="vd-stats">
+        <div class="vd-stat">
+            <div class="k">判断总数</div>
+            <div class="v">{{ total }}<small> 次</small></div>
+        </div>
+        <div class="vd-stat">
+            <div class="k">覆盖个股</div>
+            <div class="v">{{ ov.stocks or 0 }}<small> 只</small></div>
+        </div>
+        <div class="vd-stat">
+            <div class="k">已到期验证</div>
+            <div class="v">{{ ov.backfilled or 0 }}<small> / {{ total }}</small></div>
+        </div>
+        <div class="vd-stat">
+            <div class="k">平均性价比评分</div>
+            <div class="v">{{ '%.1f' | format(ov.avg_score | float(0)) }}<small> / 10</small></div>
+        </div>
+    </div>
+
+    {% if vd.groups %}
+    <div class="vd-card">
+        <h2>哪个模型更值得信</h2>
+        <div class="sub">按使用过的模型聚合。方向命中率 = 结论方向（看多/看空）与 20 日真实涨跌一致的比例。</div>
+        <div style="overflow-x:auto">
+        <table class="vd-table">
+            <thead><tr>
+                <th>模型</th><th>判断数</th><th>平均评分</th>
+                <th>20 日平均涨跌</th><th>60 日平均涨跌</th><th>方向命中率</th>
+            </tr></thead>
+            <tbody>
+            {% for g in vd.groups %}
+                <tr>
+                    <td>{{ g.model }}</td>
+                    <td>{{ g.cnt }}</td>
+                    <td>{{ '%.1f' | format(g.avg_score | float(0)) }}</td>
+                    <td>
+                        {% if g.avg_ret20 is not none %}
+                            <span class="{{ 'up' if g.avg_ret20 > 0 else ('down' if g.avg_ret20 < 0 else 'flat') }}">
+                                {{ '%+.2f' | format(g.avg_ret20 | float(0)) }}%</span>
+                        {% else %}<span class="flat">观察中</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if g.avg_ret60 is not none %}
+                            <span class="{{ 'up' if g.avg_ret60 > 0 else ('down' if g.avg_ret60 < 0 else 'flat') }}">
+                                {{ '%+.2f' | format(g.avg_ret60 | float(0)) }}%</span>
+                        {% else %}<span class="flat">—</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if g.dir20 and g.dir20 > 0 %}
+                            {{ '%.0f' | format(g.hit20 | float(0) / g.dir20 * 100) }}%
+                            <span style="color:var(--text-tertiary)">({{ g.hit20 }}/{{ g.dir20 }})</span>
+                        {% else %}<span class="flat">样本不足</span>{% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if vd.buckets %}
+    <div class="vd-card">
+        <h2>评分高的票，真的涨得更好吗</h2>
+        <div class="sub">把判断按性价比评分分三档，看事后收益是否存在正相关 —— 这是判断模型是否有效的关键证据。</div>
+        <div style="overflow-x:auto">
+        <table class="vd-table">
+            <thead><tr><th>评分档</th><th>样本数</th><th>平均评分</th><th>20 日涨跌</th><th>60 日涨跌</th></tr></thead>
+            <tbody>
+            {% for b in vd.buckets %}
+                <tr>
+                    <td>
+                        {% if b.bucket == 'high' %}<span class="pill pill-high">高评 ≥7</span>
+                        {% elif b.bucket == 'mid' %}<span class="pill pill-fair">中评 4~7</span>
+                        {% else %}<span class="pill pill-low">低评 &lt;4</span>{% endif %}
+                    </td>
+                    <td>{{ b.cnt }}</td>
+                    <td>{{ '%.1f' | format(b.avg_score | float(0)) }}</td>
+                    <td>
+                        {% if b.avg_ret20 is not none %}
+                            <span class="{{ 'up' if b.avg_ret20 > 0 else ('down' if b.avg_ret20 < 0 else 'flat') }}">
+                                {{ '%+.2f' | format(b.avg_ret20 | float(0)) }}%</span>
+                        {% else %}<span class="flat">观察中</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if b.avg_ret60 is not none %}
+                            <span class="{{ 'up' if b.avg_ret60 > 0 else ('down' if b.avg_ret60 < 0 else 'flat') }}">
+                                {{ '%+.2f' | format(b.avg_ret60 | float(0)) }}%</span>
+                        {% else %}<span class="flat">—</span>{% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="vd-card">
+        <h2>我的判断档案</h2>
+        <div class="sub">每一条判断的完整轨迹：当时的结论与合理估值区间，事后真实价格与涨跌。</div>
+        <div style="overflow-x:auto">
+        <table class="vd-table">
+            <thead><tr>
+                <th>股票</th><th>分析日</th><th>评分</th><th>结论</th>
+                <th>分析时价</th><th>合理区间</th><th>20 日</th><th>60 日</th><th>状态</th>
+            </tr></thead>
+            <tbody>
+            {% for r in vd.records %}
+                <tr>
+                    <td><a href="/stock/{{ r.stock_code }}" target="_blank">{{ r.stock_name or r.stock_code }}</a></td>
+                    <td>{{ r.analysis_date or '—' }}</td>
+                    <td>{{ '%.1f' | format(r.score | float(0)) }}</td>
+                    <td>
+                        {% if r.verdict in ('低估',) %}<span class="pill pill-low">{{ r.verdict }}</span>
+                        {% elif r.verdict in ('高估',) %}<span class="pill pill-high">{{ r.verdict }}</span>
+                        {% else %}<span class="pill pill-fair">{{ r.verdict or '—' }}</span>{% endif %}
+                    </td>
+                    <td>{{ '%.2f' | format(r.price_at | float(0)) if r.price_at is not none else '—' }}</td>
+                    <td style="font-size:var(--text-xs)">
+                        {% if r.val_low and r.val_high %}
+                            {{ '%.1f' | format(r.val_low | float(0)) }} ~ {{ '%.1f' | format(r.val_high | float(0)) }}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if r.ret_20d is not none %}
+                            <span class="{{ 'up' if r.ret_20d > 0 else ('down' if r.ret_20d < 0 else 'flat') }}">
+                                {{ '%+.1f' | format(r.ret_20d | float(0)) }}%</span>
+                        {% else %}<span class="flat">—</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if r.ret_60d is not none %}
+                            <span class="{{ 'up' if r.ret_60d > 0 else ('down' if r.ret_60d < 0 else 'flat') }}">
+                                {{ '%+.1f' | format(r.ret_60d | float(0)) }}%</span>
+                        {% else %}<span class="flat">—</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if r.watch_stage == 'done20' %}<span class="pill pill-fair">已验证</span>
+                        {% elif r.watch_stage == 'watching' %}
+                            <div class="bar" title="还需 {{ r.days_left }} 天到期"><i style="width:{{ r.progress }}%"></i></div>
+                            <span style="font-size:var(--text-2xs);color:var(--text-tertiary)">
+                                观察 {{ r.days_passed }}/{{ vd.due_days.get('20', 45) }} 天</span>
+                        {% else %}<span class="flat">—</span>{% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+{% endif %}
+</div>
+{% endblock %}

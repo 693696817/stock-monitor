@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="0KqdVeNhj2pY5SKYi3ttr8">
+<head data-page-node-id="UFbjf2SzF4ZjWfCtIKFCGK">
+    {% set site = request.app.state.site if (request and request.app.state and request.app.state.site) else {} %}
+    {% set _site_domain = (site.get('SITE_DOMAIN') or '').rstrip('/') %}
+
+    {% set _cur_url = (_site_domain + '/register') if _site_domain else (request.url.scheme ~ '://' ~ request.url.netloc ~ '/register') %}
+
+    <meta charset="UTF-8" data-page-node-id="otW2yYqNYJiRQO3yh5LgVt">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="BFXF7fAKZhWdnCOPFxfYHA">
+
+    {% set site = request.app.state.site if (request and request.app.state and request.app.state.site) else {} %}
+    <title>注册 - A股棱镜</title>
+    <meta name="description" content="注册A股棱镜账号，开启 A股基本面研究：注册即送普通分析 5 次与深度分析 1 次。" data-page-node-id="bBOOyFgt68Oc7NrU6EZsgY">
+    <meta name="keywords" content="A股棱镜,注册,A股研究账号,股票分析工具" data-page-node-id="sCPEkCr0hWGaa5iJMJvQN2">
+    <meta name="robots" content="noindex,nofollow" data-page-node-id="3xdJyOP1aW7R6ThDY3Jj3W">
+    <link rel="canonical" href="{{ _cur_url }}" data-page-node-id="Yzn9bPrEPqMOynvvHyUG9f">
+    <link href="/static/vendor/bootstrap.min.css" rel="stylesheet" data-page-node-id="FCXopfZPtmTJPJ1xiHwKHC">
+    <link href="/static/vendor/all.min.css" rel="stylesheet" data-page-node-id="my8ljBkfliBKDsAW7KtoQC">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Orbitron:wght@600;800&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" data-page-node-id="VSLry2Cp0gFVYg88LGXRHj">
+
+    <style>
+        /* --- 全局基础 (与登录页完全一致) --- */
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: #fff;
+            margin: 0;
+            background: #0f172a;
+            background-image: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15), transparent 50%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 0;
+        }
+
+        .font-tech { font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+
+        /* 关键修复：覆盖默认灰色，使其在深底可见 */
+        .text-muted { color: #94a3b8 !important; }
+        .text-info { color: #38bdf8 !important; }
+
+        /* 容器宽度微调：比登录页(420px)略宽以容纳验证码按钮，但在视觉上保持一致 */
+        .register-wrapper {
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+        }
+
+        /* --- 品牌样式 --- */
+        .brand-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .logo-box-lg {
+            width: 72px; height: 72px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.2);
+            margin-bottom: 1rem;
+        }
+        .brand-main-lg {
+            /* 同登录页：站名长度由后台配置决定，固定 2rem 在手机上会溢出 */
+            font-family: 'Orbitron', sans-serif; font-weight: 800;
+            font-size: clamp(1.35rem, 5.5vw, 2rem); letter-spacing: 1px;
+            overflow-wrap: anywhere;
+            background: linear-gradient(90deg, #fff 0%, #38bdf8 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 15px rgba(56, 189, 248, 0.3);
+            line-height: 1.2;
+        }
+        .brand-sub-lg {
+            font-size: 0.85rem; color: #94a3b8; font-weight: 400; letter-spacing: 1px; text-transform: uppercase;
+        }
+
+        /* --- 玻璃卡片 --- */
+        .register-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative; overflow: hidden;
+        }
+        .register-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(90deg, #38bdf8, #818cf8);
+        }
+
+        /* --- 表单控件 (完全复用登录页样式) --- */
+        .form-floating > .form-control {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 12px;
+        }
+        .form-floating > .form-control:focus {
+            background: rgba(15, 23, 42, 0.8);
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
+            color: #fff;
+        }
+        /* 修复 Label 颜色 */
+        .form-floating > label { color: #94a3b8; }
+        .form-floating > .form-control:focus ~ label,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label {
+            color: #38bdf8;
+            transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+        }
+
+        /* 验证码按钮组特殊处理 */
+        .input-group .form-control {
+            border-top-right-radius: 0; border-bottom-right-radius: 0;
+        }
+        .btn-verify {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 0;
+            color: #38bdf8;
+            font-size: 0.9rem;
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+            transition: all 0.3s;
+            z-index: 5;
+        }
+        .btn-verify:hover {
+            background: rgba(56, 189, 248, 0.1); color: #fff; border-color: rgba(255,255,255,0.1);
+        }
+        .btn-verify:disabled {
+            color: #64748b; cursor: not-allowed;
+        }
+
+        /* 复选框样式修复 */
+        .form-check-input {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+        }
+        .form-check-input:checked {
+            background-color: #38bdf8; border-color: #38bdf8;
+        }
+        .form-check-input:focus {
+            box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.25);
+        }
+
+        /* 注册按钮 */
+        .btn-register-submit {
+            background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
+            border: none; color: white; width: 100%; padding: 14px;
+            border-radius: 12px; font-weight: 600; font-size: 1rem; margin-top: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+        }
+        .btn-register-submit:hover {
+            transform: translateY(-2px); box-shadow: 0 8px 25px rgba(56, 189, 248, 0.4); color: white;
+        }
+
+        /* 底部链接动画 */
+        .hover-opacity-100:hover { opacity: 1 !important; color: #fff !important; }
+
+        /* ===== 移动端适配 =====
+           同登录页：本页不继承 base.html，全局 responsive.css 的选择器在本页
+           没有对应元素（引了也不生效），断点规则只能内联；类名均为本页私有。 */
+        @media (max-width: 576px) {
+            /* body 是 flex + align-items:center：表单比登录页长（多手机号/邀请码），
+               在手机上几乎必然高于视口，居中会把卡片顶部顶出可视区且滚不回去。
+               改为顶部对齐，桌面端 40px 留白在手机上收到 24px。 */
+            body { align-items: flex-start; padding: 24px 0 32px; }
+
+            .register-wrapper { padding: 16px; }
+            .register-card { padding: 24px 18px; border-radius: 18px; }
+            .brand-container { margin-bottom: 1.25rem; }
+            .logo-box-lg { width: 60px; height: 60px; border-radius: 14px; }
+
+            /* 验证码行：360px 下「输入框 + 获取验证码」并排会把输入框压到 100px 出头，
+               px-4 的按钮内边距也一并收窄，并禁止换行（换行会让圆角错位）。 */
+            .btn-verify { padding-left: 10px; padding-right: 10px; font-size: .82rem; white-space: nowrap; }
+            .input-group { flex-wrap: nowrap; }
+            /* 触摸设备上 hover 位移会残留，容易误判成按钮卡住 */
+            .btn-register-submit:hover { transform: none; }
+        }
+        @media (max-width: 400px) {
+            .register-card { padding: 20px 14px; }
+            .btn-register-submit { padding: 13px; font-size: .95rem; }
+        }
+        /* 尊重系统「减少动态效果」设置 */
+        @media (prefers-reduced-motion: reduce) {
+            .btn-register-submit:hover { transform: none; }
+        }
+    </style>
+</head>
+<body data-page-node-id="P0LOR4NmXfHoVadFcd32Lp">
+
+    {% set ann = site.get('ANNOUNCEMENT') %}
+    {% if ann and ann.active and ann.text %}
+    <div class="site-announce ann-{{ ann.level or 'info' }}" role="alert"
+         style="font-size:.9rem; border-bottom:1px solid rgba(255,255,255,.08); padding:8px 16px; display:flex; align-items:center; gap:8px;">
+        <i class="fa-solid fa-bullhorn"></i>
+        <span style="flex-grow:1;">{{ ann.text }}</span>
+    </div>
+    <style>
+        .site-announce.ann-info    { background: rgba(56, 189, 248, .12);  color: #7dd3fc; }
+        .site-announce.ann-warning { background: rgba(251, 191, 36, .12);  color: #fcd34d; }
+        .site-announce.ann-danger  { background: rgba(248, 113, 113, .12); color: #fca5a5; }
+    </style>
+    {% endif %}
+
+    <div class="register-wrapper" data-page-node-id="5QgGuMMHpZrDS9sFqphvpm">
+
+        <div class="brand-container" data-page-node-id="Nx43fdof8wHrULKiy99ed1">
+            <div class="logo-box-lg" data-page-node-id="aF28tSh0H2Be6V23L1vlhX">
+                <i class="fa-solid fa-microchip position-absolute" style="color: rgba(56, 189, 248, 0.15); font-size: 42px;" data-page-node-id="L3CAXCK130tvh6UPB9F74E"></i>
+                <i class="fa-solid fa-chart-line position-relative" style="color: #38bdf8; font-size: 36px;" data-page-node-id="wSpawz2pQzWXZSA2sNUNcG"></i>
+            </div>
+            <div class="text-center" data-page-node-id="W0eSzJ22YQCPvLJEtAkMbN">
+                <h1 class="brand-main-lg" data-page-node-id="mFErAZZKuGKbzyNUOsteOr">{{ site.get('SITE_NAME') or 'A股棱镜' }}</h1>
+                <p class="brand-sub-lg" data-page-node-id="SnUHPmB36szvSlwm3pXIiO">注册账号 · 开启智能投研</p>
+            </div>
+        </div>
+
+        <div class="register-card" data-page-node-id="kxEv0I7nAeW2cvT3TIaYmI">
+
+            <form onsubmit="return false;" data-page-node-id="10hN5ONVgsA4O9QKJ8nqFq">
+
+                <div class="form-floating mb-3" data-page-node-id="S4qIpVUP0RQQRVoW3oRVOb">
+
+                    <input type="tel" inputmode="numeric" maxlength="11" autocomplete="username"
+                           class="form-control" id="phoneInput" placeholder="13800000000" data-page-node-id="YcGDvI4GKXdld8kZEjsrVt">
+                    <label for="phoneInput" data-page-node-id="XAasEhKjBCKcwO4l9YuBjn">手机号（即登录账号）</label>
+                </div>
+
+                {% set _sms_required = reg_policy.get('sms_required', true) if reg_policy else true %}
+                {% set _invite_required = (reg_policy.get('invite_required', false) or not _sms_required) if reg_policy else false %}
+                {% if _sms_required %}
+                <div class="input-group mb-3" data-page-node-id="Pfw42lpMwFJS8CQ131eoXe">
+                    <div class="form-floating flex-grow-1" data-page-node-id="q0Gz6j2CmXmXQ2gBgfYfF4">
+                        <input type="text" inputmode="numeric" class="form-control" id="codeInput" placeholder="Code" maxlength="6" data-page-node-id="H9uHm7pPoSm44nJVAI2xxP">
+                        <label for="codeInput" data-page-node-id="1sgo4jbgEosbprIfPsiPIh">短信验证码</label>
+                    </div>
+                    <button class="btn btn-verify px-4" type="button" id="btnSendCode" onclick="sendCode()" data-page-node-id="tzpg7HLTHVNTMUwl547YUn">
+                        获取验证码
+                    </button>
+                </div>
+
+                <div id="sendTip" class="small mb-3" style="display:none; color:#34d399;" data-page-node-id="T6ECvgtCaGbuQt6nIFpo59">
+                    <i class="fa-solid fa-circle-check me-1" data-page-node-id="y2pg0V5CCtsErMFcDqIoUt"></i>
+                </div>
+                {% endif %}
+
+                <div class="form-floating mb-3" data-page-node-id="lm2UTwLZK7wGfPKJTd424t">
+                    <input type="password" class="form-control" id="pwdInput" placeholder="Password" autocomplete="new-password" data-page-node-id="okDyioUj80uqwGY1WSJu6L">
+                    <label for="pwdInput" data-page-node-id="uC6rNSDlMfEATudthwNaOk">设置密码 ({{ reg_policy.get('password_min_len', 6) if reg_policy else 6 }}-20位)</label>
+                </div>
+
+                <div class="form-floating mb-3" data-page-node-id="lNe2EZOCWSqrZxqPCqwNY2">
+                    <input type="text" class="form-control" id="inviteInput" placeholder="Invite Code" data-page-node-id="EverzpHwpPibdHcBFpLYHR">
+                    <label for="inviteInput" data-page-node-id="ka1Bmg3dvbqbvph2rAuRvC">邀请码 {% if _invite_required %}(必填){% else %}(选填){% endif %}</label>
+                </div>
+
+                <div class="form-check mb-4" data-page-node-id="oIymEbz47bLPH5iZhDWNdn">
+                    <input class="form-check-input" type="checkbox" id="agreeTerms" data-page-node-id="mJHr9LUQB5FMMVEdbQaMa8">
+                    <label class="form-check-label text-muted small" for="agreeTerms" style="line-height: 1.5;" data-page-node-id="httm9gkD1skQojAUleodOM">
+                        我已阅读并同意
+                        <a href="/terms" target="_blank" rel="noopener" class="text-info text-decoration-none" data-page-node-id="n9vD2O7103yp6ihvcSFzla">《服务条款》</a> 与
+                        <a href="/privacy" target="_blank" rel="noopener" class="text-info text-decoration-none" data-page-node-id="Sn1qNzvUlZXSaw1RfAUoVp">《隐私政策》</a>
+                        <span class="d-block mt-1" style="font-size:.75rem;color:#64748b;" data-page-node-id="5a0DR3TLsX6WFZPiz4kFLF">
+                            <i class="fa-solid fa-circle-info me-1" data-page-node-id="pxe7SYoezf002rhSnsvyc3"></i>
+                            另请务必阅读<a href="/disclaimer" target="_blank" rel="noopener" class="text-info text-decoration-none" data-page-node-id="1CQItdkgoJAVxHu5B8enfO">《免责声明》</a>：本平台内容不构成投资建议。
+                        </span>
+                    </label>
+                </div>
+
+                <div id="regMsg" class="small text-center mb-2" style="color:#ff5f56; min-height:1.2em;" data-page-node-id="vdAw67tPmjbRjndyYAngUo"></div>
+
+                <button type="button" class="btn-register-submit" onclick="handleRegister()" data-page-node-id="ERqKxwrTsMlYNEKY7lLCwE">
+                    立即注册
+                </button>
+            </form>
+
+            <div class="text-center mt-4 pt-2 border-top border-secondary border-opacity-25" data-page-node-id="NxIQaTL38AHJLINNm5exZK">
+                <span class="text-muted small" data-page-node-id="OGPFeEThSFYNMJfilOLmur">已有账号?</span>
+                <a href="/login" class="text-info fw-bold ms-1 text-decoration-none" data-page-node-id="McHAv5u1icyxkfq9xDLiT6">立即登录</a>
+            </div>
+
+        </div>
+
+        <div class="text-center mt-4" data-page-node-id="iKKy5yscAJpmEng1cL3ZC3">
+            <a href="/" class="text-muted small text-decoration-none opacity-50 hover-opacity-100" data-page-node-id="yvESGedFrRpYZ4Md4Esqtt">
+                <i class="fa-solid fa-house me-1" data-page-node-id="TkYHgF6tclaY8ItLJwehjw"></i> 返回首页
+            </a>
+        </div>
+
+    </div>
+
+    <script src="/static/vendor/bootstrap.bundle.min.js"></script>
+    <script>
+        const PHONE_RE = /^1[3-9]\d{9}$/;
+
+        // 注册策略（/register 路由从 settings.REGISTER_POLICY 下发，与 /api/register 服务端校验同源）
+        const REG_SMS = {{ 'true' if (reg_policy and reg_policy.get('sms_required', true)) else 'false' }};
+        const REG_INVITE = {{ 'true' if (reg_policy and (reg_policy.get('invite_required', false) or not reg_policy.get('sms_required', true))) else 'false' }};
+        const REG_PWD_MIN = {{ reg_policy.get('password_min_len', 6) if reg_policy else 6 }};
+
+        // 站内回跳目标判定（防开放重定向，详见 login.html 同名函数的说明）。
+        //   1. 必须以 / 开头   —— 挡 javascript: / https: 等伪协议
+        //   2. 不能以 // 开头  —— //evil.com 会被浏览器解析成 https://evil.com
+        // ⚠️ login.html 里有一份同样实现，改动时请两处同步。
+        function safeNext(n) {
+            if (typeof n !== 'string' || !n) return '';
+            if (n.indexOf('/') !== 0 || n.indexOf('//') === 0) return '';
+            return n;
+        }
+
+        function startCountdown(btn, text) {
+            let s = 60;
+            btn.disabled = true;
+            const timer = setInterval(() => {
+                s--;
+                btn.innerText = s + 's 后重发';
+                if (s <= 0) {
+                    clearInterval(timer);
+                    btn.disabled = false;
+                    btn.innerText = text;
+                }
+            }, 1000);
+        }
+
+        // 发送验证码（Register 场景，调用真实短信网关）
+        function sendCode() {
+            const phone = document.getElementById('phoneInput').value.trim();
+            if (!PHONE_RE.test(phone)) {
+                alert("请输入正确的 11 位手机号");
+                document.getElementById('phoneInput').focus();
+                return;
+            }
+            const btn = document.getElementById('btnSendCode');
+            btn.disabled = true;
+            fetch('/api/sms/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mobile: phone, scene: 'register' })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success') {
+                    // 内联提示替代 alert：注册流程里连弹两次窗很打断人，
+                    // 而且 alert 在部分浏览器会被折叠成后台标签，回来时验证码已过期。
+                    const tip = document.getElementById('sendTip');
+                    if (tip) {
+                        tip.textContent = '验证码已发送，请查收短信';
+                        tip.style.display = 'block';
+                    }
+                    startCountdown(btn, '获取验证码');
+                } else {
+                    alert(d.detail || '发送失败，请稍后重试');
+                    btn.disabled = false;
+                }
+            })
+            .catch(() => {
+                alert('网络错误，请稍后重试');
+                btn.disabled = false;
+            });
+        }
+
+        // 注册逻辑（调用后端 /api/register：手机号 + 短信验证码 + 密码）
+        function handleRegister() {
+            const agree = document.getElementById('agreeTerms').checked;
+            if(!agree) {
+                alert("请先勾选同意服务条款");
+                return;
+            }
+
+            const phone = document.getElementById('phoneInput').value.trim();
+            const code = document.getElementById('codeInput').value.trim();
+            const pwd = document.getElementById('pwdInput').value;
+            const invite = document.getElementById('inviteInput').value.trim();
+
+            if(!PHONE_RE.test(phone)) {
+                alert("请输入正确的 11 位手机号");
+                document.getElementById('phoneInput').focus();
+                return;
+            }
+            if(REG_SMS && !code) {
+                alert("请先获取并填写短信验证码");
+                document.getElementById('codeInput').focus();
+                return;
+            }
+            if(REG_INVITE && !invite) {
+                alert("当前注册需要邀请码，请向管理员获取");
+                document.getElementById('inviteInput').focus();
+                return;
+            }
+            if(!pwd) {
+                alert("请设置登录密码");
+                document.getElementById('pwdInput').focus();
+                return;
+            }
+            if(pwd.length < REG_PWD_MIN || pwd.length > 20) {
+                alert("密码需为 " + REG_PWD_MIN + "-20 位");
+                document.getElementById('pwdInput').focus();
+                return;
+            }
+
+            const btn = document.querySelector('.btn-register-submit');
+            const msg = document.getElementById('regMsg');
+            if (msg) msg.textContent = '';
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> 注册中...';
+            btn.disabled = true;
+
+            fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: pwd, invite_code: invite, phone: phone, code: code })
+            })
+            .then(async (resp) => {
+                const data = await resp.json().catch(() => ({}));
+                if (resp.ok && data.status === 'success') {
+                    // 注册即登录：带上 ?next= 回到用户原本要去的地方（首页跳转注册时会带）
+                    var _next = safeNext(new URLSearchParams(location.search).get('next'));
+                    window.location.href = _next || '/profile';
+                } else {
+                    if (msg) msg.textContent = data.detail || '注册失败，请重试';
+                    btn.disabled = false;
+                    btn.innerHTML = '立即注册';
+                }
+            })
+            .catch(() => {
+                if (msg) msg.textContent = '网络错误，请稍后重试';
+                btn.disabled = false;
+                btn.innerHTML = '立即注册';
+            });
+        }
+
+        // 回车提交：手机号/验证码/密码框里按 Enter 直接注册
+        ['phoneInput', 'codeInput', 'pwdInput'].forEach(function (id) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); handleRegister(); }
+            });
+        });
+
+        // 「立即登录」反向透传 next：从登录页带过来的回跳目标别在这里丢掉。
+        // 同样只接受以 / 开头的相对路径，挡伪协议注入。
+        (function () {
+            var n = safeNext(new URLSearchParams(location.search).get('next'));
+            if (!n) return;
+            var a = document.querySelector('a[href="/login"]');
+            if (a) a.href = '/login?next=' + encodeURIComponent(n);
+        })();
+    </script>
+</body>
+</html>

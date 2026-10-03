@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block seo_description %}后台仪表盘 · 管理后台 - A股棱镜（仅限管理员访问）{% endblock %}
+{% block seo_keywords %}A股棱镜,管理后台,系统管理{% endblock %}
+
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block title %}后台仪表盘 - A股棱镜{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+    {% include 'components/admin_sidebar.html' %}
+    <main class="admin-main">
+        <h3 class="font-tech mb-4" style="color:#fff;"><i class="fa-solid fa-gauge-high text-info me-2"></i>仪表盘</h3>
+
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3"><div class="admin-stat"><div class="label">注册用户（累计）</div><div class="value" id="s_users">-</div></div></div>
+            <div class="col-6 col-lg-3"><div class="admin-stat"><div class="label">会员用户</div><div class="value" id="s_vip">-</div></div></div>
+            <div class="col-6 col-lg-3"><div class="admin-stat"><div class="label">今日新增用户</div><div class="value" id="s_users_today">-</div></div></div>
+            <div class="col-6 col-lg-3"><div class="admin-stat"><div class="label">今日分析次数</div><div class="value" id="s_analyses_today">-</div></div></div>
+            <div class="col-6 col-lg-3"><div class="admin-stat"><div class="label">分析记录（累计）</div><div class="value" id="s_analyses">-</div></div></div>
+            <div class="col-6 col-lg-3"><div class="admin-stat"><div class="label">反馈总数</div><div class="value" id="s_feedback">-</div></div></div>
+            <div class="col-6 col-lg-3"><div class="admin-stat"><div class="label">反馈投票累计</div><div class="value" id="s_feedback_votes">-</div></div></div>
+            <div class="col-6 col-lg-3"><div class="admin-stat"><div class="label">运行状态</div><div class="value text-success" style="font-size:1.2rem;"><i class="fa-solid fa-circle-check"></i> 正常</div></div></div>
+        </div>
+
+        <div class="admin-card">
+            <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-clock-rotate-left text-warning me-2"></i>最近分析记录</h5>
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr><th>用户</th><th>股票</th><th>代码</th><th>模式</th><th>时间</th></tr>
+                    </thead>
+                    <tbody id="recentRows">
+                        <tr><td colspan="5" class="text-center text-secondary">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="admin-card">
+            <h5 class="mb-3" style="color:#fff;"><i class="fa-solid fa-circle-info text-info me-2"></i>使用说明</h5>
+            <p class="text-secondary mb-1">本后台为内部运营管理工具，仅管理员可见。可在「系统设置」中实时切换金融数据源与 AI 大模型配置，保存后即时生效，无需重启服务。</p>
+            <p class="text-secondary mb-0">反馈、用户、分析记录均为 MySQL 持久化数据，随业务增长可后续引入分页与导出。</p>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function loadStats() {
+        try {
+            const resp = await fetch('/api/admin/stats');
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const r = await resp.json();
+            const map = {
+                s_users: r.users_total ?? '-',
+                s_vip: r.vip_total ?? '-',
+                s_users_today: r.users_today ?? '-',
+                s_analyses_today: r.analyses_today ?? '-',
+                s_analyses: r.analyses_total ?? '-',
+                s_feedback: r.feedback_total ?? '-',
+                s_feedback_votes: r.feedback_votes ?? '-'
+            };
+            Object.entries(map).forEach(([id, v]) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = v;
+            });
+        } catch (e) {
+            console.error(e);
+            ['s_users', 's_vip', 's_users_today', 's_analyses_today', 's_analyses', 's_feedback', 's_feedback_votes']
+                .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '—'; });
+        }
+    }
+
+    async function loadRecent() {
+        const tb = document.getElementById('recentRows');
+        try {
+            const resp = await fetch('/api/admin/records?per_page=8');
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const r = await resp.json();
+            if (!r.rows || !r.rows.length) {
+                tb.innerHTML = '<tr><td colspan="5" class="text-center text-secondary">暂无记录</td></tr>';
+                return;
+            }
+            tb.innerHTML = r.rows.map(row => {
+                const created = row.created_at ? String(row.created_at).replace('T', ' ').slice(0, 16) : '-';
+                const mode = row.mode === 'deep' ? '<span class="admin-badge badge-admin">深度</span>' : '<span class="admin-badge badge-free">普通</span>';
+                return `<tr>
+
+                    <td>${esc(row.email_display ?? row.email) || '匿名'}</td>
+                    <td>${esc(row.stock_name) || '-'}</td>
+                    <td>${esc(row.stock_code) || '-'}</td>
+                    <td>${mode}</td>
+                    <td class="font-mono" style="font-size:.8rem;">${created}</td>
+                </tr>`;
+            }).join('');
+        } catch (e) {
+            console.error(e);
+            tb.innerHTML = '<tr><td colspan="5" class="text-center text-danger">加载失败，请刷新重试</td></tr>';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadStats();
+        loadRecent();
+    });
+</script>
+{% endblock %}

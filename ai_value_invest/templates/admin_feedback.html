@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block seo_description %}反馈管理 · 管理后台 - A股棱镜（仅限管理员访问）{% endblock %}
+{% block seo_keywords %}A股棱镜,管理后台,系统管理{% endblock %}
+
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block title %}反馈管理 - A股棱镜 后台{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+    {% include 'components/admin_sidebar.html' %}
+    <main class="admin-main">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="font-tech mb-0" style="color:#fff;"><i class="fa-solid fa-comments text-info me-2"></i>反馈管理</h3>
+            <div class="btn-group btn-group-sm" role="group">
+                <button class="btn btn-outline-secondary active" data-status="">全部</button>
+                <button class="btn btn-outline-secondary" data-status="0">待处理</button>
+                <button class="btn btn-outline-secondary" data-status="1">开发中</button>
+                <button class="btn btn-outline-secondary" data-status="2">已上线</button>
+            </div>
+        </div>
+
+        <div class="admin-card p-0" style="overflow:hidden;">
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr><th>ID</th><th>类型</th><th>标题</th><th>内容</th><th>投票</th><th>状态</th><th>时间</th><th>操作</th></tr>
+                    </thead>
+                    <tbody id="fbRows">
+                        <tr><td colspan="8" class="text-center text-secondary">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center p-3">
+                <button class="btn btn-outline-secondary btn-sm" id="prevBtn">上一页</button>
+                <span class="text-secondary small" id="pageInfo">第 1 页</span>
+                <button class="btn btn-outline-secondary btn-sm" id="nextBtn">下一页</button>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let page = 1;
+    const perPage = 20;
+    let statusFilter = '';
+
+    const TYPE_ICON = {
+        bug: '<i class="fa-solid fa-bug text-danger"></i> Bug',
+        feature: '<i class="fa-solid fa-lightbulb text-warning"></i> 功能',
+        data: '<i class="fa-solid fa-database text-success"></i> 数据',
+        other: '<i class="fa-solid fa-wrench text-secondary"></i> 其他'
+    };
+    const STATUS_OPTS = {
+        pending: { label: '待处理', cls: 'status-pending' },
+        in_progress: { label: '开发中', cls: 'status-in_progress' },
+        done: { label: '已上线', cls: 'status-done' }
+    };
+
+    function fmtDate(v) {
+        if (!v) return '-';
+        return String(v).replace('T', ' ').slice(0, 16);
+    }
+
+    async function loadFeedback() {
+        try {
+            const url = `/api/admin/feedback?page=${page}&per_page=${perPage}` + (statusFilter !== '' ? `&status=${statusFilter}` : '');
+            const resp = await fetch(url);
+            if (!resp.ok) {
+                document.getElementById('fbRows').innerHTML =
+                    `<tr><td colspan="8" class="text-center text-danger">加载失败（HTTP ${resp.status}），请刷新重试</td></tr>`;
+                return;
+            }
+            const r = await resp.json();
+            const tb = document.getElementById('fbRows');
+            document.getElementById('pageInfo').textContent = `第 ${r.page ?? page} 页 / 共 ${Math.max(1, Math.ceil((r.total ?? 0) / (r.per_page || perPage)))} 页`;
+            if (!r.rows || !r.rows.length) {
+                tb.innerHTML = '<tr><td colspan="8" class="text-center text-secondary">暂无反馈</td></tr>';
+                return;
+            }
+            tb.innerHTML = r.rows.map(row => {
+                const st = STATUS_OPTS[row.status] || STATUS_OPTS.pending;
+                const typeLabel = TYPE_ICON[row.type] || TYPE_ICON.other;
+                return `<tr>
+                    <td>#${String(row.id).padStart(4, '0')}</td>
+                    <td>${typeLabel}</td>
+
+                    <td>${esc(row.title)}</td>
+                    <td style="max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+                        title="${esc(row.desc)}">${esc(row.desc)}</td>
+                    <td>${row.votes}</td>
+                    <td><span class="status-badge ${st.cls}">${st.label}</span></td>
+                    <td class="font-mono" style="font-size:.8rem;">${fmtDate(row.time)}</td>
+                    <td>
+                        <select class="admin-select form-select-sm" style="width:auto; display:inline-block;" data-id="${row.id}">
+                            <option value="pending" ${row.status === 'pending' ? 'selected' : ''}>待处理</option>
+                            <option value="in_progress" ${row.status === 'in_progress' ? 'selected' : ''}>开发中</option>
+                            <option value="done" ${row.status === 'done' ? 'selected' : ''}>已上线</option>
+                        </select>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            document.querySelectorAll('#fbRows select[data-id]').forEach(sel => {
+                sel.addEventListener('change', async function () {
+                    const id = this.getAttribute('data-id');
+                    const newStatus = this.value;
+                    try {
+                        const res = await fetch(`/api/admin/feedback/${id}/status`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: newStatus })
+                        });
+                        const data = await res.json();
+                        if (data.status === 'success') {
+                            showToast(`反馈 #${id} 状态已更新为「${STATUS_OPTS[newStatus].label}」`);
+                        } else {
+                            showToast('❌ 更新失败：' + (data.detail || data.msg || '未知错误'));
+                            loadFeedback();
+                        }
+                    } catch (e) {
+                        showToast('❌ 网络错误');
+                        loadFeedback();
+                    }
+                });
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    function showToast(msg) {
+        let t = document.getElementById('adminToast');
+        if (!t) {
+            t = document.createElement('div');
+            t.id = 'adminToast';
+            t.className = 'toast position-fixed bottom-0 end-0 p-3';
+            t.style.cssText = 'z-index:1090; background:#1e293b; border:1px solid #38bdf8; color:#fff; border-radius:10px;';
+            t.innerHTML = `<div>${msg}</div>`;
+            document.body.appendChild(t);
+        } else {
+            t.innerHTML = `<div>${msg}</div>`;
+        }
+        setTimeout(() => { t.style.display = 'none'; }, 2500);
+        t.style.display = 'block';
+    }
+
+    document.querySelectorAll('.btn-group [data-status]').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.btn-group [data-status]').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            statusFilter = this.getAttribute('data-status');
+            page = 1;
+            loadFeedback();
+        });
+    });
+    document.getElementById('prevBtn').addEventListener('click', function () { if (page > 1) { page--; loadFeedback(); } });
+    document.getElementById('nextBtn').addEventListener('click', function () { page++; loadFeedback(); });
+
+    document.addEventListener('DOMContentLoaded', loadFeedback);
+</script>
+{% endblock %}

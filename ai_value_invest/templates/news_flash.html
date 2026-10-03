@@ -1,0 +1,924 @@
+{% extends "base.html" %}
+
+{% block title %}7×24 AI 市场快讯 - 重要财经动态{% endblock %}
+{% block seo_description %}A股棱镜 7×24 市场快讯：聚合实时财经动态、政策变化与重要公司公告，快速了解影响市场的关键事件。{% endblock %}
+{% block seo_keywords %}A股棱镜,A股快讯,财经快讯,市场动态,7x24{% endblock %}
+
+{% block extra_css %}
+<style>
+    .news-container {
+        padding-top: 100px;
+        padding-bottom: 40px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .news-control-bar {
+        background: rgba(30, 41, 59, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(56, 189, 248, 0.15);
+        border-radius: 12px;
+        padding: 15px 25px;
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        position: sticky;
+        top: 80px;
+        z-index: 100;
+        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+    }
+
+    .live-indicator {
+        display: flex;
+        align-items: center;
+        font-family: 'JetBrains Mono', monospace;
+        color: #38bdf8;
+        font-size: 0.9rem;
+    }
+
+    .live-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #38bdf8;
+        border-radius: 50%;
+        margin-right: 8px;
+        box-shadow: 0 0 10px #38bdf8;
+        animation: pulse 1.5s infinite;
+    }
+
+    .filter-group .btn-filter {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #94a3b8;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        transition: all 0.3s;
+        margin-right: 5px;
+    }
+    .filter-group .btn-filter:hover, .filter-group .btn-filter.active {
+        background: rgba(56, 189, 248, 0.15);
+        color: #38bdf8;
+        border-color: #38bdf8;
+    }
+
+    .timeline-wrapper {
+        position: relative;
+        padding-left: 20px;
+    }
+    .timeline-wrapper::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(180deg, #38bdf8 0%, rgba(56, 189, 248, 0.1) 100%);
+    }
+
+    .news-item {
+        position: relative;
+        margin-bottom: 30px;
+        padding-left: 25px;
+        opacity: 0;
+        animation: slideInRight 0.5s forwards;
+    }
+
+    .news-time-dot {
+        position: absolute;
+        left: -24px;
+        top: 0;
+        width: 10px;
+        height: 10px;
+        background: #0f172a;
+        border: 2px solid #38bdf8;
+        border-radius: 50%;
+        z-index: 2;
+    }
+
+    .news-card {
+        background: rgba(30, 41, 59, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s ease;
+    }
+    .news-card:hover {
+        background: rgba(30, 41, 59, 0.7);
+        border-color: rgba(56, 189, 248, 0.3);
+        transform: translateX(5px);
+    }
+
+    .news-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+    .news-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #e2e8f0;
+        margin-bottom: 8px;
+        cursor: pointer;
+    }
+    .news-title:hover { color: #38bdf8; }
+
+    .news-content {
+        color: #94a3b8;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
+
+    .news-tag {
+        display: inline-block;
+        color: #7dd3fc;
+        font-size: 0.75rem;
+        margin-right: 10px;
+        opacity: 0.85;
+    }
+
+    .news-action-btn {
+        background: transparent;
+        border: none;
+        color: #64748b;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.9rem;
+        transition: color 0.2s, background 0.2s;
+        padding: 5px 10px;
+        border-radius: 8px;
+    }
+    .news-action-btn:hover {
+        color: #38bdf8;
+        background: rgba(56, 189, 248, 0.08);
+    }
+    .news-action-btn.like-active { color: #38bdf8; }
+    .news-action-btn .like-count { font-size: 0.8rem; font-weight: 600; }
+
+    .ai-analysis-box {
+        background: rgba(56, 189, 248, 0.05);
+        border-left: 3px solid #38bdf8;
+        padding: 10px 15px;
+        border-radius: 0 8px 8px 0;
+        margin-top: 10px;
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+    }
+    .ai-tag {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+    .tag-bull { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .tag-bear { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .tag-neutral { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
+
+    .sidebar-card {
+        background: rgba(30, 41, 59, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .sentiment-meter {
+        height: 8px;
+        background: #334155;
+        border-radius: 4px;
+        margin-top: 10px;
+        overflow: hidden;
+        position: relative;
+    }
+    .sentiment-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981);
+        width: 65%;
+        border-radius: 4px;
+    }
+    .sentiment-marker {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #fff;
+        left: 65%;
+        box-shadow: 0 0 10px #fff;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(56, 189, 248, 0.3);
+        border-radius: 50%;
+        border-top-color: #38bdf8;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    /* 热点标签（可点击筛选） */
+    .hot-tag {
+        display: inline-block;
+        background: rgba(56, 189, 248, 0.1);
+        border: 1px solid rgba(56, 189, 248, 0.25);
+        color: #7dd3fc;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        text-decoration: none;
+        transition: all 0.2s;
+        margin: 0 6px 6px 0;
+    }
+    .hot-tag:hover { background: rgba(56, 189, 248, 0.25); color: #e0f2fe; }
+    .hot-tag.active { background: #38bdf8; color: #0f172a; border-color: #38bdf8; font-weight: 600; }
+
+    /* 重大快讯列表 */
+    .imp-news-item {
+        display: block;
+        color: #cbd5e1;
+        text-decoration: none;
+        font-size: 0.85rem;
+        padding: 8px 10px;
+        border-radius: 8px;
+        transition: all 0.2s;
+        border-left: 2px solid transparent;
+        margin-bottom: 4px;
+    }
+    .imp-news-item:hover {
+        background: rgba(56, 189, 248, 0.08);
+        color: #e2e8f0;
+        border-left-color: #38bdf8;
+    }
+    .imp-news-time {
+        color: #64748b;
+        font-size: 0.72rem;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* 实时大盘 */
+    .market-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        font-size: 0.88rem;
+    }
+    .market-row + .market-row { border-top: 1px solid rgba(255,255,255,0.05); }
+
+    /* 分享 toast */
+    .geek-toast {
+        position: fixed;
+        left: 50%;
+        bottom: 40px;
+        transform: translateX(-50%) translateY(20px);
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid rgba(56, 189, 248, 0.4);
+        color: #e2e8f0;
+        padding: 10px 22px;
+        border-radius: 24px;
+        font-size: 0.9rem;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.3s;
+        z-index: 2000;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .geek-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0% { opacity: 0.5; box-shadow: 0 0 0 rgba(56,189,248,0); } 70% { opacity: 1; box-shadow: 0 0 10px rgba(56,189,248,0.5); } 100% { opacity: 0.5; } }
+    @keyframes slideInRight { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="news-container container">
+    <div class="row">
+
+        <div class="col-lg-8">
+            <div id="newsNotice" class="alert py-2 px-3 mb-3" style="display:none; font-size:0.85rem; background:rgba(56,189,248,.1); border:1px solid rgba(56,189,248,.3); color:#7dd3fc;"></div>
+
+            <div class="news-control-bar">
+                <div class="d-flex align-items-center gap-4 flex-wrap">
+                    <div class="live-indicator">
+                        <div class="live-dot"></div>
+                        <span id="currentTime">加载中…</span>
+                    </div>
+                    <div class="filter-group d-none d-md-block">
+                        <button class="btn-filter active" data-filter="all">全部</button>
+                        <button class="btn-filter" data-filter="important">🔥 重大</button>
+                        <button class="btn-filter" data-filter="bull">📈 利好</button>
+                        <button class="btn-filter" data-filter="bear">📉 利空</button>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 align-items-center">
+                    <button class="btn btn-outline-secondary btn-sm rounded-pill" id="refreshBtn">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="timeline-wrapper" id="newsTimeline">
+                <div class="text-center py-5" id="loadingState">
+                    <div class="loading-spinner"></div>
+                    <p class="text-muted mt-3">加载快讯中...</p>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <button class="btn btn-outline-secondary rounded-pill px-4" id="loadMoreBtn">
+                    <i class="fa-solid fa-clock-rotate-left me-2"></i>加载历史快讯
+                </button>
+            </div>
+        </div>
+
+        {% if sb('news.market').enabled or sb('news.important').enabled
+              or sb('news.sentiment').enabled or sb('news.hot_tags').enabled
+              or sb('news.stats').enabled %}
+        <div class="col-lg-4 d-none d-lg-block d-flex flex-column">
+            {% if sb('news.market').enabled %}
+            <!-- 实时大盘（复用 /api/market-snapshot，轻量缓存） -->
+            <div class="sidebar-card" style="order:{{ sb('news.market').order }};">
+                <h6 class="text-white fw-bold font-tech mb-3"><i class="fa-solid fa-chart-line me-2 text-info"></i>实时大盘</h6>
+                <div id="marketWidget"><span class="text-muted small">加载行情中…</span></div>
+            </div>
+            {% endif %}
+
+            {% if sb('news.important').enabled %}
+            <!-- 重大快讯（可点击定位） -->
+            <div class="sidebar-card" style="order:{{ sb('news.important').order }};">
+                <h6 class="text-white fw-bold font-tech mb-3"><i class="fa-solid fa-fire me-2 text-danger"></i>重大快讯</h6>
+                <div id="importantNewsList"><span class="text-muted small">加载中…</span></div>
+            </div>
+            {% endif %}
+
+            {% if sb('news.sentiment').enabled %}
+            <!-- AI 市场情绪 -->
+            <div class="sidebar-card" style="order:{{ sb('news.sentiment').order }};">
+                <h6 class="text-white fw-bold font-tech mb-3"><i class="fa-solid fa-gauge-high me-2 text-info"></i>AI 市场情绪</h6>
+                <div class="d-flex justify-content-between text-muted small mb-1">
+                    <span>极度恐慌</span>
+                    <span class="text-white fw-bold" id="sentimentValue">-- (计算中)</span>
+                    <span>极度贪婪</span>
+                </div>
+                <div class="sentiment-meter">
+                    <div class="sentiment-fill" style="width: 100%; opacity: 0.3;"></div>
+                    <div class="sentiment-marker" id="sentimentMarker" style="left: 50%;"></div>
+                </div>
+                {% if sb('news.sentiment').options.show_comment %}
+                <p class="text-muted small mt-3 mb-0" id="sentimentComment">
+                    <i class="fa-solid fa-robot me-1"></i>
+                    AI 正在分析市场情绪...
+                </p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if sb('news.hot_tags').enabled %}
+            <!-- 热点标签（可点击筛选） -->
+            <div class="sidebar-card" style="order:{{ sb('news.hot_tags').order }};">
+                <h6 class="text-white fw-bold font-tech mb-3"><i class="fa-solid fa-hashtag me-2 text-success"></i>热点标签</h6>
+                <div id="hotTags"><span class="text-muted small">加载中...</span></div>
+                <div id="tagClearWrap" style="display:none; margin-top:10px;">
+                    <span class="badge bg-info text-dark" style="cursor:pointer;" id="tagClearBtn">
+                        #<span id="tagClearName"></span> <i class="fa-solid fa-xmark ms-1"></i> 清除筛选
+                    </span>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if sb('news.stats').enabled %}
+            <!-- 今日统计 -->
+            <div class="sidebar-card" style="order:{{ sb('news.stats').order }};">
+                <h6 class="text-white fw-bold font-tech mb-3"><i class="fa-solid fa-chart-pie me-2 text-success"></i>今日统计</h6>
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="text-2xl fw-bold text-success" id="bullCount">--</div>
+                        <div class="text-muted small">利好</div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="text-2xl fw-bold text-danger" id="bearCount">--</div>
+                        <div class="text-muted small">利空</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-2xl fw-bold text-info" id="totalCount">--</div>
+                        <div class="text-muted small">总快讯</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-2xl fw-bold text-warning" id="importantCount">--</div>
+                        <div class="text-muted small">重大</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="geek-toast" id="geekToast"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let allNewsData = [];
+    let currentFilter = 'all';
+    let currentTag = null;        // 标签筛选
+    let currentOffset = 0;        // 已加载条数，用于「加载历史快讯」分页
+
+    const timelineContainer = document.getElementById('newsTimeline');
+    const loadingState = document.getElementById('loadingState');
+
+    // 边栏小模块配置：由后台「系统边栏」下发（条数 / 刷新间隔 / 是否显示点评）。
+    // 模块被停用后对应 DOM 不存在，下面的写入全部做了判空，不会因此整段报错。
+    const NEWS_CFG = {
+        tagLimit: {{ sb('news.hot_tags').options.limit | int }},
+        importantLimit: {{ sb('news.important').options.limit | int }},
+        marketRefreshSec: {{ sb('news.market').options.refresh_sec | int }},
+        showComment: {{ 'true' if sb('news.sentiment').options.show_comment else 'false' }}
+    };
+    // 取值兜底：后台若存进 0 / 负数，这里保证至少有个合理值，避免边栏渲染出空列表
+    NEWS_CFG.tagLimit = Math.max(1, NEWS_CFG.tagLimit || 15);
+    NEWS_CFG.importantLimit = Math.max(1, NEWS_CFG.importantLimit || 8);
+    NEWS_CFG.marketRefreshSec = Math.max(15, NEWS_CFG.marketRefreshSec || 60);
+
+    const sentimentConfig = {
+        'bull': { text: '利好', class: 'tag-bull', icon: 'fa-arrow-trend-up' },
+        'bear': { text: '利空', class: 'tag-bear', icon: 'fa-arrow-trend-down' },
+        'neutral': { text: '中性', class: 'tag-neutral', icon: 'fa-scale-balanced' }
+    };
+
+    // ---------- 工具：toast ----------
+    function showToast(msg) {
+        const t = document.getElementById('geekToast');
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(t._timer);
+        t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    // ---------- 拉取快讯 ----------
+    async function fetchNews() {
+        try {
+            loadingState.style.display = 'block';
+            timelineContainer.innerHTML = '';
+            timelineContainer.appendChild(loadingState);
+
+            // ⚠️ 必须判 resp.ok：非 200（500/限流/登录失效）时 response.json() 拿到的是错误页/HTML，
+            //    旧代码直接读 result.status 恒为 undefined → 静默什么都不发生，用户只看到空白。
+            const response = await fetch(`/api/news?limit=50`);
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            const result = await response.json();
+
+            if (result.status === 'success' && result.data) {
+                allNewsData = result.data;
+                currentOffset = allNewsData.length;
+                renderNews(allNewsData);
+                updateSidebar(allNewsData);
+                // 真实拉取时刻（原来这里是每 1 秒跳动的本地时钟，会误导为逐秒实时）
+                const ct = document.getElementById('currentTime');
+                if (ct) {
+                    ct.innerText = '更新于 ' + new Date().toLocaleTimeString();
+                    ct.title = '快讯每 5 分钟自动刷新一次';
+                }
+                const noticeEl = document.getElementById('newsNotice');
+                if (result.notice) {
+                    noticeEl.textContent = 'ℹ️ ' + result.notice;
+                    noticeEl.style.display = 'block';
+                } else {
+                    noticeEl.style.display = 'none';
+                }
+            } else {
+                // 接口 200 但业务失败：也要让用户看见，而不是留一个空白时间轴
+                throw new Error(result.msg || result.detail || '接口返回异常');
+            }
+        } catch (error) {
+            console.error('Error fetching news:', error);
+            timelineContainer.innerHTML = `
+                <div class="text-center py-5 text-muted">
+                    <i class="fa-solid fa-exclamation-triangle fa-2x mb-3"></i>
+                    <p>加载失败：${esc(error.message || '请稍后重试')}</p>
+                    <button class="btn btn-sm btn-outline-info mt-2" onclick="fetchNews()">
+                        <i class="fa-solid fa-rotate-right me-1"></i>重试
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    async function loadMore() {
+        const btn = document.getElementById('loadMoreBtn');
+        if (!btn || btn.disabled) return;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>加载中…';
+        try {
+            const response = await fetch(`/api/news?limit=50&offset=${currentOffset}`);
+            const result = await response.json();
+            if (result.status === 'success' && result.data && result.data.length) {
+                const older = result.data.filter(it =>
+                    !allNewsData.some(x => x.title === it.title && x.date === it.date && x.time === it.time));
+                if (older.length) {
+                    allNewsData = allNewsData.concat(older);
+                    currentOffset += result.data.length;
+                    renderNews(allNewsData);
+                    updateSidebar(allNewsData);
+                }
+                // 接口有返回但全部是重复项时，也要告诉用户，否则点了没反应会以为卡住
+                if (result.data.length < 50 || older.length === 0) {
+                    btn.style.display = 'none';
+                    const tip = document.createElement('div');
+                    tip.className = 'text-center text-muted small py-3';
+                    tip.textContent = '已加载全部历史快讯';
+                    btn.parentNode.insertBefore(tip, btn);
+                }
+            } else {
+                btn.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error loading more news:', error);
+            // 失败要给用户可见反馈，而不是默默恢复成可点状态
+            btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-2"></i>加载失败，点击重试';
+            return;   // 保持 disabled 文案，不再恢复到「加载历史快讯」
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    function shouldFilterItem(item) {
+        // 标签筛选优先
+        if (currentTag && !(item.tags || []).includes(currentTag)) return true;
+        if (currentFilter === 'all') return false;
+        if (currentFilter === 'important') return !item.important;
+        if (currentFilter === 'bull') return item.sentiment !== 'bull';
+        if (currentFilter === 'bear') return item.sentiment !== 'bear';
+        return false;
+    }
+
+    function renderNews(newsList) {
+        let htmlContent = '';
+
+        // 过滤后可能一条不剩（如选中了某个冷门标签），此时必须给出空状态提示，
+        // 否则时间轴一片空白，用户会以为页面崩了。
+        const visible = newsList.filter(item => !shouldFilterItem(item));
+
+        if (newsList.length === 0) {
+            htmlContent = `
+                <div class="text-center py-5 text-muted">
+                    <i class="fa-solid fa-newspaper fa-2x mb-3"></i>
+                    <p>暂无快讯</p>
+                </div>
+            `;
+        } else if (visible.length === 0) {
+            const label = currentTag ? `#${esc(currentTag)}`
+                        : ({ important: '重大快讯', bull: '利好', bear: '利空' }[currentFilter] || '该筛选');
+            htmlContent = `
+                <div class="text-center py-5 text-muted">
+                    <i class="fa-solid fa-filter-circle-xmark fa-2x mb-3"></i>
+                    <p>「${label}」下暂无快讯</p>
+                    <button class="btn btn-sm btn-outline-info mt-2" onclick="resetFilters()">
+                        <i class="fa-solid fa-rotate-left me-1"></i>清除筛选
+                    </button>
+                </div>
+            `;
+        } else {
+            visible.forEach((item, index) => {
+                if (shouldFilterItem(item)) return;
+
+                const config = sentimentConfig[item.sentiment] || sentimentConfig['neutral'];
+                const importantBadge = item.important ? '<span class="badge bg-danger ms-2" style="font-size: 0.6rem;">🔥 重大</span>' : '';
+                const liked = localStorage.getItem('geek_news_like_' + item.gid) === '1';
+
+                const tagsHtml = (item.tags || []).map(tag =>
+                    `<span class="news-tag">#${esc(tag)}</span>`
+                ).join('');
+
+                const titleText = item.title ? esc(item.title) : '';
+
+                htmlContent += `
+                    <div class="news-item" id="news-item-${esc(item.gid)}" style="animation-delay: ${index * 0.05}s;">
+                        <div class="news-time-dot"></div>
+                        <div class="news-card">
+                            <div class="news-meta">
+                                <span class="text-white">${esc(item.time)}</span>
+                                <span>•</span>
+                                <span>${esc(item.date)}</span>
+                                ${importantBadge}
+                            </div>
+                            <div class="news-title">${titleText}</div>
+                            <div class="news-content">${esc(item.content)}</div>
+
+                            <div class="d-flex align-items-center justify-content-between mt-3">
+                                <div class="d-flex align-items-center flex-wrap">
+                                    <small class="text-muted me-2">相关:</small>
+                                    <div class="small">${tagsHtml}</div>
+                                </div>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <button class="news-action-btn news-like-btn ${liked ? 'like-active' : ''}" data-gid="${esc(item.gid)}" title="点赞">
+                                        <i class="fa-solid fa-thumbs-up"></i>
+                                        <span class="like-count">${item.likes || 0}</span>
+                                    </button>
+                                    <button class="news-action-btn news-share-btn" data-gid="${esc(item.gid)}" title="分享">
+                                        <i class="fa-solid fa-share-nodes"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="ai-analysis-box">
+                                <div class="fs-4"><i class="fa-solid fa-robot text-primary"></i></div>
+                                <div>
+                                    <div class="mb-1">
+                                        <span class="ai-tag ${config.class}"><i class="fa-solid ${config.icon} me-1"></i>${config.text}</span>
+                                        <span class="fw-bold text-white ms-1" style="font-size: 0.8rem;">DeepSeek 洞察:</span>
+                                    </div>
+                                    <p class="mb-0 small text-light opacity-75">${esc(item.ai_comment)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        timelineContainer.innerHTML = htmlContent;
+    }
+
+    // ---------- 点赞 ----------
+    async function handleLike(btn) {
+        const gid = btn.dataset.gid;
+        const key = 'geek_news_like_' + gid;
+        const wasLiked = localStorage.getItem(key) === '1';
+        const newLiked = !wasLiked;
+        const countEl = btn.querySelector('.like-count');
+        let count = parseInt(countEl.textContent || '0', 10) || 0;
+
+        // 乐观更新
+        count = newLiked ? count + 1 : Math.max(0, count - 1);
+        countEl.textContent = count;
+        btn.classList.toggle('like-active', newLiked);
+        if (newLiked) localStorage.setItem(key, '1'); else localStorage.removeItem(key);
+
+        // 同步内存数据，避免重渲染丢计数
+        const mem = allNewsData.find(x => String(x.gid) === String(gid));
+        if (mem) mem.likes = count;
+
+        try {
+            const res = await fetch('/api/news/like', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ gid: Number(gid), action: newLiked ? 'like' : 'unlike' })
+            });
+            const d = await res.json();
+            if (d && d.status === 'success' && typeof d.likes === 'number') {
+                countEl.textContent = d.likes;
+                if (mem) mem.likes = d.likes;
+            }
+        } catch (err) {
+            // 保留乐观结果
+        }
+    }
+
+    // ---------- 分享 ----------
+    async function shareNews(gid) {
+        const it = allNewsData.find(x => String(x.gid) === String(gid));
+        if (!it) return;
+        const text = (it.title ? it.title + '\n' : '') + (it.content || '') + '\n—— A股棱镜·市场快讯';
+        const shareData = { title: 'A股棱镜 市场快讯', text: text, url: location.href };
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+                return;
+            }
+        } catch (e) { /* 用户取消或失败 → 走复制兜底 */ }
+        // 复制兜底
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast('已复制快讯内容，可粘贴分享');
+        } catch (e) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); showToast('已复制快讯内容，可粘贴分享'); }
+            catch (_) { showToast('复制失败，请手动复制'); }
+            document.body.removeChild(ta);
+        }
+    }
+
+    // ---------- 侧边栏 ----------
+    function updateSidebar(newsList) {
+        const bullCount = newsList.filter(n => n.sentiment === 'bull').length;
+        const bearCount = newsList.filter(n => n.sentiment === 'bear').length;
+        const importantCount = newsList.filter(n => n.important).length;
+        const totalCount = newsList.length;
+
+        // ⚠️ 边栏模块可被后台「系统边栏」停用，届时这些元素根本不存在。
+        //    逐个判空后再写，避免一个停用模块让整个 updateSidebar 抛异常，
+        //    连带把其它正常模块的数据也刷新不出来。
+        const _set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+        _set('bullCount', bullCount);
+        _set('bearCount', bearCount);
+        _set('totalCount', totalCount);
+        _set('importantCount', importantCount);
+
+        const sentimentScore = totalCount > 0 ? Math.round(50 + (bullCount - bearCount) / totalCount * 50) : 50;
+        _set('sentimentValue', `${sentimentScore} (${sentimentScore > 55 ? '贪婪' : sentimentScore < 45 ? '恐慌' : '中性'})`);
+        const markerEl = document.getElementById('sentimentMarker');
+        if (markerEl) markerEl.style.left = `${sentimentScore}%`;
+
+        if (NEWS_CFG.showComment) {
+            const comment = sentimentScore > 60 ? '市场情绪偏乐观，注意追高风险' :
+                            sentimentScore < 40 ? '市场情绪偏谨慎，可关注超跌机会' :
+                            '市场情绪中性，观望为主';
+            const cmtEl = document.getElementById('sentimentComment');
+            if (cmtEl) cmtEl.innerHTML = `<i class="fa-solid fa-robot me-1"></i> AI 解读：${comment}`;
+        }
+
+        // 热点标签
+        const allTags = {};
+        newsList.forEach(n => {
+            (n.tags || []).forEach(t => { allTags[t] = (allTags[t] || 0) + 1; });
+        });
+        const sortedTags = Object.entries(allTags).sort((a, b) => b[1] - a[1]).slice(0, NEWS_CFG.tagLimit);
+        const hotTagsHtml = sortedTags.map(([tag, count]) => {
+            const active = currentTag === tag ? ' active' : '';
+            return `<a href="javascript:void(0)" class="hot-tag${active}" data-tag="${esc(tag)}">#${esc(tag)} <span class="opacity-50">${count}</span></a>`;
+        }).join('');
+        const tagEl = document.getElementById('hotTags');
+        if (tagEl) tagEl.innerHTML = hotTagsHtml || '<span class="text-muted small">暂无热点</span>';
+
+        const clearWrap = document.getElementById('tagClearWrap');
+        if (clearWrap) {
+            if (currentTag) {
+                clearWrap.style.display = 'block';
+                const nameEl = document.getElementById('tagClearName');
+                if (nameEl) nameEl.textContent = currentTag;
+            } else {
+                clearWrap.style.display = 'none';
+            }
+        }
+
+        // 重大快讯列表（条数由后台「系统边栏」配置）
+        const imp = newsList.filter(n => n.important).slice(0, NEWS_CFG.importantLimit);
+        const impHtml = imp.length ? imp.map(n => `
+            <a href="javascript:void(0)" class="imp-news-item" data-gid="${esc(n.gid)}">
+                <div class="imp-news-time">${esc(n.time)} ${esc(n.date)}</div>
+                <div class="text-truncate">${esc(n.title || (n.content || '').slice(0, 28))}</div>
+            </a>
+        `).join('') : '<span class="text-muted small">暂无重大快讯</span>';
+        const impEl = document.getElementById('importantNewsList');
+        if (impEl) impEl.innerHTML = impHtml;
+    }
+
+    // 实时大盘（复用 /api/market-snapshot）
+    async function loadMarketWidget() {
+        const box = document.getElementById('marketWidget');
+        // 「实时大盘」模块可能在后台被停用 —— 元素不在就别发这个请求了，
+        // 既省一次接口调用，也避免在后面写 innerHTML 时炸掉。
+        if (!box) return;
+        try {
+            const res = await fetch('/api/market-snapshot');
+            const d = await res.json();
+            const m = (d && d.market) || {};
+            const defs = [['sh', '上证指数'], ['sz', '深证成指'], ['cy', '创业板指']];
+            const rows = defs.map(([k, name]) => {
+                const it = m[k] || {};
+                const up = it.is_up;
+                const color = up ? '#f87171' : '#34d399';   // 红涨绿跌（A股惯例）
+                const sign = up ? '+' : '';
+                return `<div class="market-row">
+                    <span class="text-muted">${it.name || name}</span>
+                    <span><b style="color:${color}">${it.price || '-'}</b>
+                    <span style="color:${color};font-size:.78rem">${sign}${it.change_pct || '0.00'}%</span></span>
+                </div>`;
+            }).join('');
+            const northUp = m.north_is_up;
+            const northColor = northUp ? '#f87171' : '#34d399';
+            const northRow = `<div class="market-row" style="border-top:1px solid rgba(255,255,255,.08);margin-top:4px;padding-top:8px">
+                <span class="text-muted">北向资金</span>
+                <span style="color:${northColor};font-weight:600">${m.north_fund || '--'}</span>
+            </div>`;
+            box.innerHTML = rows + northRow;
+        } catch (e) {
+            box.innerHTML = '<span class="text-muted small">行情加载失败</span>';
+        }
+    }
+
+    // 点击「重大快讯」定位到正文
+    function scrollToNews(gid) {
+        const el = document.getElementById('news-item-' + gid);
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const card = el.querySelector('.news-card');
+        if (card) {
+            card.style.transition = 'box-shadow .4s';
+            card.style.boxShadow = '0 0 0 2px #38bdf8';
+            setTimeout(() => { card.style.boxShadow = ''; }, 1600);
+        }
+    }
+
+    // ---------- 事件绑定 ----------
+    function init() {
+        fetchNews();
+        loadMarketWidget();
+
+        // 「LIVE」不再用本地时钟冒充：改为展示最近一次真实拉取成功的时刻，
+        // 并定期真正重新拉接口刷新数据（大盘刷新间隔由后台「系统边栏」配置）。
+        setInterval(() => {
+            fetchNews();
+            loadMarketWidget();
+        }, 5 * 60 * 1000);
+
+        const mRefresh = NEWS_CFG.marketRefreshSec * 1000;
+        if (mRefresh !== 5 * 60 * 1000) {
+            setInterval(loadMarketWidget, mRefresh);
+        }
+    }
+
+    // 顶部筛选
+    document.querySelectorAll('.btn-filter').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentFilter = this.dataset.filter;
+            renderNews(allNewsData);
+        });
+    });
+
+    // 时间线内：点赞 / 分享（事件委托）
+    timelineContainer.addEventListener('click', async function(e) {
+        const likeBtn = e.target.closest('.news-like-btn');
+        if (likeBtn) { await handleLike(likeBtn); return; }
+        const shareBtn = e.target.closest('.news-share-btn');
+        if (shareBtn) { await shareNews(shareBtn.dataset.gid); return; }
+    });
+
+    // 热点标签点击筛选
+    // 边栏模块可在后台停用，绑事件前必须判空，否则整段脚本在首行就抛 TypeError，
+    // 后面（重大快讯定位、刷新按钮等）的绑定全部失效 —— 属于"一个模块停用拖垮整页交互"。
+    const hotTagsBox = document.getElementById('hotTags');
+    if (hotTagsBox) {
+        hotTagsBox.addEventListener('click', function(e) {
+            const a = e.target.closest('.hot-tag');
+            if (!a) return;
+            e.preventDefault();
+            const tag = a.dataset.tag;
+            currentTag = (currentTag === tag) ? null : tag;
+            renderNews(allNewsData);
+            updateSidebar(allNewsData);
+        });
+    }
+
+    // 清除标签筛选
+    const tagClearBtn = document.getElementById('tagClearBtn');
+    if (tagClearBtn) {
+        tagClearBtn.addEventListener('click', function() {
+            resetFilters();
+        });
+    }
+
+    // 清除全部筛选（标签 +  sentiment），供空状态里的「清除筛选」按钮调用
+    function resetFilters() {
+        currentTag = null;
+        currentFilter = 'all';
+        document.querySelectorAll('.btn-filter').forEach(b => {
+            b.classList.toggle('active', b.dataset.filter === 'all');
+        });
+        renderNews(allNewsData);
+        updateSidebar(allNewsData);
+    }
+
+    // 重大快讯点击定位
+    const impNewsBox = document.getElementById('importantNewsList');
+    if (impNewsBox) {
+        impNewsBox.addEventListener('click', function(e) {
+            const a = e.target.closest('.imp-news-item');
+            if (!a) return;
+            scrollToNews(a.dataset.gid);
+        });
+    }
+
+    document.getElementById('loadMoreBtn').addEventListener('click', loadMore);
+
+    document.getElementById('refreshBtn').addEventListener('click', function() {
+        this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        fetchNews().then(() => loadMarketWidget()).then(() => {
+            this.innerHTML = '<i class="fa-solid fa-rotate"></i>';
+        });
+    });
+
+    init();
+</script>
+{% endblock %}

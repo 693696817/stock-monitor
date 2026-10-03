@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block seo_description %}通知管理 · 管理后台 - A股棱镜（仅限管理员访问）{% endblock %}
+{% block seo_keywords %}A股棱镜,管理后台,通知{% endblock %}
+
+
+{% block robots %}noindex, nofollow{% endblock %}
+
+
+{% block title %}通知管理 - A股棱镜 后台{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+    {% include 'components/admin_sidebar.html' %}
+    <main class="admin-main">
+        <h3 class="font-tech mb-4" style="color:#fff;"><i class="fa-solid fa-bell text-info me-2"></i>通知管理</h3>
+
+        <!-- 发布 -->
+        <div class="admin-card mb-3">
+            <h5 class="mb-3" style="color:#fff;">发布通知</h5>
+            <div class="row g-2">
+                <div class="col-12 col-md-4">
+                    <label class="form-label text-secondary" style="font-size:.8rem;">标题</label>
+                    <input id="ntTitle" class="form-control" maxlength="120" placeholder="如：深度分析体验已上线">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label text-secondary" style="font-size:.8rem;">类型</label>
+                    <select id="ntType" class="form-select">
+                        <option value="system">系统消息</option>
+                        <option value="feature">新功能</option>
+                        <option value="redeem">兑换相关</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label text-secondary" style="font-size:.8rem;">提醒级别</label>
+                    <select id="ntLevel" class="form-select">
+                        <option value="info">普通（蓝）</option>
+                        <option value="success">成功（绿）</option>
+                        <option value="warning">警告（黄）</option>
+                        <option value="danger">重要（红）</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label text-secondary" style="font-size:.8rem;">接收人（空=全站）</label>
+                    <input id="ntUid" class="form-control" placeholder="用户 ID，留空广播">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label text-secondary" style="font-size:.8rem;">展示天数（0=长期）</label>
+                    <input id="ntExpire" type="number" class="form-control" value="0" min="0" max="365">
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label text-secondary" style="font-size:.8rem;">跳转链接（选填）</label>
+                    <input id="ntLink" class="form-control" placeholder="/pricing">
+                </div>
+            </div>
+            <div class="mt-2">
+                <label class="form-label text-secondary" style="font-size:.8rem;">正文</label>
+                <textarea id="ntContent" class="form-control" rows="3" placeholder="纯文本，支持换行；不要写 HTML"></textarea>
+            </div>
+            <div class="mt-3 d-flex align-items-center flex-wrap gap-2">
+                <button id="ntSend" class="btn btn-info">发布通知</button>
+                <button id="ntScan" class="btn btn-outline-warning">立即扫描会员到期</button>
+                <span class="text-secondary" style="font-size:.75rem;">会员到期提醒每日自动扫描一次；重启后会自动补跑，也可点此手动触发。</span>
+            </div>
+        </div>
+
+        <!-- 列表 -->
+        <div class="admin-card">
+            <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+                <h5 class="mb-0" style="color:#fff;">已发布通知</h5>
+                <button id="ntRefresh" class="btn btn-sm btn-outline-info mt-2 mt-md-0">刷新</button>
+            </div>
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th><th>标题</th><th>类型</th><th>级别</th>
+                            <th>接收人</th><th>已读</th><th>有效期</th><th>发布时间</th><th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ntRows">
+                        <tr><td colspan="9" class="text-center text-secondary">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <nav id="ntPager" class="mt-3"></nav>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let curPage = 1;
+    const PER = 20;
+
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function escAttr(s) {
+        return esc(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function fmtTime(v) { return v ? String(v).replace('T', ' ').slice(0, 19) : '-'; }
+
+    const LEVEL_MAP = {
+        info: ['普通', 'badge-free'],
+        success: ['成功', 'badge-vip'],
+        warning: ['警告', 'badge-vip'],
+        danger: ['重要', 'badge-free']
+    };
+
+    async function post(url, payload) {
+        const r = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload || {})
+        });
+        return await r.json().catch(function () { return {}; });
+    }
+
+    async function send() {
+        const title = (document.getElementById('ntTitle').value || '').trim();
+        if (!title) { alert('请填写标题'); return; }
+        let uid = (document.getElementById('ntUid').value || '').trim();
+        if (uid === '') uid = null;
+        else if (!/^\d+$/.test(uid)) { alert('用户 ID 只能是数字，全站广播请留空'); return; }
+        else uid = parseInt(uid, 10);
+        const exp = parseInt(document.getElementById('ntExpire').value || '0', 10);
+        if (exp < 0 || exp > 365) { alert('展示天数需在 0-365 之间'); return; }
+
+        const btn = document.getElementById('ntSend');
+        btn.disabled = true;
+        try {
+            const r = await post('/api/admin/notices/create', {
+                title: title,
+                content: (document.getElementById('ntContent').value || '').trim(),
+                type: document.getElementById('ntType').value,
+                level: document.getElementById('ntLevel').value,
+                user_id: uid,
+                link: (document.getElementById('ntLink').value || '').trim(),
+                expire_days: exp
+            });
+            if (r.status !== 'success') { alert(r.detail || '发布失败'); return; }
+            alert('已发布' + (uid ? ('给用户 #' + uid) : '（全站广播）'));
+            document.getElementById('ntTitle').value = '';
+            document.getElementById('ntContent').value = '';
+            loadList();
+        } catch (e) {
+            alert('发布失败：网络错误');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function scanExpiry() {
+        const btn = document.getElementById('ntScan');
+        btn.disabled = true;
+        try {
+            const r = await post('/api/admin/notices/scan-expiry', {});
+            if (r.status !== 'success') { alert(r.detail || '扫描失败'); return; }
+            alert('扫描完成：命中 ' + (r.scanned || 0) + ' 名会员，新推送 ' + (r.created || 0) + ' 条提醒。\n（重复提醒会自动去重）');
+            loadList();
+        } catch (e) {
+            alert('扫描失败：网络错误');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function loadList() {
+        try {
+            const r = await (await fetch('/api/admin/notices?page=' + curPage + '&per_page=' + PER)).json();
+            const tb = document.getElementById('ntRows');
+            if (!r.rows || !r.rows.length) {
+                tb.innerHTML = '<tr><td colspan="9" class="text-center text-secondary">暂无通知</td></tr>';
+            } else {
+                tb.innerHTML = r.rows.map(function (row) {
+                    const lv = LEVEL_MAP[row.level] || ['-', 'badge-free'];
+                    // 正文可能很长，表格里截断展示，完整内容放 title 悬浮
+                    const brief = (row.content || '').length > 60
+                        ? (row.content.slice(0, 60) + '…') : (row.content || '-');
+                    return '<tr>' +
+                        '<td class="font-mono">' + row.id + '</td>' +
+                        '<td>' + esc(row.title) +
+                            '<div class="text-secondary" style="font-size:.75rem;" title="' + escAttr(row.content || '') + '">' + esc(brief) + '</div>' +
+                            (row.link ? '<div class="text-secondary" style="font-size:.72rem;">→ ' + esc(row.link) + '</div>' : '') +
+                        '</td>' +
+                        '<td>' + esc(row.type) + '</td>' +
+                        '<td><span class="admin-badge ' + lv[1] + '">' + lv[0] + '</span></td>' +
+                        '<td>' + (row.user_id ? ('#' + row.user_id) : '<span class="text-info">全站</span>') + '</td>' +
+                        '<td>' + (row.read_count || 0) + ' 人</td>' +
+                        '<td class="font-mono" style="font-size:.75rem;">' + (row.expire_at ? fmtTime(row.expire_at) : '长期') + '</td>' +
+                        '<td class="font-mono" style="font-size:.75rem;">' + fmtTime(row.created_at) + '</td>' +
+                        '<td><button class="btn btn-sm btn-outline-danger" data-del="' + row.id + '">删除</button></td>' +
+                        '</tr>';
+                }).join('');
+            }
+            renderPager(r.total || 0, r.page || 1);
+        } catch (e) {
+            document.getElementById('ntRows').innerHTML =
+                '<tr><td colspan="9" class="text-center text-danger">加载失败</td></tr>';
+        }
+    }
+
+    function renderPager(total, page) {
+        const pages = Math.max(1, Math.ceil(total / PER));
+        let html = '';
+        if (page > 1) html += '<button class="btn btn-sm btn-outline-info me-1" data-p="' + (page - 1) + '">上一页</button>';
+        html += '<span class="text-secondary mx-2" style="align-self:center;">第 ' + page + ' / ' + pages + ' 页（共 ' + total + ' 条）</span>';
+        if (page < pages) html += '<button class="btn btn-sm btn-outline-info" data-p="' + (page + 1) + '">下一页</button>';
+        document.getElementById('ntPager').innerHTML = html;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadList();
+        document.getElementById('ntSend').addEventListener('click', send);
+        document.getElementById('ntScan').addEventListener('click', scanExpiry);
+        document.getElementById('ntRefresh').addEventListener('click', function () { loadList(); });
+    });
+
+    document.addEventListener('click', async function (e) {
+        const p = e.target.closest('#ntPager button[data-p]');
+        if (p) { curPage = parseInt(p.getAttribute('data-p'), 10); loadList(); return; }
+        const d = e.target.closest('button[data-del]');
+        if (d) {
+            const id = d.getAttribute('data-del');
+            if (!confirm('确认删除通知 #' + id + '？\n用户侧的这条消息会一并消失，此操作不可撤销。')) return;
+            try {
+                const r = await post('/api/admin/notices/delete', { id: parseInt(id, 10) });
+                if (r.status !== 'success') { alert(r.detail || '删除失败'); return; }
+                loadList();
+            } catch (err) { alert('删除失败：网络错误'); }
+        }
+    });
+</script>
+{% endblock %}

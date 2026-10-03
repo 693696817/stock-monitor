@@ -1,0 +1,366 @@
+<style>
+    /* Logo 容器 */
+    .navbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0;
+        margin-right: 2rem;
+    }
+
+    /* Logo 图标盒子 */
+    .logo-box {
+        width: 42px;
+        height: 42px;
+        background: rgba(30, 41, 59, 0.5); /* 半透明背景 */
+        border: 1px solid rgba(56, 189, 248, 0.3); /* 青色边框 */
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+        transition: all 0.3s ease;
+    }
+
+    /* 图标悬停发光效果 */
+    .navbar-brand:hover .logo-box {
+        background: rgba(56, 189, 248, 0.1);
+        border-color: #38bdf8;
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+        transform: scale(1.05);
+    }
+
+    /* Logo 文字区域 */
+    .brand-text-group {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        line-height: 1;
+    }
+
+    /* 主品牌名：A股棱镜 */
+    .brand-main {
+        font-family: 'Orbitron', sans-serif; /* 科技字体 */
+        font-weight: 800;
+        font-size: 1.25rem;
+        letter-spacing: 1px;
+        background: linear-gradient(90deg, #fff 0%, #38bdf8 100%); /* 白色到青色渐变 */
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 2px 10px rgba(56, 189, 248, 0.2);
+    }
+
+    /* 副标题：智能股票分析平台 */
+    .brand-sub {
+        font-size: 0.65rem;
+        color: #94a3b8;
+        font-weight: 400;
+        letter-spacing: 0.5px;
+        margin-top: 4px;
+        text-transform: uppercase;
+    }
+
+    /* 导航项悬停增强 */
+    .nav-link {
+        position: relative;
+    }
+    .nav-link::after {
+        content: '';
+        position: absolute;
+        width: 0;
+        height: 2px;
+        bottom: 0;
+        left: 50%;
+        background-color: #38bdf8;
+        transition: all 0.3s;
+        transform: translateX(-50%);
+    }
+    .nav-link:hover::after, .nav-link.active::after {
+        width: 80%;
+    }
+
+    /* 提醒铃铛 */
+    .bell-btn {
+        position: relative;
+        color: #cbd5e1;
+        font-size: 1.05rem;
+        width: 38px;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: transparent;
+        transition: all .2s;
+    }
+    .bell-btn:hover { color: #38bdf8; border-color: rgba(56,189,248,.4); }
+    .bell-dot {
+        position: absolute;
+        top: 4px;
+        right: 5px;
+        min-width: 16px;
+        height: 16px;
+        padding: 0 4px;
+        border-radius: 8px;
+        background: #e24b4a;
+        color: #fff;
+        font-size: 0.6rem;
+        font-weight: 500;
+        line-height: 16px;
+        text-align: center;
+        display: none;
+    }
+    .bell-drop {
+        background: #1e293b;
+        border: 1px solid rgba(255,255,255,0.1);
+        min-width: 300px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .bell-item { border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .bell-item:last-child { border-bottom: none; }
+</style>
+
+<nav class="navbar navbar-expand-lg fixed-top" data-bs-theme="dark" itemscope itemtype="http://schema.org/SiteNavigationElement" data-page-node-id="s7xM3RhBDiWyrAtFsB1cbG">
+    <div class="container" data-page-node-id="0EnGJEHqpTj2MH2TOeHCQo">
+
+        {% set site = request.app.state.site if (request and request.app.state and request.app.state.site) else {} %}
+        {% set site_name = site.get('SITE_NAME') or 'A股棱镜' %}
+        <a class="navbar-brand" href="/" title="{{ site_name }} - 智能股票分析平台" aria-label="{{ site_name }}首页" data-page-node-id="y9zdrxflkTgrhWsH1fXBSO">
+            {% set logo = site.get('SITE_LOGO_URL') or '' %}
+            {% if logo %}
+            <img src="{{ logo }}" alt="{{ site_name }}" style="height:42px; width:auto; border-radius:10px; border:1px solid rgba(56,189,248,0.3);" data-page-node-id="1lAZmEWXVcQRUhqVNBh2Pd">
+            {% else %}
+            <div class="logo-box" data-page-node-id="yFRl1wUJn7W6Xf7qb1e2HL">
+                <i class="fa-solid fa-microchip position-absolute" style="color: rgba(56, 189, 248, 0.15); font-size: 24px;" data-page-node-id="jDGIS5K8Bl1gcj21YnHI7H"></i>
+                <i class="fa-solid fa-chart-line position-relative" style="color: #38bdf8; font-size: 20px;" data-page-node-id="rotmcAPpT4tP1KPVimvS5s"></i>
+            </div>
+            {% endif %}
+
+            <div class="brand-text-group" data-page-node-id="PF8FYegiFb14H35rxcicjO">
+                <span class="brand-main" data-page-node-id="RKNYal5KCgoH6wcuA6n6Sd">{{ site_name }}</span>
+                <span class="brand-sub" data-page-node-id="B1oRKZA38KHThP40pNQSh2">智能股票分析平台</span>
+            </div>
+        </a>
+
+        <button class="navbar-toggler navbar-dark border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation" data-page-node-id="oaoycT0uhTimMVWoaUxhWh">
+            <span class="navbar-toggler-icon" data-page-node-id="XTbN275C3LxJIKFT8YmDK3"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav" data-page-node-id="VMMZETq2NE8Fj4UAJI4jzL">
+            <ul class="navbar-nav mx-auto" data-page-node-id="0UVholxemfi5DPCqZJYDTl">
+                <li class="nav-item" itemprop="name" data-page-node-id="ywlPoWJltICzqQA8BH9C6Y">
+                    <a class="nav-link {% if active_page == 'home' %}active{% endif %}" href="/" itemprop="url" data-page-node-id="9im0seQciz2t8XPY4fO5n3">首页</a>
+                </li>
+                <li class="nav-item" itemprop="name" data-page-node-id="UOkzWl57pUezpc5vivEszJ">
+                    <a class="nav-link {% if active_page == 'pricing' %}active{% endif %}" href="/pricing" itemprop="url" data-page-node-id="BLzdIslVxIBSAps5Tan8H5">价格方案</a>
+                </li>
+                <li class="nav-item" itemprop="name" data-page-node-id="6ZmG5HO8pa8yI8OjByWvgl">
+                    <a class="nav-link {% if active_page == 'analysis' %}active{% endif %}" href="/analysis" itemprop="url" title="A股深度价值分析" data-page-node-id="GdPIth0RopxGqBHyKYJs0y">股票分析</a>
+                </li>
+                <li class="nav-item" itemprop="name" data-page-node-id="m5HE2MnRS3CGLdnbtA2HXF">
+                    <a class="nav-link {% if active_page == 'market' %}active{% endif %}" href="/market" itemprop="url" data-page-node-id="n2ZGAhBUJj2Ks7YyC5PE5E">大盘分析</a>
+                </li>
+                <li class="nav-item" itemprop="name" data-page-node-id="gFJZ6RAmqonwDo2rcdsyRS">
+                    <a class="nav-link {% if active_page == 'hot' %}active{% endif %}" href="/hot" itemprop="url" data-page-node-id="9mvGyIMnczrJ7C2i0rvctV">热门个股</a>
+                </li>
+                <li class="nav-item" itemprop="name" data-page-node-id="DNOv3Du7s4cTx226jteqCV">
+                    <a class="nav-link {% if active_page == 'opportunities' %}active{% endif %}" href="/opportunities" itemprop="url" data-page-node-id="Cc6chdNLBVa65Yzlwry8FG">机会捕捉</a>
+                </li>
+                <li class="nav-item" itemprop="name" data-page-node-id="WbVayjNO2nf1KBadlkJJsm">
+                    <a class="nav-link {% if active_page == 'news' %}active{% endif %}" href="/news" itemprop="url" data-page-node-id="kr4FBNiTEtSXMGYbwJ8RTS">市场快讯</a>
+                </li>
+                <li class="nav-item" itemprop="name" data-page-node-id="EIW4Y7LVlhM4HDcR49fnYu">
+                <a class="nav-link text-warning {% if active_page == 'risks' %}active{% endif %}" href="/risks" itemprop="url" data-page-node-id="MOEBRkRV8n3yC9sgkog6eh">
+                    <i class="fa-solid fa-bolt me-1" data-page-node-id="hrGJphQ8lTIJlscDmVBjFs"></i>风险预警
+                </a>
+</li>
+            </ul>
+
+            <div class="d-flex gap-3" id="authArea" data-page-node-id="7A1hffgQQ6Y5g6ZtjxCz3f">
+                <div class="dropdown" id="bellArea" style="display:none;" data-page-node-id="zrptIKMMedS6ov7I0pgc54">
+                    <button class="bell-btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside" aria-expanded="false" title="消息与提醒" data-page-node-id="bMDg5Ixx4HG9tP9r37IAmE">
+                        <i class="fa-regular fa-bell" data-page-node-id="FrYdOPb4NOxZGVK7TNCLnB"></i>
+                        <span class="bell-dot" id="bellDot" data-page-node-id="aAkplYX5X5A4PK7d9QQ7qm">0</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end bell-drop" id="bellMenu" data-page-node-id="1S4etVhAlCbSCz25MH6gLE">
+                        <li data-page-node-id="MWDPfYVrNaZfimHbdxvkE1"><span class="dropdown-item-text text-muted small" data-page-node-id="OBioi8F0oWJg5UgN2o7K3J">暂无触发的提醒</span></li>
+                    </ul>
+                </div>
+
+                <a href="/login" class="btn-login text-decoration-none" data-page-node-id="gS1RKk6YDLNsVbumyDCc91">
+                    <i class="fa-regular fa-user me-2" data-page-node-id="BthIvGX4gBupD1j1pA4lbQ"></i>登录系统
+                </a>
+            </div>
+
+            <script>
+                // 根据用户登录态动态渲染右上角：未登录显示「登录系统」，已登录显示昵称 + 会员徽章 + 下拉菜单
+                (function () {
+                    var area = document.getElementById('authArea');
+                    if (!area) return;
+
+                    // 铃铛状态：两类消息各自拉取、各自渲染，合并计数。
+                    var bellState = { notifUnread: 0, notifRows: [], notifLoaded: false,
+                                      alertCount: 0, alertItems: [], alertLoaded: false };
+
+                    // 登录后回到当前页面：此前这里是死的 /login，登录成功一律落 /profile，
+                    // 用户在 /hot 点「登录系统」就再也回不去 /hot。
+                    var loginLink = area.querySelector('a[href="/login"]');
+                    if (loginLink) {
+                        var cur = location.pathname + location.search;
+                        // 登录/注册页本身不能当回跳目标，否则登录后原地打转；
+                        // 退出、404 之类也没必要记。
+                        if (cur && cur !== '/' && !/^\/(login|register)\b/.test(cur)) {
+                            loginLink.href = '/login?next=' + encodeURIComponent(cur);
+                        }
+                    }
+
+                    fetch('/api/me')
+                        .then(function (r) { return r.json(); })
+                        .then(function (d) {
+                            if (d.status === 'success' && d.user) {
+                                var u = d.user;
+                                var crown = u.is_vip ? ' <i class="fa-solid fa-crown text-warning"></i>' : '';
+                                area.innerHTML =
+                                    '<div class="dropdown">' +
+                                        '<a class="btn-login text-decoration-none dropdown-toggle" href="#" role="button" ' +
+                                           'data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false">' +
+                                           '<i class="fa-regular fa-user me-1"></i>' + esc(u.nickname) + crown +
+                                        '</a>' +
+                                        '<ul class="dropdown-menu dropdown-menu-end" style="background:#1e293b; border:1px solid rgba(255,255,255,0.1); min-width:180px;">' +
+                                            '<li><span class="dropdown-item-text text-muted small">' + esc(u.membership_name) + '</span></li>' +
+                                            (u.is_admin ? '<li><a class="dropdown-item text-warning" href="/admin"><i class="fa-solid fa-screwdriver-wrench me-2"></i>后台管理</a></li>' : '') +
+                                            '<li><a class="dropdown-item text-light" href="/profile"><i class="fa-regular fa-id-card me-2"></i>个人中心</a></li>' +
+                                            '<li><a class="dropdown-item text-light" href="/pricing"><i class="fa-solid fa-gem me-2"></i>会员方案</a></li>' +
+                                            '<li><hr class="dropdown-divider" style="border-color:rgba(255,255,255,0.1)"></li>' +
+                                            '<li><a class="dropdown-item text-danger" href="#" id="logoutBtn"><i class="fa-solid fa-right-from-bracket me-2"></i>退出登录</a></li>' +
+                                        '</ul>' +
+                                    '</div>';
+                                var lb = document.getElementById('logoutBtn');
+                                if (lb) {
+                                    lb.addEventListener('click', function (e) {
+                                        e.preventDefault();
+                                        fetch('/api/logout', { method: 'POST' })
+                                            .then(function () { window.location.href = '/'; });
+                                    });
+                                }
+                                loadBell();
+                            }
+                        })
+                        .catch(function () {});
+
+                    // 铃铛合并两类消息：站内通知（系统/会员到期/兑换回执）+ 自选股提醒。
+                    // 两个红点各算各的会让用户不知道该看哪个，合并成一个未读数。
+                    // ⚠️ 两个请求并行发、各自渲染：任一失败不影响另一类展示（Promise.allSettled）。
+                    function loadBell() {
+                        var bellArea = document.getElementById('bellArea');
+                        if (!bellArea) return;
+                        var dot = document.getElementById('bellDot');
+                        var menu = document.getElementById('bellMenu');
+
+                        function render() {
+                            var total = (bellState.notifUnread || 0) + (bellState.alertCount || 0);
+                            bellArea.style.display = '';
+                            if (total > 0) {
+                                dot.style.display = 'block';
+                                dot.textContent = total > 99 ? '99+' : total;
+                            } else {
+                                dot.style.display = 'none';
+                            }
+                            if (!bellState.notifLoaded && !bellState.alertLoaded) return;
+                            var html = '';
+                            if (bellState.notifLoaded) {
+                                html += '<li><div class="d-flex justify-content-between align-items-center px-3 pt-2">'
+                                    + '<span class="text-muted" style="font-size:.7rem;">消息通知</span>'
+                                    + (bellState.notifUnread
+                                        ? '<button class="btn btn-link btn-sm p-0 text-info" style="font-size:.7rem;" id="notifReadAll">全部已读</button>'
+                                        : '')
+                                    + '</div></li>';
+                                var rows = bellState.notifRows || [];
+                                if (!rows.length) {
+                                    html += '<li><span class="dropdown-item-text text-muted small">暂无消息</span></li>';
+                                } else {
+                                    rows.slice(0, 6).forEach(function (n) {
+                                        var color = { success: '#34d399', warning: '#fbbf24', danger: '#f87171' }[n.level] || '#94a3b8';
+                                        var href = n.link || '/profile';
+                                        html += '<li class="bell-item">'
+                                            + '<div class="dropdown-item text-light py-2" style="cursor:default;">'
+                                            + '<div class="d-flex justify-content-between align-items-start">'
+                                            + '<a class="small fw-bold text-decoration-none flex-grow-1" style="color:' + color + ';" href="' + esc(href) + '">'
+                                            + (n.is_read ? '' : '<span class="text-danger">● </span>') + esc(n.title) + '</a>'
+                                            + (n.is_read ? '' : '<button class="btn btn-link btn-sm p-0 ms-2 text-muted" style="font-size:.68rem;" data-nread="' + n.id + '">已读</button>')
+                                            + '</div>'
+                                            + (n.content ? '<div class="text-muted" style="font-size:.7rem;white-space:normal;">' + esc(n.content) + '</div>' : '')
+                                            + '<div class="text-muted" style="font-size:.68rem;">' + esc(n.created_at || '') + '</div>'
+                                            + '</div></li>';
+                                    });
+                                }
+                                html += '<li><hr class="dropdown-divider" style="border-color:rgba(255,255,255,0.1)"></li>';
+                            }
+                            var items = bellState.alertItems || [];
+                            html += '<li><div class="px-3 pt-1"><span class="text-muted" style="font-size:.7rem;">自选股提醒</span></div></li>';
+                            if (!items.length) {
+                                html += '<li><span class="dropdown-item-text text-muted small">暂无触发的提醒</span></li>';
+                            } else {
+                                items.forEach(function (a) {
+                                    var mlbl = { total_mv: '市值', price: '价格', pct_chg: '涨跌幅', pe_ttm: '市盈率' }[a.metric] || a.metric;
+                                    html += '<li class="bell-item"><a class="dropdown-item text-light py-2" href="/profile#watchlist">'
+                                        + '<div class="small fw-bold">' + esc(a.stock_name) + ' <span class="text-info">' + esc(mlbl) + '</span>提醒</div>'
+                                        + '<div class="text-muted" style="font-size:.7rem">' + esc(a.last_value || '') + ' · ' + esc(a.triggered_at || '') + '</div>'
+                                        + '</a></li>';
+                                });
+                            }
+                            html += '<li><a class="dropdown-item text-info small" href="/profile#watchlist">查看全部自选提醒</a></li>';
+                            menu.innerHTML = html;
+
+                            var ra = document.getElementById('notifReadAll');
+                            if (ra) {
+                                ra.addEventListener('click', function (e) {
+                                    e.stopPropagation();
+                                    fetch('/api/notifications/read-all', { method: 'POST' })
+                                        .then(function () { bellState.notifLoaded = false; loadBell(); });
+                                });
+                            }
+                            menu.querySelectorAll('button[data-nread]').forEach(function (b) {
+                                b.addEventListener('click', function (e) {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    fetch('/api/notifications/read', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ id: parseInt(b.getAttribute('data-nread'), 10) })
+                                    }).then(function () { bellState.notifLoaded = false; loadBell(); });
+                                });
+                            });
+                        }
+
+                        fetch('/api/notifications?limit=8')
+                            .then(function (r) { return r.json(); })
+                            .then(function (d) {
+                                if (d.status !== 'success') return;
+                                bellState.notifUnread = d.unread || 0;
+                                bellState.notifRows = d.rows || [];
+                                bellState.notifLoaded = true;
+                                render();
+                            })
+                            .catch(function () { bellState.notifLoaded = true; render(); });
+
+                        fetch('/api/alerts/unread')
+                            .then(function (r) { return r.json(); })
+                            .then(function (d) {
+                                if (d.status !== 'success') return;
+                                bellState.alertCount = d.count || 0;
+                                bellState.alertItems = d.items || [];
+                                bellState.alertLoaded = true;
+                                render();
+                            })
+                            .catch(function () { bellState.alertLoaded = true; render(); });
+                    }
+                })();
+            </script>
+        </div>
+    </div>
+</nav>

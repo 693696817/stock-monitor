@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="520" viewBox="0 0 760 520" font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif">
+<rect width="760" height="520" fill="#0d1424"/>
+<circle cx="547.1999999999999" cy="40" r="160" fill="#38bdf8" opacity="0.05"/>
+<circle cx="114.0" cy="520" r="120" fill="#818cf8" opacity="0.04"/>
+<text x="28" y="34" fill="#f1f5f9" font-size="16" font-weight="600">合理价告警设置</text>
+<text x="28" y="52" fill="#64748b" font-size="12">界面示意图，数值为演示数据</text>
+<defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#818cf8"/></linearGradient></defs><rect x="24" y="24" width="712" height="472" rx="12" fill="#151e33" stroke="rgba(255,255,255,0.10)"/>
+<text x="48" y="60" fill="#f1f5f9" font-size="15" font-weight="600">设置提醒</text>
+<text x="48" y="80" fill="#64748b" font-size="11">贵州茅台 600519.SH</text>
+<text x="48" y="118" fill="#94a3b8" font-size="12">提醒条件</text>
+<rect x="48" y="130" width="300" height="38" rx="8" fill="#1c2740" stroke="#38bdf8"/>
+<text x="64" y="154" fill="#f1f5f9" font-size="12">跌破我的研报合理价</text>
+<text x="332" y="154" fill="#38bdf8" font-size="11">▾</text>
+<rect x="48" y="182" width="664" height="52" rx="8" fill="#38bdf8" opacity="0.08" stroke="#38bdf8" stroke-opacity="0.3"/>
+<text x="64" y="204" fill="#38bdf8" font-size="11">无需填写阈值 —— 自动取你最近一次研报给出的「合理市值下限」</text>
+<text x="64" y="222" fill="#64748b" font-size="10">总市值跌到它下方时提醒；该股未做过研报则不触发</text>
+<text x="48" y="266" fill="#94a3b8" font-size="12">当前设置</text>
+<rect x="48" y="278" width="664" height="56" rx="8" fill="#1c2740" stroke="rgba(255,255,255,0.10)"/>
+<text x="64" y="300" fill="#f1f5f9" font-size="12">总市值跌破我的研报合理下限</text>
+<text x="64" y="320" fill="#64748b" font-size="10">最近研报（10-02）合理市值下限 2,180 亿 · 当前 2,110 亿</text>
+<text x="600" y="308" fill="#38bdf8" font-size="11">监测中</text>
+<rect x="48" y="360" width="140" height="38" rx="8" fill="url(#g2)"/>
+<text x="118" y="384" fill="#04121f" font-size="12" font-weight="600" text-anchor="middle">保存</text>
+<rect x="200" y="360" width="140" height="38" rx="8" fill="none" stroke="rgba(255,255,255,0.10)"/>
+<text x="270" y="384" fill="#94a3b8" font-size="12" text-anchor="middle">取消</text>
+<text x="48" y="440" fill="#64748b" font-size="11">还支持：总市值 / 收盘价 / 涨跌幅 / 市盈率 / 市净率 / PB 历史分位 / 财报披露</text>
+<text x="48" y="462" fill="#64748b" font-size="11">提醒引擎在交易时段每小时评估一次</text>
+</svg>

@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="XNB7jAE7n1LIN9jm0k9AvN">
+<head data-page-node-id="Mg8zHQel7yBcJ34JOn3kbz">
+    {% set site = request.app.state.site if (request and request.app.state and request.app.state.site) else {} %}
+    {% set _site_domain = (site.get('SITE_DOMAIN') or '').rstrip('/') %}
+
+    {% set _cur_url = (_site_domain + '/login') if _site_domain else (request.url.scheme ~ '://' ~ request.url.netloc ~ '/login') %}
+
+    <meta charset="UTF-8" data-page-node-id="v2YlQtxGOnIna1G4UXPaZM">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="jtB09OGjZhTxFqzmvLh7uU">
+
+    {% set site = request.app.state.site if (request and request.app.state and request.app.state.site) else {} %}
+    <title>登录 - A股棱镜</title>
+    <meta name="description" content="登录 A股棱镜，使用你的账号继续。" data-page-node-id="0WCS9vJDPHCnKZJoGUEfcm">
+    <meta name="keywords" content="A股棱镜,登录,A股研究账号,股票分析工具" data-page-node-id="MY6Q2D26rDJzwrcxGnLaoU">
+    <meta name="robots" content="noindex,nofollow" data-page-node-id="mto8WxWcoKfa0gkBQxKUyQ">
+    <link rel="canonical" href="{{ _cur_url }}" data-page-node-id="O8J7sB4Sd2FlMLuD7yhzwd">
+    <link href="/static/vendor/bootstrap.min.css" rel="stylesheet" data-page-node-id="Id87lzawVlDe86if8izWVh">
+    <link href="/static/vendor/all.min.css" rel="stylesheet" data-page-node-id="Tz8u1HoEuweEQ0tD36Z4PO">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Orbitron:wght@600;800&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" data-page-node-id="VhWikaFS8cA0UOPmnjDHa4">
+
+    <style>
+        /* 2. 基础字体设置 */
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: #fff;
+            margin: 0;
+            background: #0f172a; /* 深蓝背景 */
+            background-image:
+                radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15), transparent 50%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .font-tech {
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        /* --- 关键修复：覆盖 Bootstrap 默认的黑色文字 --- */
+        .text-muted {
+            color: #94a3b8 !important; /* 蓝灰色，在深底上清晰可见 */
+        }
+
+        /* 修复复选框在深色背景下的样式 */
+        .form-check-input {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+        }
+        .form-check-input:checked {
+            background-color: #38bdf8;
+            border-color: #38bdf8;
+        }
+        .form-check-input:focus {
+            box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.25);
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+        }
+
+        /* --- 品牌样式 --- */
+        .brand-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo-box-lg {
+            width: 72px;
+            height: 72px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.2);
+            margin-bottom: 1rem;
+        }
+
+        .brand-main-lg {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 800;
+            /* 站名由后台配置、长度不定（如「A股棱镜」4 个字），
+               固定 2rem 在手机上必然溢出，改为随视口收缩。 */
+            font-size: clamp(1.35rem, 5.5vw, 2rem);
+            letter-spacing: 1px;
+            /* 长中文站名允许在字间断行，避免撑破容器 */
+            overflow-wrap: anywhere;
+            background: linear-gradient(90deg, #fff 0%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 15px rgba(56, 189, 248, 0.3);
+            line-height: 1.2;
+        }
+
+        .brand-sub-lg {
+            font-size: 0.85rem;
+            color: #94a3b8; /* 确保副标题也是亮色 */
+            font-weight: 400;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* --- 玻璃拟态卡片 --- */
+        .login-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(90deg, #38bdf8, #818cf8);
+        }
+
+        /* 表单控件 */
+        .form-floating > .form-control {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 12px;
+        }
+        .form-floating > .form-control:focus {
+            background: rgba(15, 23, 42, 0.8);
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
+            color: #fff;
+        }
+        .form-floating > label {
+            color: #94a3b8; /* 标签文字颜色 */
+        }
+        .form-floating > .form-control:focus ~ label,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label {
+            color: #38bdf8;
+            transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+        }
+
+        /* 登录按钮 */
+        .btn-login-submit {
+            background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
+            border: none;
+            color: white;
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-top: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+        }
+        .btn-login-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(56, 189, 248, 0.4);
+            color: white;
+        }
+        .btn-login-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* 登录入口标题：原先这里有「密码登录 / 验证码登录」双 Tab，
+           08-31 起只保留手机号 + 密码一种方式，两个 Tab 只剩一个可点，
+           改成一行标题更诚实（微信登录入口也一并下线，见文件末尾说明）。 */
+        .auth-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 22px;
+        }
+        .auth-title-sub {
+            font-size: .8rem;
+            color: #64748b;
+            font-weight: 400;
+            margin-top: 4px;
+        }
+
+        /* 辅助工具类 */
+        .text-info { color: #38bdf8 !important; }
+        .hover-opacity-100:hover { opacity: 1 !important; }
+
+        /* ===== 移动端适配 =====
+           本页是不继承 base.html 的独立模板，全局 responsive.css 里的选择器
+           （.container / .hero / .admin-* / .search-shell …）在本页没有对应元素，
+           引进来也完全不生效，所以本页的断点规则只能内联。
+           类名一律 .login-* / #phoneInput 等本页私有前缀，不会外溢到其他页面。 */
+        @media (max-width: 576px) {
+            /* body 用 flex + align-items:center 做垂直居中：当卡片比视口更高时，
+               顶部会被顶出可视区且滚不回去（经典 flex 居中截断）。
+               手机上改为顶部对齐 + 上下留白，内容可正常滚动。 */
+            body { align-items: flex-start; padding: 24px 0 32px; }
+
+            .login-wrapper { padding: 16px; }
+            /* 桌面 40px 内边距在手机上吃掉大量宽度，表单控件被挤窄 */
+            .login-card { padding: 24px 18px; border-radius: 18px; }
+            .brand-container { margin-bottom: 1.25rem; }
+            .logo-box-lg { width: 60px; height: 60px; border-radius: 14px; }
+            .auth-title { margin-bottom: 18px; }
+
+            /* 触摸设备上 hover 位移会残留，容易误判成按钮卡住 */
+            .btn-login-submit:hover { transform: none; }
+        }
+        @media (max-width: 400px) {
+            .login-card { padding: 20px 14px; }
+            .btn-login-submit { padding: 13px; font-size: .95rem; }
+        }
+        /* 尊重系统「减少动态效果」设置 */
+        @media (prefers-reduced-motion: reduce) {
+            .btn-login-submit:hover { transform: none; }
+        }
+    </style>
+</head>
+<body data-page-node-id="J7lPDdRgWqQUlSjNzheajp">
+
+    {% set ann = site.get('ANNOUNCEMENT') %}
+    {% if ann and ann.active and ann.text %}
+    <div class="site-announce ann-{{ ann.level or 'info' }}" role="alert"
+         style="font-size:.9rem; border-bottom:1px solid rgba(255,255,255,.08); padding:8px 16px; display:flex; align-items:center; gap:8px;" data-page-node-id="mv3iB73rnXrf1TMdG2LeY2">
+        <i class="fa-solid fa-bullhorn" data-page-node-id="RnUl9nNkkBveDCDHzf0CVN"></i>
+        <span style="flex-grow:1;" data-page-node-id="x4khRUcZdUHDdf9X6xv1Bg">{{ ann.text }}</span>
+    </div>
+    <style>
+        .site-announce.ann-info    { background: rgba(56, 189, 248, .12);  color: #7dd3fc; }
+        .site-announce.ann-warning { background: rgba(251, 191, 36, .12);  color: #fcd34d; }
+        .site-announce.ann-danger  { background: rgba(248, 113, 113, .12); color: #fca5a5; }
+    </style>
+    {% endif %}
+
+    <div class="login-wrapper" data-page-node-id="zyubRRVMqEhqwyCXt5vgjL">
+
+        <div class="brand-container" data-page-node-id="9BqBlX7JL5sNzFkBCFH8Yy">
+            <div class="logo-box-lg" data-page-node-id="NI0mJyehNjNRkkcD04Qb4V">
+                <i class="fa-solid fa-microchip position-absolute" style="color: rgba(56, 189, 248, 0.15); font-size: 42px;" data-page-node-id="CcFWF6DF7RzsquulR0Zfg2"></i>
+                <i class="fa-solid fa-chart-line position-relative" style="color: #38bdf8; font-size: 36px;" data-page-node-id="o2ahuX4eQM2AVqCnSEZIAu"></i>
+            </div>
+            <div class="text-center" data-page-node-id="SDZ3m6fvq7GGMiGCOqf5ma">
+                <h1 class="brand-main-lg" data-page-node-id="xMpiToc9eYToFAGKCADBzH">{{ site.get('SITE_NAME') or 'A股棱镜' }}</h1>
+                <p class="brand-sub-lg" data-page-node-id="6bvAUJAH9JvQ3vU9twFoiE">智能股票分析平台</p>
+            </div>
+        </div>
+
+        <div class="login-card" data-page-node-id="RNHxMmZ4SRV7RCVksKY1UR">
+
+            <div class="auth-title" data-page-node-id="fVwkkBh6ojbvkvn7mbPIK0">
+                手机号登录
+                <div class="auth-title-sub" data-page-node-id="EfwUeH8JKOtkGlkTVViyqU">使用注册手机号 + 密码登录</div>
+            </div>
+
+            <form onsubmit="return false;" data-page-node-id="i06fpaeXOZIoKMguVf2Mfq">
+                <div class="form-floating mb-3" data-page-node-id="3osppgxYgOnEfo5V6T9ByP">
+
+                    <input type="tel" inputmode="numeric" maxlength="11" autocomplete="username"
+                           class="form-control" id="phoneInput" placeholder="13800000000" data-page-node-id="A0Vwo4dsBCEGgB3TGrDjmo">
+                    <label for="phoneInput" data-page-node-id="1H9lfzs1B28NHBUEKD07SA">手机号</label>
+                </div>
+
+                <div id="pwdGroup" class="form-floating mb-3" data-page-node-id="LIGI3fU8ddx6ieXLM8Vrm1">
+                    <input type="password" class="form-control" id="pwdInput" placeholder="Password" autocomplete="current-password" data-page-node-id="ub83ciKpb1IrRpYL0UlThx">
+                    <label for="pwdInput" data-page-node-id="uTdBGRkDCDdgnHwlEA8GA5">密码</label>
+                    <i class="fa-regular fa-eye position-absolute top-50 end-0 translate-middle-y me-3 text-muted"
+                       style="cursor: pointer; z-index: 10;" onclick="togglePwd()" data-page-node-id="ikit7EZqyaaj469YUBImgN"></i>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-4" data-page-node-id="PExbqEr0c8Eiq2X5pODGpg">
+                    <div class="form-check" data-page-node-id="y7E5kzm8jrqfg4GY57PO9F">
+                        <input class="form-check-input" type="checkbox" id="rememberMe" data-page-node-id="Yk43BVJPQGonUOiZWT6Kzm">
+                        <label class="form-check-label text-muted small" for="rememberMe" data-page-node-id="1EECkMImz32tmabRWyFXGv">
+                            记住我
+                        </label>
+                    </div>
+                    <a href="javascript:void(0)" class="text-decoration-none small text-info" onclick="openResetModal()" data-page-node-id="PKOtLCEWJgr0DFr9k2HAHi">忘记密码?</a>
+                </div>
+
+                <div id="loginMsg" class="small text-center mb-2" style="color:#ff5f56; min-height:1.2em;" data-page-node-id="VUBk5bMIpmOJar6bGxsICn"></div>
+
+                <button type="button" class="btn-login-submit" onclick="handleLogin()" data-page-node-id="xwJF7PZjEXpCLigvTloIxE">
+                    立即登录 <i class="fa-solid fa-arrow-right ms-2" data-page-node-id="Yp810m59xodnE2h2hkDf4A"></i>
+                </button>
+            </form>
+
+            <div class="text-center mt-4" data-page-node-id="op3MXHGTa9YK8t389ZKMpf">
+                <span class="text-muted small" data-page-node-id="BHk8HAMJBRm9PAeMhNTfb5">还没有账号?</span>
+                <a href="/register" class="text-info small fw-bold ms-1 text-decoration-none" data-page-node-id="uNkCBa0eJsLr3Ok9J6F1l7">立即注册</a>
+            </div>
+
+        </div>
+
+        <div class="text-center mt-4" data-page-node-id="nltcNDF3BGfx7XKkPPOzUm">
+            <a href="/" class="text-muted small text-decoration-none opacity-50 hover-opacity-100" data-page-node-id="wDnSzOKscPtzsw1xYTgbYR">
+                <i class="fa-solid fa-house me-1" data-page-node-id="ayr7BgaSmNrThnraELi4HK"></i> 返回首页
+            </a>
+        </div>
+
+    </div>
+
+    <script src="/static/vendor/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const PHONE_RE = /^1[3-9]\d{9}$/;
+
+        // 站内回跳目标判定（next 参数由 URL 传入，可被攻击者构造）。
+        // 直接拿 next 去跳转就是开放重定向——攻击者发一个
+        //   /login?next=//evil.com
+        // 用户登录成功后被送到钓鱼站，且跳转来自「刚登录成功的可信页面」，极具迷惑性。
+        // 两条规则缺一不可：
+        //   1. 必须以 / 开头         —— 挡 javascript: / data: / https: 等伪协议
+        //   2. 不能以 // 开头        —— //evil.com 是协议相对 URL，浏览器按 https://evil.com 解析
+        // 非法值一律返回 ''（调用方回落到 /profile）。
+        // ⚠️ 同样一份函数在 register.html 里也有一份（两页都不继承 base.html，没有公共 JS 入口），
+        //    改动时请两处同步。
+        function safeNext(n) {
+            if (typeof n !== 'string' || !n) return '';
+            if (n.indexOf('/') !== 0 || n.indexOf('//') === 0) return '';
+            return n;
+        }
+
+        function togglePwd() {
+            const input = document.getElementById('pwdInput');
+            const icon = event.target;
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function handleLogin() {
+            const btn = document.querySelector('.btn-login-submit');
+            const msg = document.getElementById('loginMsg');
+            const phone = document.getElementById('phoneInput').value.trim();
+            const pwd = document.getElementById('pwdInput').value;
+
+            msg.textContent = '';
+
+            // 前端只做格式拦截，真正的账号存在性判断交给后端（不暴露账号是否注册）
+            if (!PHONE_RE.test(phone)) {
+                msg.textContent = '请输入正确的 11 位手机号';
+                document.getElementById('phoneInput').focus();
+                return;
+            }
+            if (!pwd) {
+                msg.textContent = '请输入密码';
+                document.getElementById('pwdInput').focus();
+                return;
+            }
+
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> 登录中...';
+            btn.disabled = true;
+
+            fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: phone, password: pwd })
+            })
+            .then(async (resp) => {
+                const data = await resp.json().catch(() => ({}));
+                if (resp.ok && data.status === 'success') {
+                    var _next = safeNext(new URLSearchParams(location.search).get('next'));
+                    window.location.href = _next || '/profile';
+                } else {
+                    msg.textContent = data.detail || '登录失败，请重试';
+                    btn.disabled = false;
+                    btn.innerHTML = '立即登录 <i class="fa-solid fa-arrow-right ms-2"></i>';
+                }
+            })
+            .catch(() => {
+                msg.textContent = '网络错误，请稍后重试';
+                btn.disabled = false;
+                btn.innerHTML = '立即登录 <i class="fa-solid fa-arrow-right ms-2"></i>';
+            });
+        }
+
+        // ---------- 找回密码（按手机号 + 短信验证码） ----------
+        function openResetModal() {
+            document.getElementById('resetMsg').textContent = '';
+            document.getElementById('resetStep1').style.display = 'block';
+            document.getElementById('resetStep2').style.display = 'none';
+            document.getElementById('resetPhone').value = '';
+            new bootstrap.Modal(document.getElementById('resetModal')).show();
+        }
+
+        function resetSend() {
+            const phone = document.getElementById('resetPhone').value.trim();
+            if (!PHONE_RE.test(phone)) {
+                document.getElementById('resetMsg').textContent = '请输入正确的 11 位手机号';
+                return;
+            }
+            const btn = document.getElementById('btnResetSend');
+            btn.disabled = true;
+            fetch('/api/password/reset/request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: phone })
+            }).then(r => r.json()).then(d => {
+                if (d.status === 'success' && d.phone_bound && d.sms_sent) {
+                    document.getElementById('resetPhoneHint').textContent = '验证码已发送至 ' + (d.masked_phone || '您的手机号');
+                    document.getElementById('resetStep1').style.display = 'none';
+                    document.getElementById('resetStep2').style.display = 'block';
+                } else {
+                    document.getElementById('resetMsg').textContent = d.msg || '发送失败，请稍后重试';
+                    btn.disabled = false;
+                }
+            }).catch(() => {
+                document.getElementById('resetMsg').textContent = '网络错误';
+                btn.disabled = false;
+            });
+        }
+
+        function resetConfirm() {
+            const phone = document.getElementById('resetPhone').value.trim();
+            const code = document.getElementById('resetCode').value.trim();
+            const pwd = document.getElementById('resetPwd').value;
+            if (code.length !== 6) {
+                document.getElementById('resetMsg').textContent = '请输入 6 位验证码';
+                return;
+            }
+            if (pwd.length < 6) {
+                document.getElementById('resetMsg').textContent = '新密码至少 6 位';
+                return;
+            }
+            const btn = document.getElementById('btnResetConfirm');
+            btn.disabled = true;
+            fetch('/api/password/reset/confirm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: phone, code: code, new_password: pwd })
+            }).then(r => r.json()).then(d => {
+                if (d.status === 'success') {
+                    alert('密码重置成功，请使用新密码登录');
+                    bootstrap.Modal.getInstance(document.getElementById('resetModal')).hide();
+                    // 回填手机号，省得用户重打一遍 11 位
+                    document.getElementById('phoneInput').value = phone;
+                } else {
+                    document.getElementById('resetMsg').textContent = d.detail || '重置失败';
+                    btn.disabled = false;
+                }
+            }).catch(() => {
+                document.getElementById('resetMsg').textContent = '网络错误';
+                btn.disabled = false;
+            });
+        }
+
+        // 「立即注册」把 next 透传过去：否则从 /hot 进来的人点「去注册」，
+        // 回跳目标会在这里断掉，注册完只能落回 /profile。
+        // 只接受以 / 开头的相对路径，挡掉 javascript: 之类的伪协议注入。
+        (function () {
+            var n = safeNext(new URLSearchParams(location.search).get('next'));
+            if (!n) return;
+            var a = document.querySelector('a[href="/register"]');
+            if (a) a.href = '/register?next=' + encodeURIComponent(n);
+        })();
+
+        // 回车提交：手机号/密码框里按 Enter 直接登录，不必去够按钮
+        ['phoneInput', 'pwdInput'].forEach(function (id) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); handleLogin(); }
+            });
+        });
+    </script>
+    <!-- 找回密码 弹窗 -->
+    <div class="modal fade" id="resetModal" tabindex="-1" aria-hidden="true" data-page-node-id="2gMZk1wJ4YjSFwYlYdizMV">
+        <div class="modal-dialog modal-dialog-centered" data-page-node-id="0IA5xOoJ2n0ZeTeWTkwQuF">
+            <div class="modal-content" style="background:#1e293b;color:#fff;border:1px solid rgba(255,255,255,0.1);" data-page-node-id="V674cPxKcXvoFu5pYlUCSr">
+                <div class="modal-header border-secondary" data-page-node-id="uwxnq1jRDvEy0yNxxEnRx2">
+                    <h5 class="modal-title" data-page-node-id="jBCDt1z8hDobWiHLr1Ufm3"><i class="fa-solid fa-key me-2 text-warning" data-page-node-id="QXxMFNEzQnNFeDWm6WjjbY"></i>找回密码</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" data-page-node-id="uuQhyXmGVeKOqaIJ69mM1l"></button>
+                </div>
+                <div class="modal-body" data-page-node-id="4WnYeuczhm4fgbxmyM3BOz">
+                    <div id="resetMsg" class="small text-center mb-2" style="color:#ff5f56;min-height:1.2em;" data-page-node-id="ZGk3ymeiK0S2XugC4WP21R"></div>
+                    <div id="resetStep1" data-page-node-id="C83DTBgUI2vB7pR3MicpKO">
+                        <label class="form-label small text-muted" data-page-node-id="UvqDbfVjzs54gFTsLp8VKi">注册手机号</label>
+                        <input type="tel" inputmode="numeric" maxlength="11" class="form-control mb-3" id="resetPhone" placeholder="请输入注册手机号" data-page-node-id="8l5aJ4HX08ipU61heft4Je">
+                        <button class="btn btn-primary w-100" id="btnResetSend" onclick="resetSend()" data-page-node-id="bhfvmaCRKq4UW5zwbadfyS">发送验证码</button>
+                        <div class="text-muted small mt-2" data-page-node-id="laqDLEnTlGnPNqj3zDgu3D">验证码将发送至该手机号。</div>
+                    </div>
+                    <div id="resetStep2" style="display:none;" data-page-node-id="C2DjBo6cWPEd2JyxR4mfSy">
+                        <div class="alert border-0 small mb-3" style="background:rgba(56,189,248,0.1);color:#7dd3fc;" id="resetPhoneHint" data-page-node-id="1YVLBEdr18cx3Q24CsJvqC"></div>
+                        <label class="form-label small text-muted" data-page-node-id="WJbfcjYRRTCqnIW36LN0nQ">短信验证码</label>
+                        <input type="text" class="form-control mb-3" id="resetCode" placeholder="6 位验证码" maxlength="6" data-page-node-id="ZrOtYFqp2BVM0hvqF2sHnJ">
+                        <label class="form-label small text-muted" data-page-node-id="NVPJ0DaP2eB04ii0kjIGnH">新密码（至少 6 位）</label>
+                        <input type="password" class="form-control mb-3" id="resetPwd" placeholder="新密码" data-page-node-id="5CauJCzOumg4Fh0LVoVb9a">
+                        <button class="btn btn-primary w-100" id="btnResetConfirm" onclick="resetConfirm()" data-page-node-id="SEFaLV1juGnkx9ZX4kPApr">重置密码</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

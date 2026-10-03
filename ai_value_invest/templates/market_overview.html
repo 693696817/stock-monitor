@@ -1,0 +1,843 @@
+{% extends "base.html" %}
+
+{% block title %}全景大盘分析 - A股市场行情概览{% endblock %}
+{% block seo_description %}A股棱镜全景大盘：实时跟踪主要指数走势、板块涨跌、成交额变化，帮助你快速把握当天市场情绪与资金动向。{% endblock %}
+{% block seo_keywords %}A股棱镜,A股大盘,市场行情,指数走势,板块涨跌,成交额{% endblock %}
+
+{% block extra_css %}
+
+<script src="/static/vendor/chart.umd.min.js"></script>
+<script>
+    if (typeof Chart === 'undefined') {
+        document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"><\/script>');
+    }
+</script>
+
+<style>
+    /* --- 布局 --- */
+    .market-container {
+        padding-top: 100px;
+        padding-bottom: 40px;
+    }
+
+    /* --- 1. 核心指数卡片 (Index Cards) --- */
+    .index-card {
+        background: rgba(30, 41, 59, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s;
+    }
+    .index-card:hover { transform: translateY(-5px); }
+
+    /* 左侧装饰条 */
+    .index-card::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 15%; bottom: 15%;
+        width: 4px;
+        border-radius: 0 4px 4px 0;
+    }
+    .border-up::before { background: #f87171; box-shadow: 2px 0 10px rgba(248, 113, 113, 0.5); }
+    .border-down::before { background: #34d399; box-shadow: 2px 0 10px rgba(52, 211, 153, 0.5); }
+
+    .index-name { color: #94a3b8; font-size: 0.9rem; margin-bottom: 5px; }
+    .index-value { font-family: 'Orbitron', sans-serif; font-size: 2rem; font-weight: 700; line-height: 1; }
+    .index-change { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; margin-top: 5px; }
+
+    .text-up { color: #f87171; }
+    .text-down { color: #34d399; }
+
+    /* --- 2. 市场活跃度 (涨跌分布) --- */
+    .market-breadth-card {
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+
+    .breadth-bar {
+        display: flex;
+        height: 12px;
+        border-radius: 6px;
+        overflow: hidden;
+        margin: 15px 0;
+        background: #1e293b;
+    }
+    .bar-up { background: #f87171; transition: width 1s ease-out; }
+    .bar-flat { background: #94a3b8; transition: width 1s ease-out; }
+    .bar-down { background: #34d399; transition: width 1s ease-out; }
+
+    .breadth-stats {
+        display: flex;
+        justify-content: space-between;
+        text-align: center;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .stat-label { font-size: 0.8rem; color: #64748b; margin-bottom: 4px; }
+    .stat-val { font-size: 1.1rem; font-weight: 700; }
+
+    /* --- 3. 情绪指数图表 --- */
+    .chart-card {
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 25px;
+        height: 100%;
+    }
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .sentiment-badge {
+        background: rgba(56, 189, 248, 0.1);
+        color: #38bdf8;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    /* 恐慌贪婪条
+       ⚠️ 渐变节点由后端 sentiment_zones 下发（内联 style），这里只管形状 ——
+          阈值在模板里再写一遍必然会和后端判定漂移。 */
+    .fear-greed-wrap { margin-top: 18px; }
+    .fear-greed-bar {
+        height: 12px;
+        border-radius: 6px;
+        margin-top: 10px;
+        position: relative;
+    }
+    /* 当前档位描边：让用户一眼看到自己落在哪一档，而不只是看一个白点 */
+    .fear-greed-zone {
+        position: absolute;
+        top: -3px;
+        height: 18px;
+        border: 2px solid rgba(255, 255, 255, 0.85);
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
+        pointer-events: none;
+    }
+    .fear-greed-marker {
+        position: absolute;
+        top: -5px;
+        width: 4px;
+        height: 22px;
+        background: #fff;
+        border-radius: 2px;
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
+        transition: left 1s ease;
+    }
+    /* 数值气泡：白点不带数字，用户还得回头找徽标里的值 */
+    .fg-tip {
+        position: absolute;
+        bottom: 26px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #fff;
+        color: #0f172a;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 1px 7px;
+        border-radius: 10px;
+        white-space: nowrap;
+    }
+    .fear-greed-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 6px;
+    }
+    /* 刻度：按档位**比例**定位，宽度与分档一致（不用三等分，档位宽度本就不均） */
+    .fear-greed-scale {
+        position: relative;
+        height: 15px;
+        margin-top: 4px;
+        font-size: 0.68rem;
+        color: #64748b;
+    }
+    .fear-greed-scale span {
+        position: absolute;
+        transform: translateX(-50%);
+        white-space: nowrap;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .fear-greed-scale span.hit { color: #fff; font-weight: 700; }
+
+    /* 图表空态：数据源拿不到历史时显示，替代原来的假数据占位数组 */
+    .chart-empty {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        font-size: 0.85rem;
+        background: rgba(30, 41, 59, 0.35);
+        border-radius: 12px;
+    }
+
+    /* --- 4. 涨停天梯 --- */
+    .ladder-hero {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        font-family: 'Orbitron', sans-serif;
+    }
+    .ladder-hero .n { font-size: 2.6rem; font-weight: 700; line-height: 1; color: #fbbf24; }
+    .ladder-hero .u { font-size: 0.95rem; color: #94a3b8; }
+    .ladder-trend { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; }
+
+    /* 连板梯队分布：每项横向条 + 计数 */
+    .tier-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 7px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+    }
+    .tier-row .tier-name { width: 46px; color: #94a3b8; flex: none; }
+    .tier-row .tier-track {
+        flex: 1;
+        height: 8px;
+        background: #1e293b;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .tier-row .tier-fill {
+        height: 100%;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #f59e0b, #f87171);
+        transition: width 0.8s ease-out;
+    }
+    .tier-row .tier-num { width: 28px; text-align: right; color: #e2e8f0; flex: none; }
+
+    /* --- 5. 市场人气榜 --- */
+    .rank-tabs { display: flex; gap: 6px; }
+    .rank-tabs .tab {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: #94a3b8;
+        font-size: 0.78rem;
+        padding: 4px 12px;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: all .2s;
+    }
+    .rank-tabs .tab.active { background: rgba(56,189,248,0.12); color: #38bdf8; border-color: rgba(56,189,248,0.35); }
+    .rank-list { list-style: none; margin: 0; padding: 0; }
+    .rank-list li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+        font-size: 0.85rem;
+    }
+    .rank-list li:last-child { border-bottom: none; }
+    .rank-badge {
+        width: 22px; height: 22px; flex: none;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem; font-weight: 700;
+        background: rgba(255,255,255,0.06); color: #94a3b8;
+    }
+    .rank-badge.top { background: rgba(248,113,113,0.18); color: #f87171; }
+    .rank-name { color: #e2e8f0; font-weight: 600; }
+    .rank-code { color: #64748b; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+    .rank-heat { margin-left: auto; color: #fbbf24; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; }
+    .rank-delta { width: 34px; text-align: right; font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; flex: none; }
+
+    @media (max-width: 991px) {
+        .ladder-hero .n { font-size: 2rem; }
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container market-container">
+
+    <div class="d-flex align-items-center mb-4">
+        <h2 class="text-white fw-bold font-tech m-0 me-3">市场概览</h2>
+        <span class="badge bg-secondary bg-opacity-25 text-light font-mono" id="marketTime">LIVE</span>
+    </div>
+
+    {% if sb('market.indices').enabled %}
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="index-card border-up">
+                <div class="index-name">上证指数 (000001)</div>
+                <div class="d-flex align-items-baseline gap-3">
+                    <div class="index-value {% if market.sh.is_up %}text-up{% else %}text-down{% endif %}" id="sh-val">{{ market.sh.price }}</div>
+                    <div class="index-change {% if market.sh.is_up %}text-up{% else %}text-down{% endif %}" id="sh-change">{{ market.sh.change_pct }}% <i class="fa-solid {% if market.sh.is_up %}fa-arrow-up{% else %}fa-arrow-down{% endif %}"></i></div>
+                </div>
+                <div style="height: 40px; margin-top: 10px; opacity: 0.5;">
+                    <canvas id="miniChart1"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="index-card border-up">
+                <div class="index-name">深证成指 (399001)</div>
+                <div class="d-flex align-items-baseline gap-3">
+                    <div class="index-value {% if market.sz.is_up %}text-up{% else %}text-down{% endif %}" id="sz-val">{{ market.sz.price }}</div>
+                    <div class="index-change {% if market.sz.is_up %}text-up{% else %}text-down{% endif %}" id="sz-change">{{ market.sz.change_pct }}% <i class="fa-solid {% if market.sz.is_up %}fa-arrow-up{% else %}fa-arrow-down{% endif %}"></i></div>
+                </div>
+                <div style="height: 40px; margin-top: 10px; opacity: 0.5;">
+                    <canvas id="miniChart2"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="index-card border-down">
+                <div class="index-name">创业板指 (399006)</div>
+                <div class="d-flex align-items-baseline gap-3">
+                    <div class="index-value {% if market.cy.is_up %}text-up{% else %}text-down{% endif %}" id="cy-val">{{ market.cy.price }}</div>
+                    <div class="index-change {% if market.cy.is_up %}text-up{% else %}text-down{% endif %}" id="cy-change">{{ market.cy.change_pct }}% <i class="fa-solid {% if market.cy.is_up %}fa-arrow-up{% else %}fa-arrow-down{% endif %}"></i></div>
+                </div>
+                <div style="height: 40px; margin-top: 10px; opacity: 0.5;">
+                    <canvas id="miniChart3"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if sb('market.breadth').enabled %}
+    {% set mb = sb('market.breadth') %}
+    <div class="market-breadth-card">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h5 class="text-white fw-bold font-tech mb-0"><i class="fa-solid fa-layer-group me-2 text-info"></i>市场活跃度</h5>
+            <small class="text-muted">数据源：金融大数据（交易日 {{ market.trade_date }}）</small>
+        </div>
+
+        {% set _stale = market.north_date and market.north_date != market.trade_date %}
+        {% if mb.options.show_breadth %}
+        <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-baseline flex-wrap gap-2">
+                <span class="stat-label mb-0">全市场涨跌家数（共 {{ market.breadth_total }} 只）</span>
+                <span class="small text-muted">
+                    {% if market.breadth_date and market.breadth_date != market.trade_date %}
+                        数据日期 {{ market.breadth_date }}
+                    {% endif %}
+                </span>
+            </div>
+            {% if market.breadth_pct %}
+            <div class="breadth-bar">
+                <div class="bar-up" style="width: {{ market.breadth_pct[0] | round(2) }}%"></div>
+                <div class="bar-flat" style="width: {{ market.breadth_pct[1] | round(2) }}%"></div>
+                <div class="bar-down" style="width: {{ market.breadth_pct[2] | round(2) }}%"></div>
+            </div>
+            {% endif %}
+            <div class="breadth-stats">
+                <div>
+                    <div class="stat-label">上涨</div>
+                    <div class="stat-val text-up">{{ market.up_count }}</div>
+                </div>
+                <div>
+                    <div class="stat-label">平盘</div>
+                    <div class="stat-val text-secondary">{{ market.flat_count }}</div>
+                </div>
+                <div>
+                    <div class="stat-label">下跌</div>
+                    <div class="stat-val text-down">{{ market.down_count }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="breadth-stats {% if mb.options.show_breadth %}border-top border-secondary pt-4{% endif %}">
+            <div>
+                <div class="stat-label">沪市成交额 (亿)</div>
+                <div class="stat-val text-white">{{ market.sh_amount }}</div>
+            </div>
+            <div>
+                <div class="stat-label">深市成交额 (亿)</div>
+                <div class="stat-val text-white">{{ market.sz_amount }}</div>
+            </div>
+            <div>
+                <div class="stat-label">两市成交额 (亿)</div>
+                <div class="stat-val text-info">{{ market.volume }}</div>
+            </div>
+            <div>
+                <div class="stat-label">龙虎榜家数</div>
+                <div class="stat-val text-warning">{{ market.limit_count }}</div>
+            </div>
+            {% if mb.options.show_north %}
+            <div class="border-start border-secondary ps-4">
+                <div class="stat-label">北向资金{% if _stale and mb.options.north_warn_if_stale %} <span class="text-muted" style="font-size:.7rem">({{ market.north_date[4:6] }}-{{ market.north_date[6:8] }})</span>{% endif %}</div>
+                <div class="stat-val {% if market.north_is_up %}text-up{% elif market.north_is_up is none %}text-muted{% else %}text-down{% endif %}">{{ market.north_fund }}</div>
+            </div>
+            {% endif %}
+        </div>
+        <p class="text-muted small mt-3 mb-0">
+            <i class="fa-solid fa-circle-info me-1"></i>
+            {% if mb.options.show_breadth %}涨跌家数为全市场真实统计（收盘口径）；{% endif %}
+            {% if mb.options.show_north and _stale %}北向资金由沪深港通 T+1 发布，当日未落地，当前显示 {{ market.north_date }} 的数据。{% endif %}
+            所有数值均来自行情接口，无估算值。
+        </p>
+    </div>
+    {% endif %}
+
+    {% if sb('market.sentiment_chart').enabled or sb('market.money_flow').enabled %}
+    <div class="row g-4">
+        {% if sb('market.sentiment_chart').enabled %}
+        <div class="{% if sb('market.money_flow').enabled %}col-lg-8{% else %}col-12{% endif %}">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h5 class="text-white fw-bold m-0"><i class="fa-solid fa-wave-square me-2 text-warning"></i>上证指数近期走势</h5>
+                    <span class="sentiment-badge">{{ market.sentiment_label }} ({{ market.sentiment }})</span>
+                </div>
+
+                <div style="height: 300px; position: relative;">
+                    <canvas id="sentimentChart"></canvas>
+                    <div id="sentimentEmpty" class="chart-empty d-none">暂无指数历史数据</div>
+                </div>
+                <div class="fear-greed-wrap px-2">
+                    {% set _zones = market.sentiment_zones or [] %}
+                    {% set _hit = market.sentiment_zone %}
+                    <div class="fear-greed-bar" style="background: linear-gradient(90deg,
+                        {%- for z in _zones -%}
+                        {{ z.color }} {{ z.min }}%, {{ z.color }} {{ z.max }}%
+                        {%- if not loop.last %}, {% endif -%}
+                        {%- endfor -%});">
+                        {% if _hit %}
+                        <div class="fear-greed-zone"
+                             style="left: {{ _hit.min }}%; width: {{ _hit.max - _hit.min }}%;"></div>
+                        {% endif %}
+                        <div class="fear-greed-marker" style="left: calc({{ market.sentiment }}% - 2px);">
+                            <span class="fg-tip">{{ market.sentiment }}</span>
+                        </div>
+                    </div>
+
+                    <div class="fear-greed-scale">
+                        {% for z in _zones %}
+                        <span class="{% if _hit and z.label == _hit.label %}hit{% endif %}"
+                              style="left: {{ (z.min + z.max) / 2 }}%;">{{ z.label }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="fear-greed-labels">
+                        <span>极度恐慌</span>
+                        <span>极度贪婪</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if sb('market.money_flow').enabled %}
+        <div class="{% if sb('market.sentiment_chart').enabled %}col-lg-4{% else %}col-12{% endif %}">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h5 class="text-white fw-bold m-0"><i class="fa-solid fa-money-bill-transfer me-2 text-success"></i>主力资金流向</h5>
+                </div>
+                <div style="height: 300px;">
+                    <canvas id="moneyFlowChart"></canvas>
+                </div>
+                <div class="mt-3 text-center">
+                    <p class="text-muted small mb-0">
+                        {% if market.north_date and market.north_date != market.trade_date %}
+                            {{ market.north_date[4:6] }}-{{ market.north_date[6:8] }} 北向净流入（T+1 发布）:
+                        {% else %}
+                            今日北向净流入:
+                        {% endif %}
+                        <span class="{% if market.north_is_up %}text-up{% elif market.north_is_up is none %}text-muted{% else %}text-down{% endif %} fw-bold">{{ market.north_fund }}</span>
+                        <br><span class="text-info">数据来源：金融大数据</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% set _ladder = market.ladder %}
+    {% set _hot = market.hot_rank %}
+    {% if (sb('market.limit_ladder').enabled and _ladder) or (sb('market.hot_rank').enabled and _hot) %}
+    <div class="row g-4 mt-1">
+        {% if sb('market.limit_ladder').enabled and _ladder %}
+        {% set _lm = sb('market.limit_ladder') %}
+        <div class="{% if sb('market.hot_rank').enabled and _hot %}col-lg-7{% else %}col-12{% endif %}">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h5 class="text-white fw-bold m-0"><i class="fa-solid fa-stairs me-2 text-warning"></i>涨停天梯 · 赚钱效应</h5>
+                    <span class="sentiment-badge">{{ _ladder.date or '--' }}</span>
+                </div>
+
+                <div class="d-flex align-items-end justify-content-between flex-wrap gap-3 mb-3">
+                    <div>
+                        <div class="stat-label mb-1">当日最高连板</div>
+                        <div class="ladder-hero">
+                            <span class="n">{{ _ladder.max_board }}</span>
+                            <span class="u">板</span>
+                            {% if _lm.options.show_trend %}
+                            <span class="ladder-trend ms-2">
+                                {% if _ladder.trend == 'up' %}
+                                    <span class="text-up"><i class="fa-solid fa-arrow-up"></i> 较前一日 {{ _ladder.prev_max_board }} 板</span>
+                                {% elif _ladder.trend == 'down' %}
+                                    <span class="text-down"><i class="fa-solid fa-arrow-down"></i> 较前一日 {{ _ladder.prev_max_board }} 板</span>
+                                {% else %}
+                                    <span class="text-muted">与前一日持平（{{ _ladder.prev_max_board }} 板）</span>
+                                {% endif %}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="stat-label mb-1">最高标的一览</div>
+                        {% if _ladder.top and _ladder.top.get('name') %}
+                        <div>
+                            <span class="rank-name">{{ _ladder.top.get('name') }}</span>
+                            <span class="rank-code">{{ _ladder.top.get('code') }}</span>
+                        </div>
+                        {% else %}
+                        <div class="text-muted small">当日无连板标的</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if _ladder.tiers %}
+                <div class="mb-3">
+                    <div class="stat-label mb-2">连板梯队分布（连板家数 {{ _ladder.total }}）</div>
+                    {% set _maxTier = _ladder.tiers | map(attribute='count') | max %}
+                    {% for t in _ladder.tiers %}
+                    <div class="tier-row">
+                        <span class="tier-name">{{ t.board }} 板</span>
+                        <span class="tier-track">
+                            <span class="tier-fill" style="width: {{ (t.count / (_maxTier or 1) * 100) | round(1) }}%"></span>
+                        </span>
+                        <span class="tier-num">{{ t.count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if market.pools %}
+                <div class="breadth-stats border-top border-secondary pt-3 mb-3">
+                    <div>
+                        <div class="stat-label">涨停</div>
+                        <div class="stat-val text-up">{{ market.pools.up }}</div>
+                    </div>
+                    <div>
+                        <div class="stat-label">跌停</div>
+                        <div class="stat-val text-down">{{ market.pools.down }}</div>
+                    </div>
+                    <div>
+                        <div class="stat-label">炸板</div>
+                        <div class="stat-val text-warning">{{ market.pools.break }}</div>
+                    </div>
+                    <div>
+                        <div class="stat-label">封板率</div>
+                        <div class="stat-val text-info">{% if market.pools.seal_rate is not none %}{{ market.pools.seal_rate }}%{% else %}--{% endif %}</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if _lm.options.show_hist %}
+                <div class="stat-label mb-2">近 {{ _lm.options.hist_days }} 个交易日最高连板高度</div>
+                <div style="height: 170px;">
+                    <canvas id="ladderChart"></canvas>
+                </div>
+                {% endif %}
+
+                <p class="text-muted small mt-3 mb-0">
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                    连板梯队为全市场真实统计；高度越高代表短线赚钱效应越强。
+                    {% if not market.pools %}涨跌停池仅在交易时段提供，当前时段无数据。{% endif %}
+                    数据来源：金融大数据。
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if sb('market.hot_rank').enabled and _hot %}
+        {% set _hr = sb('market.hot_rank') %}
+        <div class="{% if sb('market.limit_ladder').enabled and _ladder %}col-lg-5{% else %}col-12{% endif %}">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h5 class="text-white fw-bold m-0"><i class="fa-solid fa-fire me-2 text-danger"></i>市场人气榜</h5>
+                    <div class="rank-tabs" id="rankTabs">
+                        <span class="tab active" data-tab="hot">人气 TOP{{ _hr.options.limit }}</span>
+                        <span class="tab" data-tab="sky">飙升榜</span>
+                    </div>
+                </div>
+
+                <ul class="rank-list" id="rankHot">
+                    {% for r in _hot.hot[:_hr.options.limit] %}
+                    <li>
+                        <span class="rank-badge {% if r.rank <= 3 %}top{% endif %}">{{ r.rank }}</span>
+                        <span class="rank-name">{{ r.name or '--' }}</span>
+                        <span class="rank-code">{{ r.code }}</span>
+                        <span class="rank-heat">{% if r.heat %}{{ (r.heat / 10000) | round(1) }}万{% else %}--{% endif %}</span>
+                        <span class="rank-delta {% if (r.change or 0) > 0 %}text-up{% elif (r.change or 0) < 0 %}text-down{% else %}text-muted{% endif %}">
+                            {% if r.change %}{{ '↑' if r.change > 0 else '↓' }}{{ r.change | abs }}{% else %}—{% endif %}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                <ul class="rank-list d-none" id="rankSky">
+                    {% for r in _hot.sky[:_hr.options.limit] %}
+                    <li>
+                        <span class="rank-badge {% if r.rank <= 3 %}top{% endif %}">{{ r.rank }}</span>
+                        <span class="rank-name">{{ r.name or '--' }}</span>
+                        <span class="rank-code">{{ r.code }}</span>
+                        <span class="rank-heat">{% if r.heat %}{{ (r.heat / 10000) | round(1) }}万{% else %}--{% endif %}</span>
+                        <span class="rank-delta {% if (r.change or 0) > 0 %}text-up{% elif (r.change or 0) < 0 %}text-down{% else %}text-muted{% endif %}">
+                            {% if r.change %}{{ '↑' if r.change > 0 else '↓' }}{{ r.change | abs }}{% else %}—{% endif %}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                <p class="text-muted small mt-3 mb-0">
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                    人气度为全市场关注度统计（24 小时滚动），更新于 {{ _hot.as_of }}；
+                    仅反映关注度，不构成投资建议。数据来源：金融大数据。
+                </p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // --- 1. 配置全局 Chart.js 样式 (深色模式适配) ---
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
+    Chart.defaults.font.family = "'JetBrains Mono', sans-serif";
+
+    // 真实历史数据（后端传入）
+    const SH_HIST = {{ market.sh_hist | tojson | safe }} || [];
+    const SZ_HIST = {{ market.sz.history | tojson | safe }} || [];
+    const CY_HIST = {{ market.cy.history | tojson | safe }} || [];
+    const NORTH_HIST = {{ market.north_hist | tojson | safe }} || [];
+
+    // --- 2. 渲染情绪指数图表 (复刻截图中的曲线) ---
+    // ⚠️ 卡片可能被后台「系统边栏」停用，canvas 就不存在了 —— 先取元素再判断，
+    //    直接 getContext 会抛 TypeError，把后面所有图表一起带崩（一张图都不能画）。
+
+    // ⚠️⚠️ TREND / TREND_DAYS 必须**先声明再使用**。
+    //    曾经把「空数据判断」写在 `if (ctxSentiment && !TREND.length)` 里，而 TREND
+    //    在下面几行才 const 声明 —— const 有暂时性死区（TDZ），声明前访问直接抛
+    //    ReferenceError，整段 <script> 第一行就死掉，四张图（上证走势/资金流向/
+    //    天梯/3 个 sparkline）**全部**画不出来。
+    //    ⚠️ 这类错误 check_js.py **查不到**（它只做语法检查，TDZ 是运行时错误），
+    //    必须真正执行一遍 JS 才能发现。
+    // 走势长度由后台「系统边栏 → 情绪走势图 → 历史天数」控制
+    const TREND_DAYS = {{ sb('market.sentiment_chart').options.days | int }};
+    const TREND = SH_HIST.length > TREND_DAYS ? SH_HIST.slice(-TREND_DAYS) : SH_HIST;
+
+    const ctxSentiment = document.getElementById('sentimentChart');
+    // ⚠️ 没有历史数据就显示空态，不画假线（原实现 fallback 成 [50,50,...] 冒充指数点位）
+    const _sentEmpty = document.getElementById('sentimentEmpty');
+    if (ctxSentiment && !TREND.length) {
+        ctxSentiment.style.display = 'none';
+        if (_sentEmpty) _sentEmpty.classList.remove('d-none');
+    }
+    if (ctxSentiment && TREND.length) {
+    const ctx = ctxSentiment.getContext('2d');
+    // 创建渐变色背景
+    const gradientSentiment = ctx.createLinearGradient(0, 0, 0, 300);
+    gradientSentiment.addColorStop(0, 'rgba(245, 158, 11, 0.4)'); // 顶部橙色
+    gradientSentiment.addColorStop(1, 'rgba(245, 158, 11, 0)');   // 底部透明
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            // 历史是日线序列（约 30 个交易日），标签必须与其等长，
+            // 否则 Chart.js 只会画前 N 个点、后面的数据被静默丢弃。
+            labels: TREND.map((_, i) => (i === TREND.length - 1 ? '最新' : `T-${TREND.length - 1 - i}`)),
+            datasets: [{
+                label: '上证指数',
+                data: TREND,
+                borderColor: '#f59e0b', // 橙色线条
+                backgroundColor: gradientSentiment,
+                borderWidth: 2,
+                pointRadius: 0, // 隐藏点
+                pointHoverRadius: 4,
+                fill: true,
+                tension: 0.4 // 平滑曲线
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#f59e0b',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    callbacks: { label: (c) => `上证 ${Number(c.parsed.y).toFixed(2)}` }
+                }
+            },
+            scales: {
+                x: { grid: { display: false } },
+                // ⚠️ 这里曾经写死 min:0/max:100 —— 那是「0~100 情绪值」时代的遗留，
+                //    数据是上证指数点位（3800~4000），整条线被画到轴外，图上什么都看不见。
+                //    点位波动幅度小（约 5%），必须让 y 轴自适应才能看出走势；
+                //    grace 给上下留 8% 余量，免得曲线贴着边框。
+                y: {
+                    beginAtZero: false,
+                    grace: '8%',
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { callback: (v) => Number(v).toFixed(0) }
+                }
+            }
+        }
+    });
+    }
+
+    // --- 3. 渲染资金流向图表 (柱状图，真实沪深港通数据) ---
+    const ctxMoneyEl = document.getElementById('moneyFlowChart');
+    if (ctxMoneyEl) {
+    const ctxMoney = ctxMoneyEl.getContext('2d');
+    const northVals = NORTH_HIST.length ? NORTH_HIST : [0, 0, 0];
+    new Chart(ctxMoney, {
+        type: 'bar',
+        data: {
+            labels: ['沪股通', '深股通', '北向合计'],
+            datasets: [{
+                label: '净流入(亿)',
+                data: northVals,
+                backgroundColor: northVals.map(v => v >= 0 ? '#f87171' : '#34d399'),
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false },
+                tooltip: { callbacks: { label: (c) => `${c.parsed.y >= 0 ? '+' : ''}${c.parsed.y}亿` } } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+    }
+
+    // --- 4. 迷你走势图 (Sparklines，真实指数近20日) ---
+    // canvas 可能因模块被停用而不存在，这里先判空再取 context
+    function createMiniChart(canvasId, data, color) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const plot = (data && data.length) ? data : Array(20).fill(50);
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: plot.map((_, i) => i),
+                datasets: [{
+                    data: plot,
+                    borderColor: color,
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: { x: { display: false }, y: { display: false } },
+                layout: { padding: 0 }
+            }
+        });
+    }
+
+    // 迷你走势图颜色按真实涨跌决定（红涨绿跌），不要写死
+    const UP_COLOR = '#f87171';    // 红 = 涨
+    const DOWN_COLOR = '#34d399';  // 绿 = 跌
+    const _colorOf = (idx) => (idx && idx.is_up === false) ? DOWN_COLOR : UP_COLOR;
+
+    createMiniChart('miniChart1', SH_HIST.slice(-20), _colorOf({{ market.sh | tojson | safe }}));
+    createMiniChart('miniChart2', SZ_HIST.slice(-20), _colorOf({{ market.sz | tojson | safe }}));
+    createMiniChart('miniChart3', CY_HIST.slice(-20), _colorOf({{ market.cy | tojson | safe }}));
+
+    // --- 5. 连板高度走势（柱状图，近 N 个交易日最高连板高度）---
+    // canvas 只在「涨停天梯」模块启用且有数据时才存在，先判空再取 context
+    const LADDER = {{ (market.ladder.hist if market.ladder else []) | tojson | safe }} || [];
+    const LADDER_DAYS = {{ sb('market.limit_ladder').options.hist_days | int }};
+    const ctxLadderEl = document.getElementById('ladderChart');
+    if (ctxLadderEl && LADDER.length) {
+        const LAD = LADDER.length > LADDER_DAYS ? LADDER.slice(-LADDER_DAYS) : LADDER;
+        // 高度越高越红（赚钱效应强），越低越绿 —— 与全站红涨绿跌一致
+        new Chart(ctxLadderEl.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: LAD.map(d => (d.date || '').slice(5)),   // MM-DD
+                datasets: [{
+                    label: '最高连板',
+                    data: LAD.map(d => d.max_board),
+                    backgroundColor: LAD.map(d => d.max_board >= 5 ? '#f87171' : (d.max_board >= 3 ? '#fbbf24' : '#34d399')),
+                    borderRadius: 3,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: (items) => LAD[items[0].dataIndex].date || '',
+                            label: (c) => `最高 ${c.parsed.y} 板 · 连板 ${LAD[c.dataIndex].total} 家`
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { maxTicksLimit: 10 } },
+                    y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                }
+            }
+        });
+    }
+
+    // --- 6. 人气榜 / 飙升榜 切换 ---
+    // 两个榜单后端一次性都给了，前端纯切换显隐，零额外请求
+    const rankTabs = document.getElementById('rankTabs');
+    if (rankTabs) {
+        rankTabs.addEventListener('click', (e) => {
+            const btn = e.target.closest('.tab');
+            if (!btn) return;
+            const which = btn.getAttribute('data-tab');
+            rankTabs.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === btn));
+            const hot = document.getElementById('rankHot');
+            const sky = document.getElementById('rankSky');
+            if (hot) hot.classList.toggle('d-none', which !== 'hot');
+            if (sky) sky.classList.toggle('d-none', which !== 'sky');
+        });
+    }
+
+    // 「LIVE」改为真实数据时间：数据来源是日线快照，不是逐秒行情，
+    // 用本地时钟冒充实时会误导用户。
+    const _mtEl = document.getElementById('marketTime');
+    if (_mtEl) {
+        _mtEl.innerText = `{{ market.trade_date or '--' }} {{ market.update_time or '' }}`.trim() || '--';
+        _mtEl.title = '数据为最新交易日快照，非逐秒实时行情';
+    }
+
+</script>
+{% endblock %}

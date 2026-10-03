@@ -1,0 +1,698 @@
+{% extends "base.html" %}
+
+{% block title %}AI 机会捕捉 - 量化初筛{% endblock %}
+{% block seo_description %}A股棱镜 AI 机会捕捉：基于多维度财务与资金信号，量化初筛潜在机会，再交由 AI 大模型做深度判断。{% endblock %}
+{% block seo_keywords %}A股棱镜,AI选股,量化初筛,A股机会,价值发现{% endblock %}
+
+{% block extra_css %}
+<style>
+    .opp-container {
+        padding-top: 100px;
+        padding-bottom: 40px;
+    }
+
+    /* --- 通用卡片 --- */
+    .glass-panel {
+        background: rgba(30, 41, 59, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 20px;
+        height: 100%;
+        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+    }
+
+    /* --- 1. 顶部：市场情绪 & 预测 --- */
+    .gauge-wrapper {
+        position: relative;
+        height: 150px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        overflow: hidden;
+    }
+    .gauge-arc {
+        width: 200px;
+        height: 100px;
+        background: radial-gradient(circle at 50% 100%, rgba(30,41,59,0) 30%, rgba(255,255,255,0.1) 31%, rgba(255,255,255,0.1) 50%, #334155 51%);
+        border-radius: 100px 100px 0 0;
+        position: relative;
+    }
+    .gauge-pointer {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 4px;
+        height: 80px;
+        background: #fff;
+        transform-origin: bottom center;
+        transform: rotate(-45deg); /* 动态控制角度 */
+        transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 2px;
+        box-shadow: 0 0 10px rgba(255,255,255,0.8);
+    }
+
+    /* 预测按钮 */
+    .btn-vote {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #94a3b8;
+        padding: 8px 20px;
+        border-radius: 8px;
+        transition: all 0.2s;
+        width: 100%;
+    }
+    .btn-vote:hover {
+        background: rgba(255,255,255,0.1);
+        color: #fff;
+    }
+    .btn-vote.up:hover { border-color: #f87171; color: #f87171; }
+    .btn-vote.down:hover { border-color: #34d399; color: #34d399; }
+    /* 已投票：高亮当前选择，并标注「已选」 */
+    .btn-vote.chosen { font-weight: 700; }
+    .btn-vote.up.chosen { background: rgba(248,113,113,.14); border-color: #f87171; color: #f87171; }
+    .btn-vote.down.chosen { background: rgba(52,211,153,.14); border-color: #34d399; color: #34d399; }
+    .btn-vote:disabled { opacity: .6; cursor: not-allowed; }
+
+    /* 投票分布条 */
+    .vote-bar {
+        height: 8px; width: 100%; border-radius: 6px; overflow: hidden;
+        background: rgba(255,255,255,0.06); display: flex;
+    }
+    .vote-bull { background: #f87171; transition: width .5s ease; }
+    .vote-bear { background: #34d399; transition: width .5s ease; }
+
+    /* --- 2. 榜单列表 (板块/概念) --- */
+    .rank-list-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .rank-num {
+        width: 24px;
+        height: 24px;
+        background: rgba(255,255,255,0.1);
+        color: #94a3b8;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        margin-right: 12px;
+        font-family: 'Orbitron', sans-serif;
+    }
+    .rank-1 { background: #f59e0b; color: #000; }
+    .rank-2 { background: #94a3b8; color: #000; }
+    .rank-3 { background: #b45309; color: #fff; }
+
+    .change-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+    .text-up { color: #f87171; }
+    .text-down { color: #34d399; }
+
+    /* --- 3. AI 机会卡片 (核心) --- */
+    .ai-opp-card {
+        background: rgba(56, 189, 248, 0.05);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    .ai-opp-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 4px; height: 100%;
+        background: #38bdf8;
+    }
+    .opp-tag {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        background: rgba(56, 189, 248, 0.15);
+        color: #38bdf8;
+        margin-right: 5px;
+    }
+    .opp-stock-link {
+        color: #94a3b8;
+        text-decoration: underline;
+        font-size: 0.85rem;
+        margin-right: 10px;
+        transition: color 0.2s;
+    }
+    .opp-stock-link:hover { color: #fff; }
+
+    /* --- 4. 板块小标题：给两行卡片分区，避免一整页都是同权重的方块 --- */
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #64748b;
+        font-size: 0.78rem;
+        letter-spacing: .08em;
+        margin: 0 0 14px;
+    }
+    .section-title::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(255,255,255,.12), transparent);
+    }
+
+    /* --- 5. 恐惧贪婪条（与大盘页同源：渐变与档位由后端 sentiment_zones 下发） --- */
+    .fear-greed-wrap { margin-top: 10px; }
+    .fear-greed-bar {
+        height: 12px;
+        border-radius: 6px;
+        position: relative;
+    }
+    .fear-greed-zone {
+        position: absolute;
+        top: -3px;
+        height: 18px;
+        border: 2px solid rgba(255, 255, 255, 0.85);
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
+        pointer-events: none;
+    }
+    .fear-greed-marker {
+        position: absolute;
+        top: -5px;
+        width: 4px;
+        height: 22px;
+        background: #fff;
+        border-radius: 2px;
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
+        transition: left 1s ease;
+    }
+    .fg-tip {
+        position: absolute;
+        bottom: 26px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #fff;
+        color: #0f172a;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 1px 7px;
+        border-radius: 10px;
+        white-space: nowrap;
+    }
+    .fear-greed-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.72rem;
+        color: #64748b;
+        margin-top: 6px;
+    }
+    /* 刻度按档位**中点**定位：档位宽度不均（12/15/13/12/30），三等分会标错位置 */
+    .fear-greed-scale {
+        position: relative;
+        height: 15px;
+        margin-top: 4px;
+        font-size: 0.68rem;
+        color: #64748b;
+    }
+    .fear-greed-scale span {
+        position: absolute;
+        transform: translateX(-50%);
+        white-space: nowrap;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .fear-greed-scale span.hit { color: #fff; font-weight: 700; }
+
+    /* 情绪分项：把「为什么是这个分」摊开，而不是只给一个数字 */
+    .senti-part {
+        display: inline-block;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.68rem;
+        color: #94a3b8;
+        background: rgba(255,255,255,.04);
+        border: 1px solid rgba(255,255,255,.06);
+        border-radius: 6px;
+        padding: 2px 7px;
+        margin: 0 6px 6px 0;
+    }
+
+    /* --- 6. 题材榜排序 tab --- */
+    .theme-tabs { display: flex; gap: 6px; }
+    .theme-tab {
+        background: rgba(255,255,255,.04);
+        border: 1px solid rgba(255,255,255,.08);
+        color: #94a3b8;
+        font-size: 0.72rem;
+        padding: 3px 10px;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all .2s;
+    }
+    .theme-tab:hover { color: #fff; }
+    .theme-tab.active {
+        background: rgba(56,189,248,.14);
+        border-color: rgba(56,189,248,.45);
+        color: #38bdf8;
+        font-weight: 700;
+    }
+    /* 指标缺失用 -- 而不是 0：0 家上涨与「没统计到」是两回事 */
+    .metric-na { color: #475569; font-weight: 400; }
+
+    @media (max-width: 991.98px) {
+        .opp-container { padding-top: 84px; }
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container opp-container">
+
+    <div class="section-title"><i class="fa-solid fa-temperature-half"></i>市场温度计</div>
+    <div class="row g-4 mb-4">
+        <div class="col-lg-4">
+            <div class="glass-panel">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="text-white fw-bold m-0">市场情绪</h5>
+                    <span class="badge bg-secondary bg-opacity-25 text-info">{{ opp.sentiment_label }} {{ opp.sentiment }}</span>
+                </div>
+
+                <div class="gauge-wrapper">
+                    <div class="gauge-arc"></div>
+                    <div class="gauge-pointer" id="emotionPointer"></div>
+                    <div style="position: absolute; bottom: 10px; width: 100%; text-align: center; color: #94a3b8; font-size: 0.8rem;">
+                        <span style="float: left; margin-left: 20px;">恐慌</span>
+                        <span>中性</span>
+                        <span style="float: right; margin-right: 20px;">贪婪</span>
+                    </div>
+                </div>
+
+                {% set _zones = opp.sentiment_zones or [] %}
+                {% set _hit = opp.sentiment_zone %}
+                {% if _zones %}
+                <div class="fear-greed-wrap">
+                    <div class="fear-greed-bar" style="background: linear-gradient(90deg,
+                        {%- for z in _zones -%}
+                        {{ z.color }} {{ z.min }}%, {{ z.color }} {{ z.max }}%
+                        {%- if not loop.last %}, {% endif -%}
+                        {%- endfor -%});">
+                        {% if _hit %}
+                        <div class="fear-greed-zone"
+                             style="left: {{ _hit.min }}%; width: {{ _hit.max - _hit.min }}%;"></div>
+                        {% endif %}
+                        <div class="fear-greed-marker" style="left: calc({{ opp.sentiment }}% - 2px);">
+                            <span class="fg-tip">{{ opp.sentiment }}</span>
+                        </div>
+                    </div>
+                    <div class="fear-greed-scale">
+                        {% for z in _zones %}
+                        <span class="{% if _hit and z.label == _hit.label %}hit{% endif %}"
+                              style="left: {{ (z.min + z.max) / 2 }}%;">{{ z.label }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="fear-greed-labels">
+                        <span>极度恐慌</span>
+                        <span>极度贪婪</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="mt-3" style="border-top:1px solid rgba(255,255,255,.08);padding-top:10px;">
+                    {% if opp.sentiment_parts %}
+                    <div class="mb-2">
+                        {% for p in opp.sentiment_parts %}<span class="senti-part">{{ p }}</span>{% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-muted small">当日暂无情绪分项数据</div>
+                    {% endif %}
+                    <div class="text-muted" style="font-size:.72rem;">
+                        <i class="fa-regular fa-compass me-1"></i>北向资金：
+                        {% if opp.north_money_yi is not none %}
+                            <span class="{{ 'text-up' if opp.north_money_yi >= 0 else 'text-down' }} font-mono">
+                                {{ '%.2f'|format(opp.north_money_yi) }} 亿元</span>
+                        {% else %}
+                            <span class="metric-na font-mono">未披露</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="glass-panel">
+                <h5 class="text-white fw-bold mb-3">全市场涨跌分布</h5>
+                <div id="breadthBox">
+                    <div class="text-muted small py-3">统计中…</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="glass-panel text-center">
+                <h5 class="text-white fw-bold mb-1">您认为明日大盘会？</h5>
+                <p class="text-muted small mb-3" id="voteHint">加载中…</p>
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <button class="btn-vote up" id="voteUp" type="button"><i class="fa-solid fa-arrow-trend-up me-2"></i>看涨</button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn-vote down" id="voteDown" type="button"><i class="fa-solid fa-arrow-trend-down me-2"></i>看跌</button>
+                    </div>
+                </div>
+
+                <div class="vote-bar mb-2">
+                    <div class="vote-bull" id="voteBull" style="width:0%"></div>
+                    <div class="vote-bear" id="voteBear" style="width:0%"></div>
+                </div>
+                <div class="d-flex justify-content-between small mb-3">
+                    <span style="color:#f87171;">看涨 <span id="voteUpPct">–</span></span>
+                    <span style="color:#34d399;">看跌 <span id="voteDownPct">–</span></span>
+                </div>
+                <div class="text-muted small" id="voteMeta">
+                    <i class="fa-regular fa-comment-dots me-1"></i>暂无投票数据
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-title"><i class="fa-solid fa-bolt"></i>机会信号</div>
+    <div class="row g-4">
+
+        <div class="col-lg-4">
+            <div class="glass-panel" style="position: sticky; top: 88px;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="text-white fw-bold m-0"><i class="fa-solid fa-fire me-2 text-danger"></i>热门题材</h5>
+                    <a href="/hot" class="text-muted small text-decoration-none">查看全部 →</a>
+                </div>
+
+                <div class="theme-tabs mb-3" id="themeTabs">
+                    <button class="theme-tab active" data-sort="zt" type="button">按涨停数</button>
+                    <button class="theme-tab" data-sort="up" type="button">按上涨家数</button>
+                </div>
+                <div id="themeList"></div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="glass-panel">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <h5 class="text-white fw-bold m-0"><i class="fa-solid fa-lightbulb me-2 text-warning"></i>AI 投资机会分析</h5>
+                    <span class="text-muted font-mono small">{{ opp.update_time }} · 数据源 金融大数据</span>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 mb-3" id="oppFilters">
+                    <button class="btn btn-sm btn-outline-info active" data-cat="all" type="button">
+                        全部 <span class="badge bg-secondary ms-1" id="cntAll">0</span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" data-cat="capital" type="button">
+                        <i class="fa-solid fa-coins me-1"></i>资金面 <span class="badge bg-secondary ms-1" id="cntCapital">0</span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" data-cat="tech" type="button">
+                        <i class="fa-solid fa-chart-line me-1"></i>技术面 <span class="badge bg-secondary ms-1" id="cntTech">0</span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" data-cat="fundamental" type="button">
+                        <i class="fa-solid fa-book me-1"></i>基本面 <span class="badge bg-secondary ms-1" id="cntFundamental">0</span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" data-cat="theme" type="button">
+                        <i class="fa-solid fa-fire me-1"></i>主题面 <span class="badge bg-secondary ms-1" id="cntTheme">0</span>
+                    </button>
+                </div>
+
+                {% if opp.pulse_pending %}
+                <div class="alert alert-info bg-dark border-info border-opacity-25 py-2 small mb-3">
+                    <i class="fa-solid fa-circle-info me-2"></i>
+                    全市场数据首次加载中（约需 15 秒），本次先展示已有信号，稍后刷新即可看到完整的多维度机会。
+                </div>
+                {% endif %}
+
+                <div id="oppCardContainer"></div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // --- 真实数据（由服务端从金融大数据接口注入） ---
+    // ⚠️ 声明顺序即依赖顺序：所有 const 先声明再使用。
+    //    曾经把引用写在声明之前，const 的暂时性死区(TDZ)抛 ReferenceError，
+    //    整段 script 中断 → 页面上所有图表/列表全空，而语法检查是查不出来的。
+    const SENTIMENT = {{ opp.sentiment }};
+    const THEMES = {{ opp.theme_list | tojson }};
+    const OPP_CARDS = {{ opp.opportunities | tojson }};
+    const BREADTH = {{ (opp.breadth or none) | tojson }};
+
+    // --- 1. 热门题材：同一份数据，两种排序 ---
+    // 旧版拆成「热门概念 Top5（按上涨家数）」和「热门题材（按涨停数）」两张卡，
+    // 实际是同一份 kpl_concept 数据，只是排序字段不同 —— 既重复又像两类数据源。
+    // 现在只留一张卡，用 tab 切排序。
+    let themeSort = 'zt';   // 'zt' = 按涨停数（题材强度）；'up' = 按上涨家数（参与广度）
+
+    // 指标缺失显示 --：0 家上涨和「没统计到」是两回事，绝不能混为一谈
+    function metricText(v, unit) {
+        if (v === null || v === undefined) return '<span class="metric-na">--</span>';
+        return esc(v) + (unit || '');
+    }
+
+    function renderThemes() {
+        const container = document.getElementById('themeList');
+        if (!THEMES.length) {
+            container.innerHTML = '<div class="text-muted small py-3">当日暂无题材热度数据</div>';
+            return;
+        }
+        const key = themeSort === 'zt' ? 'zt_num' : 'up_num';
+        const other = themeSort === 'zt' ? 'up_num' : 'zt_num';
+        // 缺失值恒排最后，不用 0 参与排序（否则「没统计到」会被当成垫底的 0）
+        const list = THEMES.slice().sort((a, b) => {
+            const av = a[key], bv = b[key];
+            if (av === null && bv === null) return 0;
+            if (av === null) return 1;
+            if (bv === null) return -1;
+            return bv - av;
+        });
+        container.innerHTML = list.map((it, i) => `
+            <div class="rank-list-item">
+                <div class="rank-num ${i < 3 ? `rank-${i + 1}` : 'bg-dark'}">${i + 1}</div>
+                <div class="flex-grow-1 text-light small">${esc(it.name)}</div>
+                <div class="text-end">
+                    <div class="change-val text-up small">${themeSort === 'zt' ? '涨停' : '上涨'} ${metricText(it[key])}</div>
+                    <div class="text-muted font-mono" style="font-size: 0.7rem;">${themeSort === 'zt' ? '上涨' : '涨停'} ${metricText(it[other])}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    document.getElementById('themeTabs').addEventListener('click', function (e) {
+        const btn = e.target.closest('button[data-sort]');
+        if (!btn) return;
+        themeSort = btn.dataset.sort;
+        this.querySelectorAll('button[data-sort]').forEach(b => b.classList.toggle('active', b === btn));
+        renderThemes();
+    });
+
+    // --- 3. 全市场涨跌分布（真实统计，来自全市场脉搏） ---
+    function renderBreadth() {
+        const box = document.getElementById('breadthBox');
+        const b = BREADTH;
+        if (!b || !b.total) {
+            box.innerHTML = '<div class="text-muted small">当日暂无全市场统计</div>';
+            return;
+        }
+        const upPct = (b.up / b.total * 100).toFixed(1);
+        const downPct = (b.down / b.total * 100).toFixed(1);
+        box.innerHTML = `
+            <div class="d-flex justify-content-between align-items-baseline mb-2">
+                <span class="text-muted small">上涨</span>
+                <span class="font-mono" style="color:#f87171;font-weight:600;">${b.up} 家</span>
+            </div>
+            <div class="progress mb-3" style="height:8px;background:rgba(52,211,153,.25);">
+                <div class="progress-bar" style="width:${upPct}%;background:#f87171;"></div>
+            </div>
+            <div class="row g-2 text-center mb-2">
+                <div class="col-4">
+                    <div class="text-muted" style="font-size:.7rem;">平盘</div>
+                    <div class="font-mono text-light small">${b.flat}</div>
+                </div>
+                <div class="col-4">
+                    <div class="text-muted" style="font-size:.7rem;">下跌</div>
+                    <div class="font-mono small" style="color:#34d399;">${b.down}</div>
+                </div>
+                <div class="col-4">
+                    <div class="text-muted" style="font-size:.7rem;">中位数</div>
+                    <div class="font-mono text-light small">${esc(b.median_pct || '--')}</div>
+                </div>
+            </div>
+            <div class="text-muted" style="font-size:.72rem;border-top:1px solid rgba(255,255,255,.08);padding-top:8px;">
+                全市场 ${b.total} 只 · 上涨占比 ${esc(b.up_ratio || upPct + '%')} · 下跌占比 ${downPct}%
+            </div>`;
+    }
+
+    // --- 4. AI 机会卡片（真实信号驱动，支持按维度筛选） ---
+    let currentCat = 'all';
+
+    function renderOppCards() {
+        const box = document.getElementById('oppCardContainer');
+
+        // 各维度计数（真实统计，不是写死的数字）
+        const cats = { capital: 0, tech: 0, fundamental: 0, theme: 0 };
+        OPP_CARDS.forEach(c => { const k = c.cat || 'capital'; if (k in cats) cats[k] += 1; });
+        const setCnt = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n; };
+        setCnt('cntAll', OPP_CARDS.length);
+        setCnt('cntCapital', cats.capital);
+        setCnt('cntTech', cats.tech);
+        setCnt('cntFundamental', cats.fundamental);
+        setCnt('cntTheme', cats.theme);
+
+        const list = currentCat === 'all' ? OPP_CARDS : OPP_CARDS.filter(c => (c.cat || 'capital') === currentCat);
+        if (!list.length) {
+            box.innerHTML = '<div class="text-muted small py-4">该维度下当日暂未捕捉到明确机会信号</div>';
+            return;
+        }
+        box.innerHTML = list.map(c => {
+            const isHigh = c.level === 'high';
+            const badge = isHigh
+                ? '<span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">高确信度</span>'
+                : '<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">中确信度</span>';
+            const tagColor = isHigh ? '#f87171' : '#34d399';
+
+            // ⚠️ 内容来自外部数据接口（股票名/上市原因等），一律先 esc() 再拼 innerHTML
+            const stocks = (c.stocks || []).map(s => {
+                const pct = s.pct_chg ? `<span style="color:${String(s.pct_chg).startsWith('-') ? '#34d399' : '#f87171'};font-size:.72rem;">${esc(s.pct_chg)}</span>` : '';
+                return `<a href="/stock/${encodeURIComponent(s.code || '')}" class="opp-stock-link">${esc(s.name)} ${pct}</a>`;
+            }).join(' ');
+
+            const stockRow = stocks
+                ? `<div class="d-flex align-items-center flex-wrap"><span class="opp-tag" style="color:${tagColor};background:rgba(56,189,248,0.15)">${esc(c.tag)}</span><div class="ms-3 border-start border-secondary ps-3"><span class="text-muted small me-2">关注个股:</span>${stocks}</div></div>`
+                : `<div class="d-flex align-items-center flex-wrap"><span class="opp-tag">${esc(c.tag)}</span></div>`;
+
+            // 数据依据：把支撑该结论的真实数字直接亮出来，用户可自行核对
+            const evidenceRow = c.evidence
+                ? `<div class="mt-2 pt-2" style="border-top:1px dashed rgba(255,255,255,.10);">
+                       <span class="text-muted" style="font-size:.72rem;"><i class="fa-solid fa-database me-1"></i>数据依据：</span>
+                       <span class="font-mono" style="font-size:.72rem;color:#38bdf8;">${esc(c.evidence)}</span>
+                   </div>`
+                : '';
+
+            return `
+                <div class="ai-opp-card" style="${isHigh ? '' : 'border-color: rgba(16,185,129,0.3);'}">
+                    <div class="d-flex align-items-center mb-2 flex-wrap gap-2">
+                        <h6 class="text-white fw-bold m-0 me-3">💡 ${esc(c.title)}</h6>
+                        ${badge}
+                    </div>
+                    <p class="text-muted small mb-3" style="line-height: 1.6;">${esc(c.summary)}</p>
+                    ${stockRow}
+                    ${evidenceRow}
+                </div>`;
+        }).join('');
+    }
+
+    // 分类筛选交互
+    document.getElementById('oppFilters').addEventListener('click', function (e) {
+        const btn = e.target.closest('button[data-cat]');
+        if (!btn) return;
+        currentCat = btn.dataset.cat;
+        this.querySelectorAll('button[data-cat]').forEach(b => b.classList.toggle('active', b === btn));
+        renderOppCards();
+    });
+
+    // --- 4. 情绪仪表指针 ---
+    function initGauge() {
+        // 角度: -90deg(0) ~ +90deg(100)
+        const angle = -90 + (SENTIMENT / 100 * 180);
+        setTimeout(() => {
+            document.getElementById('emotionPointer').style.transform = `rotate(${angle}deg)`;
+        }, 500);
+    }
+
+    // --- 5. 大盘涨跌投票（真实接口）
+    // 原先这块是纯装饰：两个按钮没有任何事件绑定，「昨日预测回顾 准确率 85%」是硬编码假数字，
+    // 「获取 AI 概率预测」按钮也没有真实能力。现在改为真实的投票统计。
+    (function initVote() {
+        const btnUp = document.getElementById('voteUp');
+        const btnDown = document.getElementById('voteDown');
+        const bull = document.getElementById('voteBull');
+        const bear = document.getElementById('voteBear');
+        const upPct = document.getElementById('voteUpPct');
+        const downPct = document.getElementById('voteDownPct');
+        const meta = document.getElementById('voteMeta');
+        const hint = document.getElementById('voteHint');
+        if (!btnUp || !btnDown) return;
+
+        function paint(d) {
+            const total = d.total || 0;
+            if (total === 0) {
+                bull.style.width = '0%';
+                bear.style.width = '0%';
+                upPct.textContent = '–';
+                downPct.textContent = '–';
+                meta.innerHTML = '<i class="fa-regular fa-comment-dots me-1"></i>暂无投票数据，来投第一票';
+            } else {
+                bull.style.width = d.up_pct + '%';
+                bear.style.width = d.down_pct + '%';
+                upPct.textContent = d.up_pct + '%（' + d.up + ' 票）';
+                downPct.textContent = d.down_pct + '%（' + d.down + ' 票）';
+                meta.innerHTML = '<i class="fa-solid fa-users me-1"></i>共 ' + total + ' 人参与 · 交易日 ' +
+                    (d.trade_date || '-');
+            }
+            // 当前用户的选择
+            btnUp.classList.toggle('chosen', d.mine === 1);
+            btnDown.classList.toggle('chosen', d.mine === 0);
+            hint.textContent = d.logged_in
+                ? (d.mine === null ? '点击上方按钮投出你的一票' : '已记录你的观点，可随时改票')
+                : '登录后即可参与投票';
+        }
+
+        /* ⚠️ 原来只靠 .catch 兜网络异常：接口返回 200 但 status≠success 时什么都不做，
+           提示永远停在 HTML 里写死的「加载中…」，用户以为还在等、也不知道能怎么办。
+           现在两种失败走同一个出口，并让提示可点击重试（不必刷新整页）。 */
+        function failHint(msg) {
+            hint.textContent = (msg || '投票数据加载失败') + '，点击重试';
+            hint.style.cursor = 'pointer';
+        }
+
+        function load() {
+            hint.style.cursor = '';
+            hint.textContent = '加载中…';
+            fetch('/api/market-vote').then(r => r.json())
+                .then(d => { if (d && d.status === 'success') paint(d); else failHint(); })
+                .catch(() => failHint());
+        }
+
+        hint.addEventListener('click', () => { if (hint.style.cursor === 'pointer') load(); });
+
+        function submit(vote) {
+            btnUp.disabled = btnDown.disabled = true;
+            fetch('/api/market-vote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vote: vote })
+            })
+                .then(r => r.json().then(d => ({ ok: r.ok, d: d })))
+                .then(({ ok, d }) => {
+                    if (!ok) {
+                        hint.textContent = (d && d.detail) ? d.detail : '投票失败，请稍后重试';
+                        if (ok === false && d && String(d.detail || '').indexOf('登录') >= 0) {
+                            setTimeout(() => { location.href = '/login?next=' + encodeURIComponent(location.pathname); }, 1200);
+                        }
+                        return;
+                    }
+                    paint(d);
+                })
+                .catch(() => { hint.textContent = '网络异常，投票未成功'; })
+                .finally(() => { btnUp.disabled = btnDown.disabled = false; });
+        }
+
+        btnUp.addEventListener('click', () => submit(1));
+        btnDown.addEventListener('click', () => submit(0));
+        load();
+    })();
+
+    renderThemes();
+    renderBreadth();
+    renderOppCards();
+    initGauge();
+</script>
+{% endblock %}

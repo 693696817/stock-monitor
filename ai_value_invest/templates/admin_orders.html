@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block seo_description %}会员订单 · 管理后台 - A股棱镜（仅限管理员访问）{% endblock %}
+{% block seo_keywords %}A股棱镜,管理后台,系统管理{% endblock %}
+
+
+{% block robots %}noindex, nofollow{% endblock %}
+
+
+
+{% block title %}会员订单 - A股棱镜 后台{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+    {% include 'components/admin_sidebar.html' %}
+    <main class="admin-main">
+        <h3 class="font-tech mb-4" style="color:#fff;"><i class="fa-solid fa-receipt text-info me-2"></i>会员订单</h3>
+
+        <div class="admin-card">
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr><th>订单号</th><th>用户</th><th>套餐</th><th>等级</th><th>金额</th><th>支付</th><th>状态</th><th>起→止</th><th>天数</th><th>备注</th><th>时间</th></tr>
+                    </thead>
+                    <tbody id="orderRows">
+                        <tr><td colspan="11" class="text-center text-secondary">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <nav id="orderPager" class="mt-3 d-flex justify-content-center"></nav>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let curPage = 1;
+    const PER = 20;
+
+    function fmtTime(v) { return v ? String(v).replace('T', ' ').slice(0, 19) : '-'; }
+    function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+    function statusBadge(s) {
+        // 0待支付 1已支付 2已退款 3已关闭
+        const map = {
+            0: ['待支付', 'rgba(148,163,184,.12)', '#94a3b8', 'rgba(148,163,184,.3)'],
+            1: ['已支付', 'rgba(39,201,63,.12)', '#27c93f', 'rgba(39,201,63,.3)'],
+            2: ['已退款', 'rgba(251,191,36,.12)', '#fbbf24', 'rgba(251,191,36,.3)'],
+            3: ['已关闭', 'rgba(255,95,86,.12)', '#ff5f56', 'rgba(255,95,86,.3)']
+        };
+        const m = map[s] || map[0];
+        return `<span class="admin-badge" style="background:${m[1]};color:${m[2]};border:1px solid ${m[3]};">${m[0]}</span>`;
+    }
+
+    async function loadOrders() {
+        try {
+            const r = await (await fetch('/api/admin/orders?page=' + curPage + '&per_page=' + PER)).json();
+            const tb = document.getElementById('orderRows');
+            if (!r.rows || !r.rows.length) {
+                tb.innerHTML = '<tr><td colspan="11" class="text-center text-secondary">暂无订单</td></tr>';
+            } else {
+                tb.innerHTML = r.rows.map(row => {
+                    const range = (fmtTime(row.start_at).slice(0,10)) + ' → ' + (fmtTime(row.end_at).slice(0,10));
+                    return `<tr>
+                        <td class="font-mono" style="font-size:.78rem;">${esc(row.order_no)}</td>
+                        <td>${esc(row.user_id)}</td>
+                        <td>${esc(row.plan_code)}</td>
+                        <td>V${row.level}</td>
+                        <td class="font-mono">¥${Number(row.amount).toFixed(2)}</td>
+                        <td>${esc(row.payment_method)}</td>
+                        <td>${statusBadge(row.payment_status)}</td>
+                        <td class="font-mono" style="font-size:.78rem;">${range}</td>
+                        <td>${row.days}</td>
+                        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(row.remark)}">${esc(row.remark)}</td>
+                        <td class="font-mono" style="font-size:.78rem;">${fmtTime(row.created_at)}</td>
+                    </tr>`;
+                }).join('');
+            }
+            renderPager(r.total || 0, r.page || 1);
+        } catch (e) {
+            document.getElementById('orderRows').innerHTML = '<tr><td colspan="11" class="text-center text-danger">加载失败</td></tr>';
+        }
+    }
+
+    function renderPager(total, page) {
+        const pages = Math.max(1, Math.ceil(total / PER));
+        let html = '';
+        if (page > 1) html += `<button class="btn btn-sm btn-outline-info me-1" data-p="${page-1}">上一页</button>`;
+        html += `<span class="text-secondary mx-2" style="align-self:center;">第 ${page} / ${pages} 页（共 ${total} 条）</span>`;
+        if (page < pages) html += `<button class="btn btn-sm btn-outline-info" data-p="${page+1}">下一页</button>`;
+        document.getElementById('orderPager').innerHTML = html;
+    }
+
+    document.addEventListener('click', function (e) {
+        const p = e.target.closest('#orderPager button[data-p]');
+        if (p) { curPage = parseInt(p.getAttribute('data-p'), 10); loadOrders(); }
+    });
+
+    document.addEventListener('DOMContentLoaded', loadOrders);
+</script>
+{% endblock %}

@@ -1,0 +1,21 @@
+# Ollama 本地模型 Qwen3.5-9B 的上下文窗口设置（2026-09-07）
+#
+# 为什么必须有这个文件：
+#   我们代码走的是 OpenAI 兼容接口 /v1/chat/completions，实测**它完全不认** num_ctx
+#   —— 无论 extra_body 里的 options.num_ctx 还是顶层 num_ctx，都会被忽略，
+#   模型仍按标称 262144 分配，显存占 10.32GB（RTX 4070 12GB 的 86%）。
+#   唯一对 /v1 接口也生效的办法，是把 num_ctx 固化进模型本身（Ollama 当作默认参数）。
+#
+# 用法（重建或恢复这个模型）：
+#   ollama create Qwen3.5-9B -f ollama_Modelfile_Qwen3.5-9B
+#
+# 实测显存（RTX 4070 12GB，模型 Q4_K_M 5.7GB）：
+#   未设置（默认 262144）  -> 10.32GB
+#   num_ctx 16384         -> 5.91GB   （只有走原生 /api/generate 设置时才生效）
+#   num_ctx 40960         -> 6.63GB   <- 本配置，省出约 3.7GB
+#
+# 注：下面 FROM 现在指向的是已带 num_ctx 的标签，重复执行是幂等的。
+#     若要回到官方原始标签：ollama pull Qwen3.5-9B
+
+FROM Qwen3.5-9B
+PARAMETER num_ctx 40960

@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+{% block seo_description %}回测台账 · 管理后台 - A股棱镜（仅限管理员访问）{% endblock %}
+{% block seo_keywords %}A股棱镜,管理后台,系统管理{% endblock %}
+
+
+{% block robots %}noindex, nofollow{% endblock %}
+
+
+
+{% block title %}回测台账 - A股棱镜 后台{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+    {% include 'components/admin_sidebar.html' %}
+    <main class="admin-main">
+        <h3 class="font-tech mb-2" style="color:#fff;">
+            <i class="fa-solid fa-flask text-info me-2"></i>回测台账
+        </h3>
+        <p class="text-secondary mb-4" style="font-size:.86rem;">
+            记录每次「长线价值投资 / 综合分析投资 / 深度价值」分析里 AI 给出的
+            <strong class="text-info">合理市值区间</strong> 与
+            <strong class="text-info">性价比评分（0-10）</strong>，
+            用于未来横向回测「哪个模型、哪个偏好更靠谱」。
+        </p>
+
+        <!-- 总览卡片 -->
+        <div class="row g-3 mb-4" id="statCards">
+            <div class="col-6 col-lg-3"><div class="admin-stat"><div class="label">累计样本</div><div class="value" id="sTotal">-</div></div></div>
+            <div class="col-6 col-lg-3"><div class="admin-stat"><div class="label">覆盖股票</div><div class="value" id="sStocks">-</div></div></div>
+            <div class="col-6 col-lg-3"><div class="admin-stat"><div class="label">平均评分</div><div class="value" id="sScore">-</div></div></div>
+            <div class="col-6 col-lg-3"><div class="admin-stat"><div class="label">已回填走势</div><div class="value" id="sBack">-</div></div></div>
+        </div>
+
+        <!-- 模型 × 偏好 聚合 -->
+        <div class="admin-card">
+            <h6 class="mb-3" style="color:#e2e8f0;"><i class="fa-solid fa-ranking-star text-warning me-2"></i>模型 × 偏好 聚合表现</h6>
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>模型</th><th>偏好</th><th>样本</th><th>平均评分</th>
+                            <th>预期空间（看多·看空）</th><th>区间宽度</th><th>方向命中 60日</th>
+                            <th>平均置信度</th><th>已回填</th><th>回填后 60日</th><th>回填后 120日</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sumRows">
+                        <tr><td colspan="11" class="text-center text-secondary">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 评分-收益关联：验证「分高真的更准吗」。样本按 股票×分析日 去重，
+                 且只统计「有评分 + 60 日收益已回填」的记录。 -->
+            <div class="mt-4">
+                <h6 class="mb-2" style="color:#e2e8f0;"><i class="fa-solid fa-chart-line text-success me-2"></i>评分-收益关联（按股票×分析日去重）</h6>
+                <div class="table-responsive">
+                    <table class="admin-table" style="max-width:720px;">
+                        <thead>
+                            <tr><th>评分档</th><th>样本</th><th>平均评分</th><th>60日均收益</th><th>120日均收益</th></tr>
+                        </thead>
+                        <tbody id="bucketRows">
+                            <tr><td colspan="5" class="text-center text-secondary">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 明细 -->
+        <div class="admin-card">
+            <div class="row g-2 align-items-end mb-3">
+                <div class="col-12 col-md-2">
+                    <label class="admin-form-label">投资偏好</label>
+                    <select class="admin-select" id="fPref">
+                        <option value="">全部</option>
+                        {% for p in prefs %}<option value="{{ p.id }}">{{ p.name or p.id }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="admin-form-label">模型（别名）</label>
+                    <input class="admin-input" id="fModel" placeholder="留空=全部">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="admin-form-label">股票名称/代码</label>
+                    <input class="admin-input" id="fKw" placeholder="如 华东医药">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="admin-form-label">评分下限</label>
+                    <input class="admin-input" id="fMin" type="number" step="0.1" min="0" max="10" placeholder="0">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="admin-form-label">评分上限</label>
+                    <input class="admin-input" id="fMax" type="number" step="0.1" min="0" max="10" placeholder="10">
+                </div>
+                <div class="col-12 col-md-2 d-flex gap-2">
+                    <button class="btn btn-info btn-sm flex-fill" id="btnSearch"><i class="fa-solid fa-magnifying-glass me-1"></i>查询</button>
+                    <button class="btn btn-outline-secondary btn-sm" id="btnReset"><i class="fa-solid fa-rotate-left"></i></button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>分析日期</th><th>股票</th><th>合理市值(亿)</th><th>中枢</th>
+                            <th>评分</th><th>预期空间</th><th>模型</th><th>偏好</th>
+                            <th>结论</th><th>置信</th><th>持有期</th>
+                            <th>当前市值</th><th>PE/PB</th><th>回测收益</th><th>详情</th>
+                        </tr>
+                    </thead>
+                    <tbody id="valRows">
+                        <tr><td colspan="15" class="text-center text-secondary">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <nav id="valPager" class="mt-3 d-flex justify-content-center"></nav>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block modals %}
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content" style="background:#0f172a;border:1px solid rgba(255,255,255,.12);color:#e2e8f0;">
+            <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,.08);">
+                <h5 class="modal-title"><i class="fa-solid fa-circle-info text-info me-2"></i>回测记录详情</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body" id="detailBody">
+                <div class="text-center text-secondary">加载中...</div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,.08);">
+                <button type="button" class="btn btn-outline-danger btn-sm me-auto" onclick="delVal(curVid)"><i class="fa-solid fa-trash-can me-1"></i>删除记录</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let curPage = 1;
+    const PER = 20;
+    let curVid = null;   // 详情弹窗当前展示的记录 id（供弹窗内「删除记录」使用）
+
+    const PREF_LABEL = {
+        long_term_value: '长线价值投资',
+        comprehensive: '综合分析投资',
+        deep_value: '深度价值'
+    };
+
+    function esc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function fmtDate(v) { return v ? String(v).slice(0, 10) : '-'; }
+    function fmtTime(v) { return v ? String(v).replace('T', ' ').slice(0, 19) : '-'; }
+    function num(v, d) {
+        if (v === null || v === undefined || v === '') return '<span class="text-secondary">-</span>';
+        const x = Number(v);
+        if (isNaN(x)) return esc(v);
+        return x.toFixed(d === undefined ? 2 : d);
+    }
+    function prefLabel(p) { return PREF_LABEL[p] || esc(p || '-'); }
+
+    // 评分配色：7+ 绿（低估、值得买）/ 4~7 琥珀 / <4 红（贵或该回避）
+    function scoreBadge(s) {
+        if (s === null || s === undefined) return '<span class="text-secondary">-</span>';
+        const x = Number(s);
+        let bg, fg, bd;
+        if (x >= 7) { bg = 'rgba(52,211,153,.14)'; fg = '#34d399'; bd = 'rgba(52,211,153,.35)'; }
+        else if (x >= 4) { bg = 'rgba(251,191,36,.14)'; fg = '#fbbf24'; bd = 'rgba(251,191,36,.35)'; }
+        else { bg = 'rgba(248,113,113,.14)'; fg = '#f87171'; bd = 'rgba(248,113,113,.35)'; }
+        return `<span class="admin-badge" style="background:${bg};color:${fg};border:1px solid ${bd};">${x.toFixed(1)}</span>`;
+    }
+
+    // 涨跌配色遵循 A 股习惯：红涨绿跌
+    function pctSpan(v) {
+        if (v === null || v === undefined) return '<span class="text-secondary">-</span>';
+        const x = Number(v);
+        const c = x > 0 ? '#f87171' : (x < 0 ? '#34d399' : '#94a3b8');
+        const sign = x > 0 ? '+' : '';
+        return `<span class="font-mono" style="color:${c};">${sign}${x.toFixed(2)}%</span>`;
+    }
+
+    function verdictBadge(v) {
+        const map = {
+            '低估': ['rgba(52,211,153,.14)', '#34d399', 'rgba(52,211,153,.35)'],
+            '合理': ['rgba(56,189,248,.14)', '#38bdf8', 'rgba(56,189,248,.35)'],
+            '高估': ['rgba(251,191,36,.14)', '#fbbf24', 'rgba(251,191,36,.35)'],
+            '回避': ['rgba(248,113,113,.14)', '#f87171', 'rgba(248,113,113,.35)']
+        };
+        const m = map[v] || ['rgba(148,163,184,.12)', '#94a3b8', 'rgba(148,163,184,.3)'];
+        return `<span class="admin-badge" style="background:${m[0]};color:${m[1]};border:1px solid ${m[2]};">${esc(v || '-')}</span>`;
+    }
+
+    function confDots(c) {
+        if (!c) return '<span class="text-secondary">-</span>';
+        const n = Math.max(1, Math.min(5, Number(c) || 0));
+        let h = '';
+        for (let i = 1; i <= 5; i++) {
+            h += `<i class="fa-solid fa-circle" style="font-size:.5rem;color:${i <= n ? '#38bdf8' : 'rgba(148,163,184,.25)'};margin-right:2px;"></i>`;
+        }
+        return h;
+    }
+
+    async function loadSummary() {
+        try {
+            const r = await (await fetch('/api/admin/valuation/summary')).json();
+            const o = r.overall || {};
+            document.getElementById('sTotal').textContent = o.total || 0;
+            document.getElementById('sStocks').textContent = o.stocks || 0;
+            document.getElementById('sScore').textContent = o.avg_score === null || o.avg_score === undefined
+                ? '-' : Number(o.avg_score).toFixed(2);
+            document.getElementById('sBack').textContent = o.backfilled || 0;
+
+            const tb = document.getElementById('sumRows');
+            const gs = r.groups || [];
+            if (!gs.length) {
+                tb.innerHTML = '<tr><td colspan="11" class="text-center text-secondary">暂无数据</td></tr>';
+            } else {
+                tb.innerHTML = gs.map(g => {
+                    const raw = (g.raw_cnt && g.raw_cnt > g.cnt)
+                        ? ` <span class="text-secondary" style="font-size:.7rem;" title="同股同日重跑已去重">raw ${g.raw_cnt}</span>` : '';
+                    const hit = (g.dir_cnt > 0)
+                        ? `<span class="font-mono" style="color:${g.hit_cnt / g.dir_cnt >= 0.5 ? '#34d399' : '#f87171'};">${(g.hit_cnt / g.dir_cnt * 100).toFixed(0)}%</span> <span class="text-secondary" style="font-size:.72rem;">(${g.hit_cnt}/${g.dir_cnt})</span>`
+                        : '<span class="text-secondary">-</span>';
+                    return `<tr>
+                        <td>${esc(g.model)}</td>
+                        <td>${prefLabel(g.preference)}</td>
+                        <td class="font-mono">${g.cnt}${raw}</td>
+                        <td>${g.avg_score === null || g.avg_score === undefined ? '-' : Number(g.avg_score).toFixed(2)}</td>
+                        <td><span style="font-size:.72rem;" class="text-secondary">看多 </span>${pctSpan(g.avg_upside_bull)}<br><span style="font-size:.72rem;" class="text-secondary">看空 </span>${pctSpan(g.avg_upside_bear)}</td>
+                        <td>${num(g.avg_band, 1)}%</td>
+                        <td>${hit}</td>
+                        <td>${num(g.avg_conf, 2)}</td>
+                        <td>${g.scored_cnt || 0}</td>
+                        <td>${pctSpan(g.avg_ret60)}</td>
+                        <td>${pctSpan(g.avg_ret120)}</td>
+                    </tr>`;
+                }).join('');
+            }
+
+            // 评分-收益关联分桶
+            const btb = document.getElementById('bucketRows');
+            const bs = r.score_buckets || [];
+            const BUCKET_LABEL = { low: '低分（<4）', mid: '中（4~7）', high: '高分（≥7）' };
+            if (!bs.length) {
+                btb.innerHTML = '<tr><td colspan="5" class="text-center text-secondary">暂无可回测样本（需「有评分 + 60 日收益已回填」）</td></tr>';
+            } else {
+                btb.innerHTML = bs.map(b => `<tr>
+                    <td>${BUCKET_LABEL[b.bucket] || esc(b.bucket)}</td>
+                    <td class="font-mono">${b.cnt}</td>
+                    <td class="font-mono">${b.avg_score === null || b.avg_score === undefined ? '-' : Number(b.avg_score).toFixed(2)}</td>
+                    <td>${pctSpan(b.avg_ret60)}</td>
+                    <td>${pctSpan(b.avg_ret120)}</td>
+                </tr>`).join('');
+            }
+        } catch (e) {
+            document.getElementById('sumRows').innerHTML =
+                '<tr><td colspan="11" class="text-center text-danger">加载失败</td></tr>';
+            document.getElementById('bucketRows').innerHTML =
+                '<tr><td colspan="5" class="text-center text-danger">加载失败</td></tr>';
+        }
+    }
+
+    function buildQuery() {
+        const p = new URLSearchParams();
+        p.set('page', curPage);
+        p.set('per_page', PER);
+        const pref = document.getElementById('fPref').value;
+        const model = (document.getElementById('fModel').value || '').trim();
+        const kw = (document.getElementById('fKw').value || '').trim();
+        const mn = (document.getElementById('fMin').value || '').trim();
+        const mx = (document.getElementById('fMax').value || '').trim();
+        if (pref) p.set('preference', pref);
+        if (model) p.set('model', model);
+        if (kw) p.set('kw', kw);
+        if (mn !== '') p.set('min_score', mn);
+        if (mx !== '') p.set('max_score', mx);
+        return p.toString();
+    }
+
+    async function loadRows() {
+        const tb = document.getElementById('valRows');
+        try {
+            const r = await (await fetch('/api/admin/valuation?' + buildQuery())).json();
+            if (!r.rows || !r.rows.length) {
+                tb.innerHTML = '<tr><td colspan="15" class="text-center text-secondary">暂无记录</td></tr>';
+            } else {
+                tb.innerHTML = r.rows.map(row => {
+                    const band = (row.val_low !== null && row.val_high !== null)
+                        ? `${Number(row.val_low).toFixed(0)} ~ ${Number(row.val_high).toFixed(0)}`
+                        : '<span class="text-secondary">-</span>';
+                    const bt = (row.ret_60d !== null && row.ret_60d !== undefined)
+                        ? `60日 ${pctSpan(row.ret_60d)}<br><span style="font-size:.72rem;" class="text-secondary">120日 ${pctSpan(row.ret_120d)}</span>`
+                        : '<span class="text-secondary" style="font-size:.78rem;">未回填</span>';
+                    return `<tr>
+                        <td class="font-mono" style="font-size:.8rem;">${fmtDate(row.analysis_date)}</td>
+                        <td>
+                            <div style="font-weight:600;">${esc(row.stock_name)}</div>
+                            <div class="font-mono text-secondary" style="font-size:.72rem;">${esc(row.stock_code)}</div>
+                        </td>
+                        <td class="font-mono">${band}</td>
+                        <td class="font-mono">${num(row.val_mid, 0)}</td>
+                        <td>${scoreBadge(row.score)}</td>
+                        <td>${pctSpan(row.upside_pct)}</td>
+                        <td>${esc(row.model)}${row.fallback ? ' <i class="fa-solid fa-shuffle text-warning" title="曾触发模型回退"></i>' : ''}</td>
+                        <td style="font-size:.8rem;">${prefLabel(row.preference)}</td>
+                        <td>${verdictBadge(row.verdict)}</td>
+                        <td>${confDots(row.confidence)}</td>
+                        <td class="font-mono" style="font-size:.8rem;">${esc(row.horizon || '-')}</td>
+                        <td class="font-mono">${num(row.mc_at, 0)}</td>
+                        <td class="font-mono" style="font-size:.8rem;">${num(row.pe_ttm_at, 1)} / ${num(row.pb_at, 2)}</td>
+                        <td>${bt}</td>
+                        <td><div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-outline-info" data-vid="${row.id}">详情</button>
+                            <button class="btn btn-sm btn-outline-danger" title="删除本条台账记录" onclick="delVal(${row.id})"><i class="fa-solid fa-trash-can"></i></button>
+                        </div></td>
+                    </tr>`;
+                }).join('');
+            }
+            renderPager(r.total || 0, r.page || 1);
+        } catch (e) {
+            tb.innerHTML = '<tr><td colspan="15" class="text-center text-danger">加载失败</td></tr>';
+        }
+    }
+
+    function renderPager(total, page) {
+        const pages = Math.max(1, Math.ceil(total / PER));
+        let html = '';
+        if (page > 1) html += `<button class="btn btn-sm btn-outline-info me-1" data-p="${page - 1}">上一页</button>`;
+        html += `<span class="text-secondary mx-2" style="align-self:center;">第 ${page} / ${pages} 页（共 ${total} 条）</span>`;
+        if (page < pages) html += `<button class="btn btn-sm btn-outline-info" data-p="${page + 1}">下一页</button>`;
+        document.getElementById('valPager').innerHTML = html;
+    }
+
+    async function openDetail(vid) {
+        const modalEl = document.getElementById('detailModal');
+        const body = document.getElementById('detailBody');
+        body.innerHTML = '<div class="text-center text-secondary">加载中...</div>';
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        curVid = vid;
+        modal.show();
+        try {
+            const r = await (await fetch('/api/admin/valuation/' + vid)).json();
+            const groups = (() => {
+                try {
+                    const d = JSON.parse(r.detail || '{}');
+                    return (d.data_groups || []).map(g =>
+                        `<span class="admin-badge me-1 mb-1" style="background:rgba(56,189,248,.1);color:#7dd3fc;border:1px solid rgba(56,189,248,.25);">${esc(g.title || g.id)}（${(g.fields || []).length} 字段）</span>`
+                    ).join('');
+                } catch (e) { return '<span class="text-secondary">-</span>'; }
+            })();
+            body.innerHTML = `
+                <div class="row g-3 mb-3">
+                    <div class="col-6 col-md-3"><div class="label text-secondary" style="font-size:.75rem;">股票</div><div style="font-weight:600;">${esc(r.stock_name)} <span class="font-mono text-secondary" style="font-size:.78rem;">${esc(r.stock_code)}</span></div></div>
+                    <div class="col-6 col-md-3"><div class="label text-secondary" style="font-size:.75rem;">分析日期</div><div class="font-mono">${fmtDate(r.analysis_date)}</div></div>
+                    <div class="col-6 col-md-3"><div class="label text-secondary" style="font-size:.75rem;">使用模型</div><div>${esc(r.model)}</div></div>
+                    <div class="col-6 col-md-3"><div class="label text-secondary" style="font-size:.75rem;">投资偏好</div><div>${prefLabel(r.preference)}</div></div>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-6 col-md-3"><div class="label text-secondary" style="font-size:.75rem;">合理市值区间</div><div class="font-mono">${num(r.val_low, 2)} ~ ${num(r.val_high, 2)} 亿</div></div>
+                    <div class="col-6 col-md-3"><div class="label text-secondary" style="font-size:.75rem;">中枢 / 当前市值</div><div class="font-mono">${num(r.val_mid, 2)} / ${num(r.mc_at, 2)} 亿</div></div>
+                    <div class="col-6 col-md-3"><div class="label text-secondary" style="font-size:.75rem;">性价比评分</div><div>${scoreBadge(r.score)} <span class="text-secondary" style="font-size:.75rem;">/ 10</span></div></div>
+                    <div class="col-6 col-md-3"><div class="label text-secondary" style="font-size:.75rem;">预期空间</div><div>${pctSpan(r.upside_pct)}</div></div>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-6 col-md-3"><div class="label text-secondary" style="font-size:.75rem;">结论</div><div>${verdictBadge(r.verdict)}</div></div>
+                    <div class="col-6 col-md-3"><div class="label text-secondary" style="font-size:.75rem;">置信度 / 持有期</div><div>${confDots(r.confidence)} <span class="font-mono ms-1">${esc(r.horizon || '-')}</span></div></div>
+                    <div class="col-6 col-md-3"><div class="label text-secondary" style="font-size:.75rem;">分析时点 股价/PE/PB</div><div class="font-mono">${num(r.price_at, 2)} / ${num(r.pe_ttm_at, 2)} / ${num(r.pb_at, 2)}</div></div>
+                    <div class="col-6 col-md-3"><div class="label text-secondary" style="font-size:.75rem;">耗时 / 面板规模</div><div class="font-mono">${r.duration_ms ? (r.duration_ms / 1000).toFixed(1) + 's' : '-'} / ${r.panel_chars || 0} 字</div></div>
+                </div>
+                <div class="mb-3">
+                    <div class="label text-secondary" style="font-size:.75rem;">评分核心依据</div>
+                    <div>${esc(r.key_reason || '-')}</div>
+                </div>
+                <div class="mb-3">
+                    <div class="label text-secondary" style="font-size:.75rem;">数据面板参数（分析时实际使用的数据组）</div>
+                    <div>${groups}</div>
+                </div>
+                <div class="mb-3">
+                    <div class="label text-secondary" style="font-size:.75rem;">结论速览原文（哨兵后原文存档，非 JSON；解析漏字段时回看模型原始写法）</div>
+                    <pre class="font-mono p-3" style="background:rgba(15,23,42,.8);border:1px solid rgba(255,255,255,.08);border-radius:10px;font-size:.78rem;max-height:220px;overflow:auto;white-space:pre-wrap;word-break:break-all;">${esc(r.raw_json || '-')}</pre>
+                </div>
+                <div class="mb-1">
+                    <div class="label text-secondary" style="font-size:.75rem;">数据面板快照（当时喂给模型的原文）</div>
+                    <pre class="font-mono p-3" style="background:rgba(15,23,42,.8);border:1px solid rgba(255,255,255,.08);border-radius:10px;font-size:.75rem;max-height:320px;overflow:auto;white-space:pre-wrap;word-break:break-all;">${esc(r.panel_text || '-')}</pre>
+                </div>
+                <div class="text-secondary" style="font-size:.75rem;">关联研报 record_id=${r.record_id || '-'} · 面板指纹 ${esc(r.panel_hash || '-')} · 记录时间 ${fmtTime(r.created_at)}</div>
+            `;
+        } catch (e) {
+            body.innerHTML = '<div class="text-danger">加载失败</div>';
+        }
+    }
+
+    // 删除一条台账记录（仅台账行，研报全文 analysis_records 保留）。
+    // 行内按钮与详情弹窗按钮共用此函数；成功后关弹窗并刷新列表 + 汇总。
+    async function delVal(vid) {
+        if (!vid) return;
+        if (!confirm('确定删除这条回测台账记录？删除后不可恢复。')) return;
+        try {
+            const resp = await fetch(`/api/admin/valuation/${vid}/delete`, { method: 'POST' });
+            const d = await resp.json().catch(() => ({}));
+            if (resp.ok && d.status === 'success') {
+                const dm = document.getElementById('detailModal');
+                const inst = bootstrap.Modal.getInstance(dm);
+                if (inst) inst.hide();
+                loadRows();
+                loadSummary();
+            } else {
+                alert('删除失败：' + (d.detail || '未知错误'));
+            }
+        } catch (e) { alert('网络错误'); }
+    }
+
+    document.addEventListener('click', function (e) {
+        const p = e.target.closest('#valPager button[data-p]');
+        if (p) { curPage = parseInt(p.getAttribute('data-p'), 10); loadRows(); return; }
+        const d = e.target.closest('button[data-vid]');
+        if (d) { openDetail(d.getAttribute('data-vid')); return; }
+    });
+
+    document.getElementById('btnSearch').addEventListener('click', function () {
+        curPage = 1;
+        loadRows();
+    });
+    document.getElementById('btnReset').addEventListener('click', function () {
+        document.getElementById('fPref').value = '';
+        document.getElementById('fModel').value = '';
+        document.getElementById('fKw').value = '';
+        document.getElementById('fMin').value = '';
+        document.getElementById('fMax').value = '';
+        curPage = 1;
+        loadRows();
+    });
+    ['fKw', 'fModel', 'fMin', 'fMax'].forEach(function (id) {
+        document.getElementById(id).addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { curPage = 1; loadRows(); }
+        });
+    });
+    document.getElementById('fPref').addEventListener('change', function () { curPage = 1; loadRows(); });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadSummary();
+        loadRows();
+    });
+</script>
+{% endblock %}

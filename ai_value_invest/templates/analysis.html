@@ -1,0 +1,1869 @@
+{% extends "base.html" %}
+
+{% block title %}AI 股票分析 - 一键生成深度研报{% endblock %}
+{% block seo_description %}A股棱镜 AI 股票分析：选择投资风格与大模型，一键生成覆盖财报解读、估值测算、风险评估的深度个股研报。{% endblock %}
+{% block seo_keywords %}A股棱镜,AI股票分析,个股深度研报,财报解读,估值测算,风险评估{% endblock %}
+
+{% block description %}
+A股棱镜为您提供 {{ stock_name }} ({{ stock_code }}) 的最新深度分析报告，支持多种投资风格与大模型自选。
+{% endblock %}
+
+{% block keywords %}
+{{ stock_name }}, {{ stock_code }}, 股票研报, AI分析, 价值投资, 技术分析
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== 分析页全局 ===== */
+    .analysis-page {
+        padding-top: 110px;
+        padding-bottom: 60px;
+    }
+
+    .ds-card {
+        background: rgba(19, 27, 46, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.28);
+        backdrop-filter: blur(14px);
+        transition: all 0.3s ease;
+    }
+    .ds-card:hover {
+        border-color: rgba(56, 189, 248, 0.18);
+    }
+
+    /* 图层顺序修复：ds-card 的 backdrop-filter 创建堆叠上下文，困住内部
+       #stockSuggest / #modelPanel 的 z-index；DOM 靠后的 .terminal-window
+       （relative, z-auto）按文档顺序绘制在溢出面板之上。ds-card 原本不是
+       定位元素（z-index 对静态元素不生效），补 position:relative；
+       面板打开时给卡片整体抬 z（backdrop-filter 上下文必须整体抬升）。 */
+    .ds-card { position: relative; }
+    .ds-card.panel-open { z-index: 1200; }
+
+    .ds-title {
+        color: #f8fafc;
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .ds-title i { color: #38bdf8; }
+
+    /* ===== 模型选择器 ===== */
+    .model-selector {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 6px 14px;
+    }
+    .model-selector .label {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    #modelDropdownBtn {
+        background: transparent;
+        border: none;
+        color: #f8fafc;
+        font-weight: 600;
+        font-size: 0.95rem;
+        padding: 0;
+        box-shadow: none !important;
+        display: inline-flex; align-items: center; gap: 4px;
+    }
+    /* ===== 模型面板（搜索 + 渠道分组 + 滚动） ===== */
+    .mpanel-wrap { position: relative; display: inline-block; }
+    .mpanel {
+        position: absolute;
+        top: calc(100% + 10px);
+        left: 50%;
+        transform: translateX(-50%);
+        width: 520px;
+        max-width: calc(100vw - 48px);
+        background: #0f172a;
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        border-radius: 14px;
+        box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7);
+        z-index: 1050;
+        overflow: hidden;
+    }
+    .mpanel-search {
+        display: flex; align-items: center; gap: 8px;
+        padding: 10px 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.03);
+    }
+    .mpanel-search i { color: #64748b; font-size: 0.85rem; }
+    .mpanel-search input {
+        flex: 1; background: transparent; border: none; outline: none;
+        color: #f8fafc; font-size: 0.9rem; min-width: 0;
+    }
+    .mpanel-search input::placeholder { color: #64748b; }
+    .mpanel-list {
+        max-height: 380px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 8px 0 10px;
+    }
+    .mpanel-list::-webkit-scrollbar { width: 8px; }
+    .mpanel-list::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 4px; }
+    .mpanel-group-title {
+        padding: 8px 16px 4px;
+        color: #64748b;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .mpanel-group-title .cnt { color: #475569; font-weight: 500; }
+    /* 推荐模型组标题：金色品牌色，与条目内「推荐」星标呼应 */
+    .mpanel-rec-title { color: #fbbf24; }
+    .mpanel-rec-title .cnt { color: rgba(251, 191, 36, .55); }
+    .mpanel-tip {
+        color: #475569; font-size: .68rem; font-weight: 500;
+        text-transform: none; letter-spacing: 0;
+        margin-left: auto;
+    }
+    /* 推荐标记（星标）：组标题旁与模型条目内通用 */
+    .mpanel-rec { color: #38bdf8; font-size: .7rem; font-weight: 700; margin-left: 2px; }
+    .badge-model.rec {
+        background: rgba(251, 191, 36, 0.14);
+        color: #fbbf24;
+        border: 1px solid rgba(251, 191, 36, 0.35);
+    }
+    .mpanel-empty { padding: 24px 16px; color: #64748b; font-size: 0.85rem; text-align: center; }
+    .mpanel-item {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 16px;
+        cursor: pointer;
+        transition: background .12s;
+        font-size: 0.9rem;
+        color: #e2e8f0;
+    }
+    .mpanel-item:hover { background: rgba(56, 189, 248, 0.1); }
+    .mpanel-item.active { background: rgba(56, 189, 248, 0.16); color: #38bdf8; }
+    .mpanel-item.active .mpanel-check { visibility: visible; }
+    .mpanel-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .mpanel-row1 { display: flex; align-items: center; gap: 6px; }
+    .mpanel-name { font-weight: 600; }
+    .mpanel-tagline {
+        font-size: 0.72rem; color: #94a3b8; line-height: 1.35;
+        white-space: normal; word-break: break-word;
+    }
+    .mpanel-lock { color: #fbbf24; font-size: 0.7rem; }
+    .mpanel-item.locked { opacity: 0.55; cursor: not-allowed; }
+    .mpanel-item.unhealthy .mpanel-name { text-decoration: line-through; text-decoration-color: rgba(248, 113, 113, .6); }
+    .mpanel-item.unhealthy { opacity: 0.72; }
+    .mpanel-check { visibility: hidden; color: #38bdf8; font-size: 0.8rem; flex-shrink: 0; }
+    /* 模型头像：缺省走首字母圆，URL 走背景图 */
+    .mavatar {
+        width: 30px; height: 30px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(56,189,248,.35), rgba(139,92,246,.35));
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 15px; color: #f8fafc; font-weight: 700;
+        flex-shrink: 0;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+    }
+    .mavatar-img {
+        background-size: cover; background-position: center; background-color: transparent;
+        text-indent: -9999px; overflow: hidden;
+    }
+    #modelDropdownBtn .mavatar { width: 24px; height: 24px; font-size: 12px; border-radius: 6px; margin-right: 6px; }
+    .mp-btn-text { flex: 1; text-align: left; }
+    .mpanel-down-tip {
+        font-size: 11px; color: #f87171; line-height: 1.4;
+        white-space: normal; padding: 0 16px 6px 34px;
+    }
+    .model-item {  /* 兼容旧 class：文档/截图工具可能引用 */
+        color: #e2e8f0; font-size: 0.9rem;
+    }
+    .model-down-tip {
+        font-size: 11px; color: #f87171; margin-top: 3px; line-height: 1.4;
+        white-space: normal; opacity: .9;
+    }
+
+    /* ===== 股票建议框：改为「JS 动态定宽定位于输入框」，不再用 left:52px/right:112px 硬编码偏移。
+       硬编码在窄屏/换按钮文案时会与输入框错位。现在 left/width 由 positionSuggest() 实时算出。 */
+    .suggest-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0; right: 0;      /* JS 会在显示前覆盖为精确值 */
+        z-index: 60;
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 14px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+        max-height: 320px;
+        overflow-y: auto;
+        padding: 6px;
+        display: none;
+    }
+
+    .badge-model {
+        font-size: 0.65rem;
+        padding: 2px 7px;
+        border-radius: 6px;
+        font-weight: 700;
+    }
+    .badge-model.norm { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25); }
+    .badge-model.free { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25); }
+    .badge-model.vip { background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-model.down { background: rgba(248, 113, 113, 0.12); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.3); }
+    .badge-model.warn { background: rgba(148, 163, 184, 0.16); color: #64748b; border: 1px solid rgba(148, 163, 184, 0.35); }
+
+    /* ===== 搜索区 ===== */
+    .search-hero {
+        position: relative;
+        background: rgba(15, 23, 42, 0.55);
+        border: 1px solid rgba(56, 189, 248, 0.15);
+        border-radius: 16px;
+        padding: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+        transition: all 0.3s ease;
+    }
+    .search-hero:focus-within {
+        border-color: rgba(56, 189, 248, 0.45);
+        box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.08), 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+    /* 外链（如 /analysis?code=300043）带入股票后的视觉引导：
+       输入框文字变蓝 + 「立即分析」按钮轻微呼吸几下，提示用户确认配置后再点击 */
+    .search-hero input.is-prefilled { color: #38bdf8; }
+    .btn-attention { animation: btnPulse 1.8s ease-in-out 3; }
+    @keyframes btnPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+        50%      { box-shadow: 0 0 0 6px rgba(56, 189, 248, 0.18); }
+    }
+    /* 有建议面板展示时抬高层级感（面板 z-index 60 已覆盖按钮，配合 ds-card.panel-open 使用）。
+       注意：此处原本重复定义了一份带 left:52px / right:112px 硬编码偏移的 .suggest-dropdown，
+       因定义在后而覆盖了上面那条「由 JS 动态定位」的正确规则，窄屏下会用错误偏移渲染，
+       已删除——定位一律交给 positionSuggest() 写入内联 left/right。 */
+    .suggest-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 9px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background .15s;
+    }
+    .suggest-item:hover, .suggest-item.active { background: rgba(56, 189, 248, 0.12); }
+    .suggest-name { color: #e2e8f0; font-size: 13px; }
+    .suggest-code { color: #94a3b8; font-size: 12px; font-family: var(--font-mono, monospace); }
+    .suggest-market { font-size: 11px; padding: 1px 7px; border-radius: 6px; }
+    .suggest-market.A { background: rgba(56, 189, 248, 0.15); color: #7dd3fc; }
+    .suggest-market.HK { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+    .suggest-empty { padding: 12px; color: #64748b; font-size: 13px; text-align: center; }
+    .suggest-loading { padding: 12px; color: #64748b; font-size: 13px; text-align: center; }
+
+    .search-icon {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #38bdf8;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+    #analysisInput {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: #f8fafc;
+        font-size: 1.1rem;
+        font-weight: 500;
+        outline: none;
+        min-width: 0;
+    }
+    #analysisInput::placeholder { color: #64748b; }
+    .btn-run {
+        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+        border: none;
+        color: #fff;
+        padding: 12px 28px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1rem;
+        box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+        transition: all 0.25s ease;
+        flex-shrink: 0;
+    }
+    .btn-run:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45); }
+    .btn-run:disabled { background: #334155; box-shadow: none; opacity: 0.7; cursor: not-allowed; }
+
+    /* 分析中：底色已由 :disabled 压暗，这里补三件事 ——
+       ① 光标改成 progress（not-allowed 会让人以为操作被拒绝，其实是「正在做」）
+       ② 把透明度提回来一点，否则置灰后秒数看不清，反而更像死掉
+       ③ 关掉悬停位移，避免和 :disabled 的规则打架 */
+    .btn-run.btn-running {
+        cursor: progress;
+        opacity: .9;
+        color: #e2e8f0;
+    }
+    .btn-run.btn-running:hover { transform: none; box-shadow: none; }
+
+    /* 取消分析：低攻击性的文字按钮，不跟「立即分析」抢视觉重心 */
+    .btn-cancel-analysis {
+        background: transparent;
+        border: 1px solid #475569;
+        color: #94a3b8;
+        padding: 6px 18px;
+        border-radius: 999px;
+        font-size: .85rem;
+        transition: all .2s ease;
+    }
+    .btn-cancel-analysis:hover {
+        border-color: #f87171;
+        color: #f87171;
+        background: rgba(248, 113, 113, .08);
+    }
+
+    /* ===== 投资偏好卡片 ===== */
+    .pref-grid {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        gap: 14px;
+    }
+    @media (min-width: 768px) { .pref-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1200px) { .pref-grid { grid-template-columns: repeat(3, 1fr); } }
+
+    .pref-card {
+        position: relative;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 16px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .pref-card:hover { border-color: rgba(56, 189, 248, 0.35); background: rgba(255, 255, 255, 0.05); }
+    .pref-card.active {
+        border-color: #38bdf8;
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(129, 140, 248, 0.05));
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.12);
+    }
+    .pref-card.deep {
+        border-color: rgba(245, 158, 11, 0.35);
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.02));
+    }
+    .pref-card.deep:hover { border-color: rgba(245, 158, 11, 0.55); }
+    .pref-card.deep.active {
+        border-color: #f59e0b;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(245, 158, 11, 0.06));
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+    }
+    .pref-card.locked {
+        opacity: 0.55;
+        cursor: not-allowed;
+        filter: grayscale(0.3);
+    }
+    .pref-card.locked:hover { border-color: rgba(245, 158, 11, 0.35); }
+
+    .radio-circle {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid rgba(148, 163, 184, 0.5);
+        margin-top: 2px;
+        flex-shrink: 0;
+        position: relative;
+        transition: all 0.2s;
+    }
+    .pref-card.active .radio-circle {
+        border-color: #38bdf8;
+        background: #38bdf8;
+    }
+    .pref-card.deep.active .radio-circle {
+        border-color: #f59e0b;
+        background: #f59e0b;
+    }
+    .radio-circle::after {
+        content: '';
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: #0f172a;
+        transition: transform 0.2s;
+    }
+    .pref-card.active .radio-circle::after { transform: translate(-50%, -50%) scale(1); }
+
+    .pref-body { flex: 1; min-width: 0; }
+    .pref-title {
+        color: #f8fafc;
+        font-weight: 700;
+        font-size: 0.98rem;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .pref-tagline {
+        color: #94a3b8;
+        font-size: 0.8rem;
+        line-height: 1.45;
+    }
+    .pref-badges {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        display: flex;
+        gap: 6px;
+    }
+    .pref-badge {
+        font-size: 0.65rem;
+        padding: 3px 8px;
+        border-radius: 20px;
+        font-weight: 700;
+    }
+    .pref-badge.deep { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .pref-badge.vip { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .pref-badge.free { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25); }
+
+    .lock-icon {
+        color: #94a3b8;
+        font-size: 0.85rem;
+    }
+
+    /* ===== 用量提示 ===== */
+    .locked-notice {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.25);
+        color: #fbbf24;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* ===== 右侧边栏 ===== */
+    .sidebar-card { margin-bottom: 20px; }
+    .sidebar-card:last-child { margin-bottom: 0; }
+
+    .stat-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+    .stat-box {
+        text-align: center;
+        padding: 12px 6px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .stat-num {
+        font-size: 1.4rem;
+        font-weight: 800;
+        font-family: 'Orbitron', sans-serif;
+    }
+    .stat-box.up .stat-num { color: #ef4444; }
+    .stat-box.down .stat-num { color: #22c55e; }
+    .stat-box.flat .stat-num { color: #94a3b8; }
+    .stat-label { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+
+    .index-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .index-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        padding: 6px 10px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.02);
+    }
+    .index-name { color: #cbd5e1; font-weight: 600; }
+    .index-value { font-family: 'Orbitron', sans-serif; }
+    .index-value.up { color: #ef4444; }
+    .index-value.down { color: #22c55e; }
+
+    .sentiment-bar {
+        height: 8px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+        display: flex;
+        margin: 12px 0 8px;
+    }
+    .sentiment-bull { background: #ef4444; }
+    .sentiment-bear { background: #22c55e; }
+
+    .hot-list { display: flex; flex-direction: column; gap: 8px; }
+    .hot-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.02);
+        font-size: 0.85rem;
+        transition: background 0.2s;
+    }
+    .hot-row:hover { background: rgba(56, 189, 248, 0.08); }
+    .hot-rank {
+        width: 22px; height: 22px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 6px;
+        background: rgba(255,255,255,0.08);
+        color: #94a3b8;
+        font-size: 0.75rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    .hot-rank.top { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .hot-name { color: #f8fafc; font-weight: 600; flex: 1; }
+    .hot-change { font-family: 'Orbitron', sans-serif; }
+    .hot-change.up { color: #ef4444; }
+    .hot-change.down { color: #22c55e; }
+
+    /* ===== 结果终端 ===== */
+    .terminal-window {
+        background: #0f172a;
+        border: 1px solid rgba(56, 189, 248, 0.15);
+        border-radius: 16px;
+        overflow: hidden;
+        position: relative;
+        min-height: 70vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.55);
+    }
+    .terminal-header {
+        background: rgba(30, 41, 59, 0.9);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85rem;
+    }
+    .status-indicator { display: flex; align-items: center; gap: 8px; color: #94a3b8; }
+    .indicator-light { width: 8px; height: 8px; border-radius: 50%; background: #64748b; transition: 0.3s; }
+    .indicator-light.processing { background: #38bdf8; box-shadow: 0 0 10px #38bdf8; animation: pulse-blue 1.5s infinite; }
+    .indicator-light.success { background: #10b981; box-shadow: 0 0 5px #10b981; }
+    .indicator-light.error { background: #ef4444; }
+    @keyframes pulse-blue { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+    .processing-container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 40px;
+    }
+    .progress-wrapper { width: 100%; max-width: 600px; margin-bottom: 30px; }
+    .progress-info { display: flex; justify-content: space-between; margin-bottom: 8px; color: #38bdf8; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; }
+    .progress-track { height: 4px; background: #334155; border-radius: 2px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #38bdf8, #818cf8); width: 0%; transition: width 0.3s ease-out; box-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
+    .log-list { width: 100%; max-width: 600px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #cbd5e1; display: flex; flex-direction: column; gap: 6px; }
+    .log-item { display: grid; grid-template-columns: 70px 1fr; gap: 12px; opacity: 0; transform: translateY(5px); animation: slideIn 0.2s forwards; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px; }
+    .log-time { color: #64748b; }
+    .log-content { color: #e2e8f0; }
+    .log-content.highlight { color: #38bdf8; }
+    .log-content.warning { color: #facc15; }
+    @keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
+
+    .terminal-footer {
+        background: rgba(30, 41, 59, 0.9);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 10px 20px;
+        font-size: 0.75rem;
+        color: #64748b;
+        display: flex;
+        justify-content: space-between;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .usage-pill { font-size: 0.75rem; color: #94a3b8; white-space: nowrap; }
+    .quota-bar { height: 4px; background: #334155; border-radius: 2px; overflow: hidden; width: 120px; }
+    .quota-fill { height: 100%; background: linear-gradient(90deg, #38bdf8, #818cf8); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container analysis-page" data-page-node-id="9WFPeN9HLkEcyHHbotDhuX">
+
+    <div class="row g-4" data-page-node-id="HNQPeaaQca4FZ9iNj3MH6H">
+        <!-- 左侧主区 -->
+        <div class="col-xl-8" data-page-node-id="wm7eC84hnWKuXatIpGVLFg">
+            <div class="ds-card mb-4" data-page-node-id="Pym7YI6msDvB4nnZojsGDy">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4" data-page-node-id="QkDhwZGbqUXQD4g1NuzPEE">
+                    <!-- 模型选择：自定义面板（Bootstrap 原生 dropdown 没有 max-height，
+                         37 个模型会把菜单撑到 2500px+，绝大部分条目在视口外根本点不到。
+                         改为自渲染面板：搜索过滤 + 渠道分组 + 固定高度滚动。 -->
+                    <div class="model-selector" data-page-node-id="vlBBdBHMzdKE0ghhT5JdmL">
+                        <span class="label" data-page-node-id="qphZmEOrt0yTUdFgylMvdQ"><i class="fa-solid fa-robot me-1" data-page-node-id="BuPUf1riXOOf6TEynOBX0j"></i>选择模型</span>
+                        <div class="mpanel-wrap" data-page-node-id="KtC9zPQ46VB1KgfoDDdssS">
+                            <button type="button" id="modelDropdownBtn" aria-expanded="false" aria-haspopup="true" data-page-node-id="WkFpZQJ01lZXCTYa00hebY">
+                                <i class="fa-solid fa-robot me-2" data-page-node-id="nbdc6388jzeaChbKrGiat1"></i>加载中...
+                            </button>
+                            <div id="modelPanel" class="mpanel d-none" role="menu" data-page-node-id="L4rYZ3HM0iBgeLmQBROqcu">
+                                <div class="mpanel-search" data-page-node-id="gsOgIJSPnhU6fREiMilDet">
+                                    <i class="fa-solid fa-magnifying-glass" data-page-node-id="G5tdUu3CEAQYbg4C6lW9cs"></i>
+                                    <input type="text" id="modelSearchInput" placeholder="搜索模型名或渠道…" autocomplete="off" data-page-node-id="s27k9NEvvPuMoHInfQMiak">
+                                </div>
+                                <div class="mpanel-list" id="modelPanelList" data-page-node-id="b1Nt1SOY8whO7vG3dwd5YJ"><!-- JS 渲染 --></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 用量 -->
+                    <div class="d-flex align-items-center gap-3" data-page-node-id="atHWe6kFr3nBbyFoncTDFF">
+                        <div class="d-none d-md-block" data-page-node-id="5r1GjtCON83d15BNvRAckY">
+                            <div class="usage-pill" id="usageText" data-page-node-id="65lBfxcp3vX96zPeJcr1Jo">加载中...</div>
+                            <div class="quota-bar" data-page-node-id="qL04abS7LfEZkZeJhF8x2l"><div class="quota-fill" id="usageBar" style="width:0%" data-page-node-id="4Iaq6XocBJ4w8IvUNT8F8P"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 搜索框 -->
+                <div class="search-hero mb-4" data-page-node-id="BQYCNkc1OCsRk2YDnD0oKb">
+                    <div class="search-icon" data-page-node-id="dyE3vtcpHGnGJXzEa2Z8AM"><i class="fa-solid fa-magnifying-glass-chart" data-page-node-id="tqEePh40SFPo51mPDXeDCE"></i></div>
+                    <input type="text" id="analysisInput" autocomplete="off" placeholder="请输入股票代码（例如：600519）或公司名称..." data-page-node-id="W17WMUSWyOFETWtDjSGDrt">
+                    <button class="btn-run" id="btnRunAnalysis" data-page-node-id="t1oRwW68mo46nF5YmsUoKC"><i class="fa-solid fa-bolt me-2" data-page-node-id="ig8FPtTYsxVwi2rjFDKirm"></i>立即分析</button>
+                    <div id="stockSuggest" class="suggest-dropdown" data-page-node-id="KS3QIHN2erNDRK67DvVFg1"></div>
+                </div>
+
+                <!-- 投资偏好 -->
+                <div class="mb-2" data-page-node-id="bEzigOw3cxNk4DUFC3y89r">
+                    <div class="d-flex justify-content-between align-items-center mb-3" data-page-node-id="3rhwA1dU8KvBnxuuOQI6EM">
+                        <span class="ds-title mb-0" data-page-node-id="FqXYEUZxMpLX36wCVnCN3Y"><i class="fa-solid fa-compass" data-page-node-id="9IZfHyY6S1EvwLlp3CeaZv"></i>请选择您的偏好投资风格</span>
+                        <span class="text-secondary small" id="selectedPrefLabel" data-page-node-id="9cj0w6L3thentmBaihbf3s"></span>
+                    </div>
+                    <div class="pref-grid" id="preferenceSelector" data-page-node-id="GtirwQPRDJvRhNWCdI33Ur">
+                        <!-- JS 渲染 -->
+                    </div>
+                </div>
+
+                <div id="lockedNotice" class="locked-notice mt-3 d-none" data-page-node-id="rvpK8nnBHSBBTAwDuLgsX8">
+                    <i class="fa-solid fa-lock me-2" data-page-node-id="WEHrsDWT3tHOZGYPRaUv95"></i><span id="lockedText" data-page-node-id="90NUmJPBy2n6zjYykwQw5i"></span>
+                </div>
+            </div>
+
+            <!-- 结果终端 -->
+            <div class="terminal-window" data-page-node-id="U5BfjfXOksCKkEorSC9aE6">
+                <div class="terminal-header" data-page-node-id="pkGZlCSAxAHCknM4aJ3qnj">
+                    <div class="status-indicator" data-page-node-id="ZNWl82VG7DA21NPzOrb9yv">
+                        <div id="statusLight" class="indicator-light" data-page-node-id="mWjmAhqKXaD6DkuXgFQxyE"></div>
+                        <span id="systemStatusText" data-page-node-id="SNQeCmef0FHY7OLJaqF0CE">系统就绪 / Waiting for input</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3" data-page-node-id="bj7SnpnRJawPUXrJ61pTFO">
+                        <span class="d-none d-md-block text-muted" data-page-node-id="yjFv4ebEQYI8q3AIXLgAVh">延迟: <span id="latencyDisplay" class="text-light" data-page-node-id="UAmLY7QduJ7QW3vJC4CV4q">--</span></span>
+                        <button class="btn btn-sm btn-outline-secondary font-mono" id="btnDownloadPdf" disabled style="border-color: #475569; color: #94a3b8;" data-page-node-id="sxmJGXOVDA2hQTm0C5yMpV">
+                            <i class="fa-solid fa-file-pdf me-2" data-page-node-id="dCOnSuF4qMBJAOgY4REody"></i>导出报告
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary font-mono" id="btnWatch" disabled style="border-color: #475569; color: #94a3b8;" onclick="toggleWatch()" data-page-node-id="DjrqIC4zgRr6rechS8GXLo">
+                            <i class="fa-regular fa-star me-2" data-page-node-id="eh6iPknmgDI19UYgFIFiCy"></i>收藏
+                        </button>
+
+                        <button class="btn-cancel-analysis d-none" id="btnCancelAnalysis" type="button" onclick="cancelAnalysis()" data-page-node-id="yhF7WFAXBqEjaRlFgNaYDl">取消分析</button>
+                    </div>
+                </div>
+
+                <div class="flex-grow-1 position-relative" style="overflow-y: auto; scroll-behavior: smooth;" data-page-node-id="CZ0b8GTm9PawA5tluk5SDL">
+                    <div id="emptyState" class="position-absolute top-50 start-50 translate-middle text-center text-muted" data-page-node-id="7L5xsyWLhyZlXXdz9DlZvT">
+                        <div class="mb-4" data-page-node-id="2xUVLq5Ni9zF9u7oTS1jxg"><i class="fa-solid fa-layer-group fa-4x opacity-25" data-page-node-id="JxGw9zIKRH4eKvWoCaGdfZ"></i></div>
+                        <h5 class="fw-normal text-light mb-2" data-page-node-id="RvoJDS4CNXa2AmIiTkoC1W">智能投研终端 v3.0</h5>
+                        <p class="small opacity-50 font-mono" data-page-node-id="lTZO6Lca000l4tf8GtHA7s">输入代码并选择投资风格，启动 AI 全维扫描</p>
+                    </div>
+                    <div id="loadingState" class="processing-container" style="display: none;" data-page-node-id="JYdWVvadWJp3og5qG7GDKy">
+                        <div class="progress-wrapper" data-page-node-id="8kMVGyAwem9nfXAX8VFmly">
+                            <div class="progress-info" data-page-node-id="daIpstNKuIF4P0qaG2KdOy"><span id="progressStep" data-page-node-id="2lOgmhHgn4FN3635Z1EjtQ">初始化系统资源...</span><span id="progressPercent" data-page-node-id="0qIFV7AiQyrzNjbbsWEvYh">0%</span></div>
+                            <div class="progress-track" data-page-node-id="tHSPud70GDgRCfDw6c3hQo"><div id="progressBar" class="progress-bar-fill" data-page-node-id="bJ6SOkuVYivzF0HYrMYevO"></div></div>
+                        </div>
+                        <div class="log-list" id="logList" data-page-node-id="eO2D6MEbn5BDW8gfDSQOqE"></div>
+                    </div>
+                    <div id="reportContent" class="markdown-body p-4 p-md-5" style="display: none;" data-page-node-id="pxFdTNOMbOxMg6nH8ajZDI"></div>
+                </div>
+
+                <div class="terminal-footer" data-page-node-id="aRAQAkFnllkVHIEXa14zuT">
+                    <span data-page-node-id="GMB5iTPaAtVrFSpZViFcSU">SESSION: <span id="sessionId" data-page-node-id="B6PvOu2XBuULg3sQBTRWVH">--</span></span>
+                    <span data-page-node-id="AwfWtbVdIrAMAmYribuHGF">ENGINE: <span id="engineLabel" data-page-node-id="taCALykhBG6jKfiHxWAKRs">--</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧边栏 -->
+
+        {% if sb('analysis.market_overview').enabled
+              or sb('analysis.sentiment').enabled
+              or sb('analysis.hot_stocks').enabled %}
+        <div class="col-xl-4 d-flex flex-column" data-page-node-id="zqtmeQgxgoEwdcwgoGC55z">
+            {% if sb('analysis.market_overview').enabled %}
+            <!-- 市场总览 -->
+            {% set mo = sb('analysis.market_overview') %}
+            <div class="ds-card sidebar-card" style="order:{{ sb('analysis.market_overview').order }};" data-page-node-id="Mc0jcPZhJi17cHemb2s8K1">
+                <div class="ds-title" data-page-node-id="SgOzWdufVzeHsPL5SMvaLZ"><i class="fa-solid fa-chart-pie" data-page-node-id="LeuzydHWENMhaREk22Dvhf"></i>市场总览</div>
+                {% if mo.options.show_limit_count or mo.options.show_north %}
+                <div class="stat-row" data-page-node-id="bj5GCFkyFH6p0B9KdWBWGv">
+                    <div class="stat-box up" data-page-node-id="JxDyNHzpHThCx3tbFrcENG">
+                        <div class="stat-num" data-page-node-id="c17F38ESb1uoAs2uXV8HlQ">{{ market_data.volume or '--' }}</div>
+                        <div class="stat-label" data-page-node-id="DEtiMZUgSY7F75KkzkFkHR">两市成交额(亿)</div>
+                    </div>
+                    {% if mo.options.show_limit_count %}
+                    <div class="stat-box flat" data-page-node-id="MDjR9fXLBYIzSFtDSqWiMV">
+                        <div class="stat-num" data-page-node-id="X6Xl0NcHCiue2L41819xou">{{ market_data.limit_count or '--' }}</div>
+                        <div class="stat-label" data-page-node-id="n9DgMlb0SbgCuD1oGCBlIj">龙虎榜家数</div>
+                    </div>
+                    {% endif %}
+                    {% if mo.options.show_north %}
+                    <div class="stat-box down" data-page-node-id="PVmKahMBYxm7kcjVSfmbP6">
+                        <div class="stat-num" data-page-node-id="YrkTQp8xKRAS73VMhiaVu4">{{ market_data.north_fund or '--' }}</div>
+                        <div class="stat-label" data-page-node-id="8E0ZxPAHlbVw930knp9j6E">北向净流入{% if market_data.north_date and market_data.north_date != market_data.trade_date %}<span class="opacity-75" style="font-size:.66rem" data-page-node-id="jBdKZP4t9tNbzAHgJ08Dto"> ({{ market_data.north_date[4:6] }}-{{ market_data.north_date[6:8] }})</span>{% endif %}</div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% if mo.options.show_breadth and market_data.breadth_total and market_data.breadth_total != '-' %}
+                <div class="d-flex justify-content-between small px-1 mb-2" style="gap:8px;" data-page-node-id="WhNnVG8oB17KqlE4hnOyzl">
+                    <span style="color:#f87171;" data-page-node-id="uuTLsK9Zu6VZWtb90YFVsl">涨 {{ market_data.up_count }}</span>
+                    <span class="text-secondary" data-page-node-id="DlKAhzZRFJC3L3H8XxffUN">平 {{ market_data.flat_count }}</span>
+                    <span style="color:#34d399;" data-page-node-id="RYvn5SXcyPphBNQ0NsRtIh">跌 {{ market_data.down_count }}</span>
+                </div>
+                {% endif %}
+                {% if mo.options.show_indices %}
+                <div class="index-list" data-page-node-id="TQ4Bnl27Q1BZ0SHtu0530E">
+                    <div class="index-item" data-page-node-id="R2uoepn0ruTATYGcueDnuB">
+                        <span class="index-name" data-page-node-id="x9l5805dwWk3aBVN8TXKnA">上证指数</span>
+                        <span data-page-node-id="QBaBYFwNmZJu7y61Yny6xn">
+                            <span class="index-value" data-page-node-id="HqrTgHqRxMxZAC0b7ssyl2">{{ market_data.sh.price or '--' }}</span>
+                            <span class="index-value {% if market_data.sh.change_pct|float > 0 %}up{% elif market_data.sh.change_pct|float < 0 %}down{% endif %}">{{ market_data.sh.change_pct or '0.00' }}%</span>
+                        </span>
+                    </div>
+                    <div class="index-item" data-page-node-id="AiZAE4GUzg1Os6G9dKWXsK">
+                        <span class="index-name" data-page-node-id="12xA7dJRU5dKH74PHbOMtx">深证成指</span>
+                        <span data-page-node-id="2XoqK6ACsjZfaacFZEt8Hd">
+                            <span class="index-value" data-page-node-id="awKd2cPLuwpLaGEamnE5be">{{ market_data.sz.price or '--' }}</span>
+                            <span class="index-value {% if market_data.sz.change_pct|float > 0 %}up{% elif market_data.sz.change_pct|float < 0 %}down{% endif %}">{{ market_data.sz.change_pct or '0.00' }}%</span>
+                        </span>
+                    </div>
+                    <div class="index-item" data-page-node-id="OGIz9p0qkJCY3fWjDdNhD6">
+                        <span class="index-name" data-page-node-id="YHJgfGxp9SlnmKVe6hKz4c">创业板指</span>
+                        <span data-page-node-id="frf6uDPX8BuXWZ8YEl3LFZ">
+                            <span class="index-value" data-page-node-id="mb47P9sYHFL4sy5HBXiF84">{{ market_data.cy.price or '--' }}</span>
+                            <span class="index-value {% if market_data.cy.change_pct|float > 0 %}up{% elif market_data.cy.change_pct|float < 0 %}down{% endif %}">{{ market_data.cy.change_pct or '0.00' }}%</span>
+                        </span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if sb('analysis.sentiment').enabled %}
+            <!-- 市场情绪（真实指标：由龙虎榜涨跌比 + 北向资金方向计算） -->
+            <div class="ds-card sidebar-card" style="order:{{ sb('analysis.sentiment').order }};" data-page-node-id="k1ElU79utNCqZDKxuYwgFo">
+                <div class="ds-title" data-page-node-id="x5zme6fiX1CAPT9ekP8ZKl"><i class="fa-solid fa-bullseye" data-page-node-id="ljRuFt6o3h1vrvzvHAN4t1"></i>市场情绪</div>
+                <p class="text-secondary small mb-3" data-page-node-id="GsNa8rCdlekEAFv1xavaa7">数据来源：金融大数据 · 交易日 {{ market_data.trade_date or '--' }}</p>
+                <div class="sentiment-bar" data-page-node-id="rd5bVYdWiCzgCMMyhoSGUt">
+                    <div class="sentiment-bull" style="width:{{ market_data.sentiment or 50 }}%" data-page-node-id="FAiOLAWh4mZcF831l1gR44"></div>
+                    <div class="sentiment-bear" style="width:{{ 100 - (market_data.sentiment or 50) }}%" data-page-node-id="12cEbJFUMDLjtJCDt4Mlle"></div>
+                </div>
+                <div class="d-flex justify-content-between small" data-page-node-id="c8AqDJOeLlZoNNrnGSd2Me">
+                    <span style="color:#f87171;" data-page-node-id="Kxppe9uMiWyQjoNz7tXM7B">看涨 {{ market_data.sentiment or 50 }}%</span>
+                    <span style="color:#4ade80;" data-page-node-id="WxNHpjIZBqmsxGtSZC4za1">看跌 {{ 100 - (market_data.sentiment or 50) }}%</span>
+                </div>
+                <div class="text-center text-secondary small mt-3" data-page-node-id="DA7CG2soUiyAFo3UUdeZ9a">
+                    <div class="fw-bold" style="color:#38bdf8;font-size:1.1rem;" data-page-node-id="h4AtHVnltcHgopu9BWVhZA">{{ market_data.sentiment_label or '中性' }}</div>
+                    <div class="font-mono opacity-75" data-page-node-id="LA8zrJuuF9VBf23Z2A3bnP">恐慌 ← 情绪指针 → 贪婪</div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if sb('analysis.hot_stocks').enabled %}
+            {% set hs = sb('analysis.hot_stocks') %}
+            {% set use_local = hs.options.source == 'local' %}
+            <!-- 热门个股（数据源可在后台「系统边栏」切换：市场人气榜 / 本站分析榜） -->
+            <div class="ds-card sidebar-card" style="order:{{ sb('analysis.hot_stocks').order }};" data-page-node-id="6FD1jGyVEaxWzS5dtaT5nL">
+                <div class="ds-title" data-page-node-id="GWdWwIESlqtEelU4XnS0LF"><i class="fa-solid fa-fire-flame-curved" data-page-node-id="nmhU1cDPTV60h4qwV5cU6y"></i>{{ '本站热门分析' if use_local else '热门个股' }}</div>
+                <div class="hot-list" data-page-node-id="kjeiGw05ZcgbjWvhVj1XD9">
+
+                    {% if use_local %}
+                        {% for s in local_hot_stocks[:hs.options.limit] %}
+                        <a href="/stock/{{ s.code }}" class="text-decoration-none hot-row" data-page-node-id="ce4nsmxdbRT8xxCQinZtha">
+                            <div class="hot-rank {% if loop.index <= 3 %}top{% endif %}" data-page-node-id="engvuHkW8ekVGXh6bhukTT">{{ loop.index }}</div>
+                            <div class="hot-name" data-page-node-id="BCvJfcUgPva3TgBIiJ8f3r">{{ s.name }}<div class="text-secondary small font-mono" data-page-node-id="4m9ZwLsysWGP11ESW6Sb8t">{{ s.code }}</div></div>
+                            <div class="text-end" data-page-node-id="rXw0Gf5Vfes1jTMWf4Be2s">
+                                <div class="hot-change" style="color:#38bdf8;" data-page-node-id="vv8s6LAA1iELDTmrurGeTu">{{ s.cnt }} 次</div>
+                                <div class="text-secondary small font-mono" data-page-node-id="BlxOQRXv8h4TsFX2F0SXnN">近 7 天</div>
+                            </div>
+                        </a>
+                        {% else %}
+                        <div class="text-secondary small text-center py-3" data-page-node-id="NICgxiKCVNIbmJDWSbJlVP">近 7 天暂无分析记录</div>
+                        {% endfor %}
+                    {% else %}
+                        {% for s in hot_stocks[:hs.options.limit] %}
+                        <a href="/stock/{{ s.code }}" class="text-decoration-none hot-row" data-page-node-id="DKXCYCk4ixBlepAicX8d0a">
+                            <div class="hot-rank {% if loop.index <= 3 %}top{% endif %}" data-page-node-id="0EyZvrUmqQXJqBtIUPrWl0">{{ loop.index }}</div>
+                            <div class="hot-name" data-page-node-id="hv96KXCp0X9OdVdpFYSJBX">{{ s.name }}<div class="text-secondary small font-mono" data-page-node-id="D1Y8D5FHxMOgQMw7Fc7gxM">{{ s.code }}</div></div>
+                            <div class="text-end" data-page-node-id="1ijGMp2wEUZYU1OWeHeMzB">
+                                <div class="hot-change {% if s.change|float > 0 %}up{% elif s.change|float < 0 %}down{% endif %}">{{ s.price }}</div>
+                                <div class="hot-change {% if s.change|float > 0 %}up{% elif s.change|float < 0 %}down{% endif %}">{{ s.change }}%</div>
+                            </div>
+                        </a>
+                        {% else %}
+                        <div class="text-secondary small text-center py-3" data-page-node-id="kdoBIhfcWC9RgK3IqzRZn2">暂无热门个股数据</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // --- DOM 引用 ---
+    const analysisInput = document.getElementById('analysisInput');
+    const btnRun = document.getElementById('btnRunAnalysis');
+    const btnDownloadPdf = document.getElementById('btnDownloadPdf');
+    const reportContent = document.getElementById('reportContent');
+    const loadingState = document.getElementById('loadingState');
+    const emptyState = document.getElementById('emptyState');
+    const logList = document.getElementById('logList');
+    const systemStatusText = document.getElementById('systemStatusText');
+    const statusLight = document.getElementById('statusLight');
+    const progressBar = document.getElementById('progressBar');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressStep = document.getElementById('progressStep');
+    const engineLabel = document.getElementById('engineLabel');
+    const usageText = document.getElementById('usageText');
+    const usageBar = document.getElementById('usageBar');
+    const lockedNotice = document.getElementById('lockedNotice');
+    const lockedText = document.getElementById('lockedText');
+
+    document.getElementById('sessionId').innerText = Math.random().toString(36).substr(2, 9).toUpperCase();
+
+    let currentStockName = "Analysis_Report";
+    let currentWatchCode = "";
+
+    // --- 运行态：防连点 / 可取消 ---
+    // 事故背景（2026-08-31）：按钮运行期间没有禁用，用户以为卡住就连点，
+    //   同一只股票 1 分钟落了 10 条记录、扣 10 次配额。
+    //   服务端 /api/analyze 也加了「同用户同时只允许一个分析」的锁（409），
+    //   但前端必须先把连点挡掉——那是绝大多数误触的场景，而且服务端锁挡不住的
+    //   「等待期间重复点击」，前端看到的是同一个页面。
+    let isAnalyzing = false;     // 正在分析：忽略一切新的提交请求
+    let analysisAbort = null;    // AbortController，供「取消分析」中断请求
+    let runElapsedTimer = null;  // 按钮上的已耗时计时器
+    const RUN_BTN_IDLE_HTML = '<i class="fa-solid fa-bolt me-2"></i>立即分析';
+
+    // 按钮切成「运行中」外观：置灰 + 转圈 + 实时秒数（同时显示取消按钮）。
+    // ⚠️ 为什么要显示秒数：用户连点的根本原因是「不知道有没有在跑」，
+    //    光变灰仍然像卡死；跳动的秒数是最直接的「活着」信号。
+    function setRunBusy(on) {
+        if (!btnRun) return;
+        clearInterval(runElapsedTimer);
+        runElapsedTimer = null;
+        const btnCancel = document.getElementById('btnCancelAnalysis');
+        if (on) {
+            btnRun.disabled = true;
+            btnRun.classList.add('btn-running');
+            const startedAt = Date.now();
+            const tick = () => {
+                const s = Math.round((Date.now() - startedAt) / 1000);
+                btnRun.innerHTML =
+                    '<i class="fa-solid fa-circle-notch fa-spin me-2"></i>分析中 ' + s + 's';
+            };
+            tick();
+            runElapsedTimer = setInterval(tick, 1000);
+            if (btnCancel) btnCancel.classList.remove('d-none');
+        } else {
+            btnRun.classList.remove('btn-running');
+            btnRun.innerHTML = RUN_BTN_IDLE_HTML;
+            btnRun.disabled = false;   // 真正的禁用判定交给 renderOptions()
+            if (btnCancel) btnCancel.classList.add('d-none');
+        }
+    }
+
+    // 取消分析：中断 fetch 即可。服务端会随生成器关闭释放并发锁，
+    // 已收到的那部分内容会照常落库（半份报告），本次已扣的额度不退还。
+    function cancelAnalysis() {
+        if (!isAnalyzing || !analysisAbort) return;
+        analysisAbort.abort();
+    }
+
+    // 选项与用户状态
+    // 服务端预填充，让首屏不必等 /api/analysis-options 就能渲染。
+    // ⚠️ default_model_id 必须一起注入：少了它，页面初始化那一刻不知道后台默认选了谁，
+    //    只能退回「第一个免费模型」，后台「AI 大模型」里的「默认」单选框就形同虚设。
+    let analysisOptions = {
+        models: {{ analysis_models | tojson }},
+        preferences: {{ analysis_preferences | tojson }},
+        user: {{ (analysis_user or {}) | tojson }},
+        default_model_id: {{ default_model_id | tojson }}
+    };
+    let selectedModelId = '';
+    let selectedPrefId = 'long_term_value';
+    let isVip = {{ 'true' if is_vip else 'false' }};
+    // 用户是否手动点选过模型。手动选过之后，接口数据回来时不要再覆盖他的选择。
+    let userPickedModel = false;
+    // 支持外部页面（首页等）通过 ?pref=xxx 直接指定投资风格、?model=xxx 直接指定模型
+    const _urlParams = new URLSearchParams(window.location.search);
+    const urlPrefId = _urlParams.get('pref') || '';
+    const urlModelId = _urlParams.get('model') || '';
+
+    function esc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function pickDefaultModel() {
+        const all = analysisOptions.models || [];
+        // 后台体检判定不可用的模型不能被默认选中（否则一进来就卡在坏模型上）
+        // 仅真·停用（配置层）才排除；瞬时体检失败仍可作为默认选择
+        const usable = all.filter(c => c.enabled && !isHardDown(c));
+        // 当前用户真能用得上的（免费用户拿不到 VIP 模型）
+        const mine = usable.filter(c => isVip || !c.vip_only);
+
+        // 1) 优先尊重后台「AI 大模型」里勾了「默认」的那个 ——
+        //    以前这里直接盲选第一个免费模型，后台的默认设置等于没用。
+        const preferId = analysisOptions.default_model_id || '';
+        const prefer = all.find(c => c.id === preferId);
+        if (prefer && prefer.enabled && !isHardDown(prefer) && (isVip || !prefer.vip_only)) {
+            return prefer.id;
+        }
+        // 2) 后台默认模型不可用 / 当前用户没权限 → 退到自己能用的第一个
+        return (mine[0] || usable[0] || all.find(c => c.enabled) || {}).id || '';
+    }
+
+    // 前台展示的是「别名」（如 豆包大模型 / deepseek-v4-pro），渠道概念对用户不可见
+    function modelLabel(m) {
+        if (!m) return '默认模型';
+        return m.alias || m.name || m.model_id || '默认模型';
+    }
+
+    // 按条目 id 找模型；找不到时按 model_id 兜底（同一接口同一模型换了条目 id 的场景）
+    function findModelById(id) {
+        const all = analysisOptions.models || [];
+        return all.find(c => c.id === id)
+            || all.find(c => (c.model_id || '') === id && c.enabled && !isHardDown(c))
+            || null;
+    }
+
+    async function loadOptions() {
+        try {
+            const r = await fetch('/api/analysis-options');
+            const data = await r.json();
+            if (data.status === 'success') {
+                analysisOptions = data;
+                isVip = !!(data.user && data.user.is_vip);
+                // 优先级：URL 显式指定（首页带过来的）> 用户手动点选 > 后台默认 > 第一个可用
+                // ⚠️ URL 指定的模型如果 VIP 锁定/不可用，会静默退回默认 —— 不弹窗打断用户。
+                if (urlModelId && !userPickedModel) {
+                    const target = findModelById(urlModelId);
+                    if (target && target.enabled && !isHardDown(target) && (isVip || !target.vip_only)) {
+                        selectedModelId = target.id;
+                    }
+                }
+                // 未选 / 选了个不存在的 / 选中的那个体检不通过 → 重新挑一个可用的。
+                // 用户手动点选过且那个模型仍然可用时，尊重用户的选择，不要覆盖。
+                const cur = (analysisOptions.models || []).find(c => c.id === selectedModelId);
+                if (!selectedModelId || !cur || isHardDown(cur) || !userPickedModel) {
+                    selectedModelId = pickDefaultModel();
+                }
+                renderOptions();
+                updateSelectionState();
+            }
+        } catch (e) { console.warn('加载分析选项失败', e); }
+    }
+
+    // ===== 模型面板：搜索过滤 + 渠道分组渲染 =====
+    // 旧版是 Bootstrap 原生 dropdown-menu：37 个模型把菜单撑到 2500px+ 且无滚动，
+    // 视口外的条目完全点不到。改为自渲染面板（固定 380px 高滚动 + 搜索 + 按渠道分组）。
+    function getModelFilter() {
+        const el = document.getElementById('modelSearchInput');
+        return (el ? el.value : '').trim().toLowerCase();
+    }
+
+    function modelMatchesFilter(c, kw) {
+        if (!kw) return true;
+        return (
+            (c.alias || '').toLowerCase().includes(kw) ||
+            (c.model_id || '').toLowerCase().includes(kw) ||
+            (c.channel_name || '').toLowerCase().includes(kw)
+        );
+    }
+
+    // ===== 推荐模型 =====
+    // 2026-09-06 改为后台驱动：每个模型在「后台设置」可勾选「推荐」+ 写一句特色文案。
+    // ⭐ 这里不再硬编码名单 —— 后台是唯一来源，前台直接读 m.featured / m.tagline。
+    // 这样运营想推哪个就勾哪个；硬编码在 JS 里会被 git 覆盖、还要重启。
+    function isRecommended(m) { return !!(m && m.featured); }
+    function recTip(m) { return (m && m.tagline) ? m.tagline : ''; }
+
+    // 推荐模型在同组内的相对顺序：先按后台配置的 featured 顺序，
+    // 后台配置的相对顺序没法直接拿到（API 没返回），就用 channel + alias 兜底稳定排序。
+    function _featOrder(a, b) {
+        const ka = (a.channel_id || '') + '|' + (a.alias || '');
+        const kb = (b.channel_id || '') + '|' + (b.alias || '');
+        return ka.localeCompare(kb, 'zh-Hans-CN');
+    }
+
+    // 只有「配置层明确停用」才算真·不可用（会禁用开跑）。
+    // 超时 / 连接错误 / 找不到模型 等瞬时体检失败，不应被当成「已停用」永久标记，仍可尝试使用。
+    function isHardDown(m) {
+        const msg = (m && (m.health_msg || '')) || '';
+        return /已停用|停用|未启用|请勾上行|channel_disabled|model_disabled/.test(msg);
+    }
+    // 排序（2026-09-06 重写）：
+    //   1) 推荐（featured）置顶 —— 跨组置顶，整体最前；
+    //   2) 普通（vip_only=false）次之；
+    //   3) VIP（vip_only=true）最末；
+    //   同层内：可用的在前，原顺序稳定。
+    // 用户原话「推荐的模型在免费和VIP排序后，再排序，推荐的更靠前（置顶作用）」
+    // —— 解读为整体置顶，不嵌进普通/VIP 子组。
+    function sortModelsForPanel(list) {
+        const key = m => (isRecommended(m) ? 0 : (m.vip_only ? 2 : 1));
+        return [...list].sort((a, b) => {
+            const d = key(a) - key(b);
+            if (d !== 0) return d;
+            const ah = isHardDown(a) ? 1 : 0, bh = isHardDown(b) ? 1 : 0;
+            if (ah !== bh) return bh - ah;                            // 可用的在前
+            return _featOrder(a, b);
+        });
+    }
+
+    // 模型头像：logo 是图片 URL（http(s) 外链或 /static/ 站内上传）→ 用背景图；
+    // 否则把 logo/alias 首字渲染成首字母圆。既支持真实 Logo 资源，
+    // 也允许后台偷懒直接填一个 emoji（🚀、🧠 等）当头像。
+    function modelAvatarHtml(m) {
+        const logo = (m && m.logo) ? String(m.logo).trim() : '';
+        if (/^(https?:\/\/|\/static\/)/i.test(logo)) {
+            return `<span class="mavatar mavatar-img" style="background-image:url('${esc(logo)}')"></span>`;
+        }
+        const text = logo || ((m && m.alias) ? m.alias.trim() : '?');
+        const initial = Array.from(text)[0] || '?';
+        return `<span class="mavatar">${esc(initial)}</span>`;
+    }
+
+    function renderModelPanel() {
+        const models = analysisOptions.models || [];
+        const listEl = document.getElementById('modelPanelList');
+        if (!listEl) return;
+        const kw = getModelFilter();
+        const visible = sortModelsForPanel(models.filter(c => modelMatchesFilter(c, kw)));
+        if (!visible.length) {
+            listEl.innerHTML = '<div class="mpanel-empty"><i class="fa-solid fa-face-meh me-2"></i>没有匹配「' + esc(kw) + '」的模型</div>';
+            return;
+        }
+        // 三层分组：推荐（置顶）→ 普通 → VIP。「普通」对应「免费可用的」，
+        // 不再使用「免费」字样避免与会员档位的「免费版」混淆（vip_only=false 只是不要求 VIP，不代表无成本）。
+        const recItems = visible.filter(c => isRecommended(c));
+        const normItems = visible.filter(c => !isRecommended(c) && !c.vip_only);
+        const vipItems = visible.filter(c => !isRecommended(c) && c.vip_only);
+
+        const renderItem = c => {
+            const active = selectedModelId === c.id;
+            const vipLocked = c.vip_only && !isVip;
+            const unhealthy = c.health_ok === false;
+            const hardDown = unhealthy && isHardDown(c);
+            const cls = 'mpanel-item' + (active ? ' active' : '') +
+                (vipLocked ? ' locked' : '') + (hardDown ? ' unhealthy' : '');
+            const tip = unhealthy ? ` title="${esc(c.health_msg || '该模型当前不可用')}"` : '';
+            const tags = [];
+            if (isRecommended(c)) {
+                tags.push('<span class="badge-model rec"><i class="fa-solid fa-star me-1"></i>推荐</span>');
+            }
+            if (hardDown) {
+                tags.push('<span class="badge-model down">已停用</span>');
+            } else if (unhealthy) {
+                tags.push('<span class="badge-model warn">体检未通过</span>');
+            } else if (c.vip_only) {
+                tags.push('<span class="badge-model vip">VIP</span>');
+            } else {
+                tags.push('<span class="badge-model norm">普通</span>');
+            }
+            const tagline = (c.tagline || '').trim()
+                ? `<div class="mpanel-tagline">${esc(c.tagline)}</div>` : '';
+            const lockIcon = vipLocked ? '<i class="fa-solid fa-lock mpanel-lock ms-1" title="需要 VIP 才能使用"></i>' : '';
+            let h = `<div class="${cls}" role="menuitem" data-model="${esc(c.id)}"${tip}>` +
+                '<i class="fa-solid fa-check mpanel-check"></i>' +
+                modelAvatarHtml(c) +
+                `<div class="mpanel-body">` +
+                    `<div class="mpanel-row1"><span class="mpanel-name">${esc(modelLabel(c))}</span>${lockIcon}${tags.join('')}</div>` +
+                    tagline +
+                `</div>` +
+            `</div>`;
+            if (unhealthy) {
+                h += '<div class="mpanel-down-tip"><i class="fa-solid fa-triangle-exclamation me-1"></i>' +
+                        esc(c.health_msg || '该模型当前不可用') + '</div>';
+            }
+            return h;
+        };
+
+        let html = '';
+        if (recItems.length) {
+            html += '<div class="mpanel-group-title mpanel-rec-title">' +
+                    '<i class="fa-solid fa-star"></i> 推荐模型' +
+                    '<span class="cnt">（' + recItems.length + '）</span>' +
+                    '<span class="mpanel-tip">站长力推，财报推理与研报表现更稳</span>' +
+                    '</div>';
+            html += recItems.map(renderItem).join('');
+        }
+        if (normItems.length) {
+            html += '<div class="mpanel-group-title"><i class="fa-solid fa-unlock"></i> 普通模型' +
+                    '<span class="cnt">（' + normItems.length + '）</span></div>';
+            html += normItems.map(renderItem).join('');
+        }
+        if (vipItems.length) {
+            html += '<div class="mpanel-group-title"><i class="fa-solid fa-crown"></i> VIP 模型' +
+                    '<span class="cnt">（' + vipItems.length + '）</span>' +
+                    '<span class="mpanel-tip">额度更高 / 解锁更强的分析能力</span>' +
+                    '</div>';
+            html += vipItems.map(renderItem).join('');
+        }
+        listEl.innerHTML = html;
+    }
+
+    // 面板所在 ds-card（backdrop-filter 堆叠上下文）整体抬升，见 CSS 注释。
+    // 注意：suggest 与 modelPanel 同住一张 ds-card，且各自的 document 级外点
+    // 处理器都会触发 hideSuggest/closeModelPanel —— 若各自 add/remove 会互相
+    // 冲掉（实测：点模型按钮开面板 → 冒泡到 suggest 外点处理器 → hideSuggest
+    // 又把 panel-open 撤了）。必须统一由 syncDsCardLift 按「任一面板开着」同步。
+    function dsCardOf(el) { return el ? el.closest('.ds-card') : null; }
+
+    function syncDsCardLift() {
+        const suggestVisible = stockSuggest && stockSuggest.style.display === 'block';
+        const modelOpen = !document.getElementById('modelPanel')?.classList.contains('d-none');
+        dsCardOf(stockSuggest)?.classList.toggle('panel-open', !!(suggestVisible || modelOpen));
+    }
+
+    function openModelPanel() {
+        const panel = document.getElementById('modelPanel');
+        if (!panel) return;
+        renderModelPanel();
+        panel.classList.remove('d-none');
+        syncDsCardLift();
+        document.getElementById('modelDropdownBtn').setAttribute('aria-expanded', 'true');
+        const si = document.getElementById('modelSearchInput');
+        if (si) { si.value = ''; si.focus(); }
+    }
+
+    function closeModelPanel() {
+        const panel = document.getElementById('modelPanel');
+        if (panel) panel.classList.add('d-none');
+        syncDsCardLift();
+        const btn = document.getElementById('modelDropdownBtn');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+
+    function renderOptions() {
+        const models = analysisOptions.models || [];
+        const preferences = analysisOptions.preferences || [];
+        const user = analysisOptions.user || {};
+        const tier = user.tier || { normal_daily: 2, deep_daily: 0 };
+
+        // 选中模型按钮（面板关闭时也要能看到当前选的是谁、健康与否）
+        const selModel = models.find(c => c.id === selectedModelId) || models[0] || {};
+        const selUnhealthy = selModel.health_ok === false;
+        const selHard = selUnhealthy && isHardDown(selModel);
+        const selBadge = selHard
+            ? '<span class="badge-model down ms-2">已停用</span>'
+            : (selUnhealthy
+                ? '<span class="badge-model warn ms-2">体检未通过</span>'
+                : (selModel.vip_only
+                    ? '<span class="badge-model vip ms-2">VIP</span>'
+                    : '<span class="badge-model norm ms-2">普通</span>'));
+        const btnEl = document.getElementById('modelDropdownBtn');
+        if (btnEl) btnEl.innerHTML =
+            modelAvatarHtml(selModel) +
+            `<span class="mp-btn-text">${esc(modelLabel(selModel))}</span>${selBadge}`;
+        if (!document.getElementById('modelPanel')?.classList.contains('d-none')) {
+            renderModelPanel();   // 面板开着时（例如体检刷新）同步重绘
+        }
+
+        // 底部状态栏 ENGINE 显示当前真实选中的模型（原来恒为 "--"）
+        if (engineLabel) engineLabel.innerText = modelLabel(selModel);
+
+        // 偏好卡片
+        const prefHtml = preferences.map(p => {
+            const active = selectedPrefId === p.id ? 'active' : '';
+            const locked = (p.vip_only && !isVip) ? 'locked' : '';
+            const deepClass = p.is_deep ? 'deep' : '';
+            let badges = '';
+            if (p.is_deep) badges += '<span class="pref-badge deep">深度</span>';
+            if (p.vip_only) badges += '<span class="pref-badge vip">VIP</span>';
+            if (!p.vip_only && !p.is_deep) badges += '<span class="pref-badge free">免费</span>';
+            const lockHtml = locked ? '<i class="fa-solid fa-lock lock-icon ms-2"></i>' : '';
+            return `<div class="pref-card ${deepClass} ${active} ${locked}" data-pref="${esc(p.id)}">
+                <div class="radio-circle"></div>
+                <div class="pref-body">
+                    <div class="pref-title">${esc(p.name)}${lockHtml}</div>
+                    <div class="pref-tagline">${esc(p.tagline)}</div>
+                </div>
+                <div class="pref-badges">${badges}</div>
+            </div>`;
+        }).join('');
+        const prefEl = document.getElementById('preferenceSelector');
+        if (prefEl) prefEl.innerHTML = prefHtml;
+
+        // 用量条
+        const currentPref = preferences.find(p => p.id === selectedPrefId) || {};
+        const isDeep = !!currentPref.is_deep;
+        // 管理员账户分析无限次：直接显示「无限」并充满进度条
+        if (user && user.unlimited) {
+            usageText.innerText = isDeep ? '深度分析：无限次（管理员）' : '普通分析：无限次（管理员）';
+            usageBar.style.width = '100%';
+        } else {
+            const nUsed = user.normal_used || 0;
+            const nTotal = tier.normal_daily + (user.bonus_normal || 0);
+            if (isDeep) {
+                // 深度剩余一律以服务端为准：它包含「每月体验」这种跨时间维度的额度，
+                // 前端按「每日额度 − 今日已用」算不准（上月用过、本月还有会显示成 0）。
+                const dRemain = (typeof user.deep_remain === 'number')
+                    ? user.deep_remain
+                    : Math.max(0, (tier.deep_daily || 0) + (tier.monthly_deep || 0) + (user.bonus_deep || 0) - (user.deep_used || 0));
+                const dTotal = (tier.deep_daily || 0) + (tier.monthly_deep || 0) + (user.bonus_deep || 0);
+                usageText.innerText = `深度剩余 ${dRemain} 次`;
+                usageBar.style.width = (dTotal > 0 ? Math.min(100, ((dTotal - dRemain) / dTotal) * 100) : 0) + '%';
+            } else {
+                usageText.innerText = `普通剩余 ${Math.max(0, nTotal - nUsed)} / ${nTotal}`;
+                usageBar.style.width = (nTotal > 0 ? Math.min(100, (nUsed / nTotal) * 100) : 0) + '%';
+            }
+        }
+    }
+
+    function updateSelectionState() {
+        const model = (analysisOptions.models || []).find(c => c.id === selectedModelId) || {};
+        const pref = (analysisOptions.preferences || []).find(p => p.id === selectedPrefId) || {};
+        const modelVipLocked = model.vip_only && !isVip;
+        const prefLocked = pref.vip_only && !isVip;
+        // 仅「配置层停用」才禁止开跑；瞬时体检失败（超时/连接）仍可尝试。
+        const modelDown = isHardDown(model);
+        const modelLocked = modelVipLocked || modelDown;
+
+        const label = modelLabel(model) + ' · ' + (pref.name || '长线价值投资');
+        document.getElementById('selectedPrefLabel').innerText = '当前：' + label;
+        engineLabel.innerText = label;
+
+        // ⚠️ 分析进行中必须优先于配置锁判定：模型体检/下拉切换都会重跑这个函数，
+        //    若不加这个分支，运行中的按钮会被 `btnRun.disabled = false` 重新点亮，
+        //    用户又能连点了——而 setRunBusy 只会在分析真正结束时复位。
+        if (isAnalyzing) {
+            btnRun.disabled = true;
+            lockedNotice.classList.add('d-none');
+        } else if (modelLocked || prefLocked) {
+            btnRun.disabled = true;
+            lockedNotice.classList.remove('d-none');
+            if (modelDown) {
+                lockedText.innerHTML = `「${esc(modelLabel(model))}」当前不可用${esc(model.health_msg ? '：' + model.health_msg : '')}，` +
+                    `请在下拉里换一个模型。失败不会扣次数，但建议换用体检通过的模型。`;
+            } else if (modelVipLocked && prefLocked) {
+                lockedText.innerHTML = `「${esc(modelLabel(model))}」与「${esc(pref.name)}」均为 VIP 专属，请 <a href="/pricing" class="text-warning">升级会员</a> 后使用。`;
+            } else if (modelVipLocked) {
+                lockedText.innerHTML = `「${esc(modelLabel(model))}」为 VIP 专属模型，请 <a href="/pricing" class="text-warning">升级会员</a> 后使用。`;
+            } else {
+                lockedText.innerHTML = `「${esc(pref.name)}」为 VIP 专属投资偏好，请 <a href="/pricing" class="text-warning">升级会员</a> 后使用。`;
+            }
+        } else {
+            btnRun.disabled = false;
+            lockedNotice.classList.add('d-none');
+        }
+    }
+
+    // 事件委托
+    document.addEventListener('click', function (e) {
+        // 模型面板开关
+        const mbtn = e.target.closest('#modelDropdownBtn');
+        if (mbtn) {
+            const panel = document.getElementById('modelPanel');
+            if (panel && panel.classList.contains('d-none')) openModelPanel();
+            else closeModelPanel();
+            return;
+        }
+        // 点面板外面就收起（面板内部点击不受影响）
+        if (!e.target.closest('.mpanel-wrap')) closeModelPanel();
+
+        const modelItem = e.target.closest('.mpanel-item');
+        if (modelItem) {
+            const id = modelItem.getAttribute('data-model');
+            const c = (analysisOptions.models || []).find(x => x.id === id);
+            if (c && c.vip_only && !isVip) return;
+            selectedModelId = id;
+            userPickedModel = true;   // 手动选过，后续接口刷新不要再改回默认
+            closeModelPanel();
+            renderOptions();
+            updateSelectionState();
+            return;
+        }
+        const prefCard = e.target.closest('.pref-card');
+        if (prefCard) {
+            const id = prefCard.getAttribute('data-pref');
+            const p = (analysisOptions.preferences || []).find(x => x.id === id);
+            if (p && p.vip_only && !isVip) return;
+            selectedPrefId = id;
+            renderOptions();
+            updateSelectionState();
+            return;
+        }
+    });
+
+    // 模型搜索框：输入即过滤（事件绑在面板容器上，input 不会触发 document click 收起）
+    document.getElementById('modelSearchInput')?.addEventListener('input', renderModelPanel);
+    // Esc 关闭面板；搜索框内按 Enter 选第一个可见模型
+    document.getElementById('modelPanel')?.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { closeModelPanel(); document.getElementById('modelDropdownBtn')?.focus(); return; }
+        if (e.key === 'Enter') {
+            const first = this.querySelector('.mpanel-item:not(.locked)');
+            if (first) { first.click(); }
+        }
+    });
+
+    // --- 进度与日志：改为「真实事件驱动」 ---
+    // 早期版本按固定时间轴推进（不论后端是否真的在做），并写死上游数据源名称，
+    // 既可能谎报进度（还没返回就到 95%），也与当前实际数据源不符。
+    // 现在进度只由真实事件推进：请求发出 → 服务端响应 → 首个流式分片 → 流结束。
+    function _setProgress(pct, msg, highlight, warning) {
+        progressBar.style.width = `${pct}%`;
+        progressPercent.innerText = `${pct}%`;
+        progressStep.innerText = msg;
+        const lastLog = logList.lastElementChild;
+        if (!lastLog || lastLog.dataset.msg !== msg) {
+            addLogLine(msg, !!highlight, !!warning);
+        }
+    }
+
+    function startProfessionalProcess(code) {
+        logList.innerHTML = '';
+        progressBar.style.width = '0%';
+        progressPercent.innerText = '0%';
+        _setProgress(8, `已提交 ${code} 的分析请求，正在等待服务端响应...`);
+    }
+
+    /** 服务端已响应（HTTP 头到达），后端正在拉行情/财务并调用模型。 */
+    // ⚠️ 实测：数据面板只要 5-6 秒，但大模型首个字节要等 40-90 秒（瓶颈在上游 prefill/排队）。
+    //    这段时间进度条一动不动，用户会直接判定「系统卡死」。
+    //    2026-09-02 升级：不再只显示单调的「已等待 N 秒」，改为分阶段进度提示
+    //    + 投资金句轮播，让等待过程有信息量、有节奏感。
+    let waitTimer = null;
+    let waitedSec = 0;
+
+    // 投资金句库 —— 等待 25 秒后开始轮播，让用户在等待中也能有收获。
+    // 中外结合，贴合站长偏好（林园 / 巴菲特 / 李大霄 / 芒格 / 格雷厄姆）。
+    const _INVEST_QUOTES = [
+        "巴菲特：别人恐惧时我贪婪，别人贪婪时我恐惧",
+        "林园：投资就是要买赚钱机器，买垄断、买龙头",
+        "李大霄：做好人、买好股、得好报",
+        "巴菲特：价格是你支付的，价值是你得到的",
+        "格雷厄姆：市场短期是投票机，长期是称重机",
+        "芒格：反过来想，总是反过来想",
+        "巴菲特：如果你不愿持有十年，就不要持有十分钟",
+        "林园：赚钱靠复利，不靠频繁交易",
+        "芒格：我做的每一件事都是难的，但那正是我做好的原因",
+        "巴菲特：护城河比短期利润更重要",
+    ];
+    let _quoteIdx = 0;
+
+    function _stopWaitTimer() {
+        if (waitTimer) { clearInterval(waitTimer); waitTimer = null; }
+    }
+
+    // 分阶段进度提示：基于后端实测耗时推断当前在做什么。
+    // 阶段划分对应数据面板拉取（0-14s）→ 模型 prefill（15s+）→ 正文生成（25s+）。
+    function _waitMessage(sec) {
+        if (sec <= 4)
+            return `📡 正在调取实时行情快照…（${sec}s）`;
+        if (sec <= 9)
+            return `📊 正在拉取财务报表与估值百分位…（${sec}s）`;
+        if (sec <= 14)
+            return `🔍 正在汇总资金流向与市场情绪指标…（${sec}s）`;
+        if (sec <= 24) {
+            const pct = Math.min(56, 49 + Math.floor((sec - 14) / 3));
+            progressBar.style.width = `${pct}%`;
+            progressPercent.innerText = `${pct}%`;
+            return `🧠 数据面板已就绪，大模型正在阅读并构思报告框架…（${sec}s）`;
+        }
+        // 25s+：进入正文生成等待，轮播投资金句，让等待有收获
+        const pct = Math.min(58, 56 + Math.floor((sec - 24) / 12));
+        progressBar.style.width = `${pct}%`;
+        progressPercent.innerText = `${pct}%`;
+        const quote = _INVEST_QUOTES[_quoteIdx % _INVEST_QUOTES.length];
+        _quoteIdx++;
+        return `✍️ AI 正在撰写深度报告…（${sec}s）｜💡 ${quote}`;
+    }
+
+    function onServerConnected() {
+        _setProgress(35, "服务端已建立连接，正在调取实时行情快照...");
+        _stopWaitTimer();
+        waitedSec = 0;
+        _quoteIdx = 0;
+        waitTimer = setInterval(() => {
+            waitedSec += 1;
+            _setProgress(35 + Math.min(21, waitedSec), _waitMessage(waitedSec));
+        }, 1000);
+    }
+
+    /** 收到首个流式分片，说明模型真的开始产出内容了。 */
+    function onFirstChunk() {
+        _stopWaitTimer();
+        _setProgress(60, "数据装载完毕，AI 推理引擎开始生成报告...", true);
+    }
+
+    /** 流式生成中：按已接收内容长度渐进推进到 95%，不再谎报 100%。 */
+    function onStreaming(chars) {
+        const pct = Math.min(95, 60 + Math.floor(chars / 60));
+        progressBar.style.width = `${pct}%`;
+        progressPercent.innerText = `${pct}%`;
+        progressStep.innerText = `正在生成投资分析报告（已输出 ${chars} 字）...`;
+    }
+
+    function finishProgressAnimation() {
+        progressBar.style.transition = 'width 0.6s ease-out';
+        progressBar.style.width = '100%';
+        progressPercent.innerText = '100%';
+        progressStep.innerText = "报告生成完成";
+        addLogLine("分析完成，正在渲染...", true, false);
+    }
+
+    function addLogLine(text, highlight=false, warning=false) {
+        const div = document.createElement('div');
+        div.className = 'log-item';
+        div.dataset.msg = text;
+        const time = new Date().toTimeString().split(' ')[0];
+        let contentClass = 'log-content';
+        if (highlight) contentClass += ' highlight';
+        if (warning) contentClass += ' warning';
+        /* ⚠️ `text` 必须过 esc()。存在一条外链可触发的完整链路：
+             /analysis?code=<img src=x onerror=...>   （URL 参数，攻击者可控）
+               → 预填进 analysisInput
+               → 用户点「立即分析」→ startProfessionalProcess(code)
+               → _setProgress(8, `已提交 ${code} ...`) → 本函数 → innerHTML
+           在这一层转义即可覆盖所有调用点（不必逐个调用点改）。
+           另外 1282 行的 progressStep 用的是 innerText，本来就是安全的。
+           `time` 是本地时间字符串、`contentClass` 是内部拼接的字面量，两者无需转义。 */
+        div.innerHTML = `<span class="log-time">[${time}]</span><span class="${contentClass}">${esc(text)}</span>`;
+        logList.appendChild(div);
+        if (logList.children.length > 6) logList.removeChild(logList.firstElementChild);
+    }
+
+    // 进度已改为事件驱动，无后台定时器需要清理；保留空实现供错误分支调用。
+    function stopProfessionalProcess() { /* no-op */ }
+
+    // --- 主分析逻辑 ---
+    async function runAnalysis(code) {
+        // 连点直接吞掉：分析一旦开跑，再次点击不会更快，只会再扣一次配额、
+        // 再落一条几乎一样的记录。这里必须与服务端锁配套（服务端返回 409 兜底）。
+        if (isAnalyzing) return;
+        if (!code) {
+            systemStatusText.innerText = '请输入股票代码或名称，或先从下拉中选中一只股票';
+            systemStatusText.style.color = '#f59e0b';
+            statusLight.className = 'indicator-light';
+            return;
+        }
+        isAnalyzing = true;
+        setRunBusy(true);
+        analysisAbort = new AbortController();
+        reportContent.innerHTML = '';
+        emptyState.style.display = 'none';
+        reportContent.style.display = 'none';
+        loadingState.style.setProperty('display', 'flex', 'important');
+        btnDownloadPdf.disabled = true;
+        document.getElementById('btnWatch').disabled = true;
+        currentWatchCode = "";
+        analysisInput.value = code;
+        // 用户已主动开跑，清掉外链带入时的视觉引导（预填蓝字 + 按钮呼吸）
+        analysisInput.classList.remove('is-prefilled');
+        btnRun.classList.remove('btn-attention');
+        statusLight.className = 'indicator-light processing';
+        systemStatusText.innerText = `正在分析: ${code} ...`;
+        systemStatusText.style.color = "#38bdf8";
+
+        startProfessionalProcess(code);
+
+        const startTime = Date.now();
+        const minDelay = 1500;
+        try {
+            const fetchTask = fetch('/api/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: code, model: selectedModelId, preference: selectedPrefId }),
+                signal: analysisAbort.signal   // 支持「取消分析」
+            });
+            const response = await fetchTask;
+            const elapsed = Date.now() - startTime;
+            const remaining = minDelay - elapsed;
+            if (remaining > 0) await new Promise(r => setTimeout(r, remaining));
+            document.getElementById('latencyDisplay').innerText = (Date.now() - startTime) + 'ms';
+
+            if (response.status === 401 || response.status === 403) {
+                const errData = await response.json().catch(() => ({}));
+                stopProfessionalProcess();
+                loadingState.style.setProperty('display', 'none', 'important');
+                statusLight.className = 'indicator-light error';
+                systemStatusText.innerText = "需要登录 / 会员";
+                systemStatusText.style.color = "#ef4444";
+                reportContent.style.display = 'block';
+                reportContent.innerHTML = `
+                    <div class="alert alert-warning border-0 bg-warning bg-opacity-10 text-warning p-4 rounded-3">
+                        <h4 class="alert-heading"><i class="fa-solid fa-lock me-2"></i>无法开始分析</h4>
+                        <p>${errData.error || '请先登录或升级会员后再使用'}</p>
+                    </div>`;
+                return;
+            }
+            // 409 = 服务端判定「这个用户已经有分析在跑」（多标签页 / 刷新后重发 /
+            // 前端守卫被绕过）。此时绝不能当成故障，也不能让loading态卡住。
+            if (response.status === 409) {
+                stopProfessionalProcess();
+                loadingState.style.setProperty('display', 'none', 'important');
+                statusLight.className = 'indicator-light error';
+                systemStatusText.innerText = "已有分析正在进行";
+                systemStatusText.style.color = "#f59e0b";
+                reportContent.style.display = 'block';
+                reportContent.innerHTML = `
+                    <div class="alert alert-warning border-0 bg-warning bg-opacity-10 text-warning p-4 rounded-3">
+                        <h4 class="alert-heading"><i class="fa-solid fa-spinner me-2"></i>上一次分析还在进行中</h4>
+                        <p class="mb-0">请等它跑完再开始新的分析。重复提交不会更快，只会多消耗一次额度。</p>
+                    </div>`;
+                return;
+            }
+            if (!response.ok) throw new Error(`服务端错误: ${response.status}`);
+
+            // 服务端已响应：后端此刻正在拉行情/财务并调用模型（真实事件）
+            onServerConnected();
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let accumulatedText = "";
+            let gotFirstChunk = false;
+            currentStockName = code;
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                let chunk = decoder.decode(value, { stream: true });
+                // ⚠️ 心跳保活：服务端在首字节之前每 5 秒发一个换行，防止反代 / 内网穿透
+                //    把长时间无数据的空闲连接掐断（那会表现为 network error）。
+                //    心跳绝不能当正文处理 —— 否则会提前切走加载态，让用户对着空白页干等。
+                const isBeat = !gotFirstChunk && chunk.trim() === "";
+                if (!isBeat) {
+                    // 首字节之后的心跳是零宽空格（不能插换行，会打断 markdown 表格/代码块），
+                    // 渲染不可见，但导出 PDF 前要剥掉，避免混进正文。
+                    chunk = chunk.replace(/\u200b/g, "");
+                    accumulatedText += chunk;
+                }
+                if (!gotFirstChunk) {
+                    if (isBeat) continue;   // 纯心跳，继续等真正的正文
+                    // 首个分片到达 = 模型真的开始输出了，此时才切到正文视图
+                    gotFirstChunk = true;
+                    onFirstChunk();
+                    loadingState.style.setProperty('display', 'none', 'important');
+                    reportContent.style.display = 'block';
+                    statusLight.className = 'indicator-light success';
+                    systemStatusText.innerText = "正在接收分析数据...";
+                    systemStatusText.style.color = "#10b981";
+                } else {
+                    onStreaming(accumulatedText.length);
+                }
+                // ⚠️ 走 renderMarkdown（marked + DOMPurify 消毒）：AI 输出不可信，
+                //    直接 marked.parse 进 innerHTML 等于给提示词注入开后门。
+                requestAnimationFrame(() => { reportContent.innerHTML = renderMarkdown(accumulatedText); });
+            }
+            // 服务端返回了空内容（未产出任何分片）也要收尾，避免卡在加载态
+            if (!gotFirstChunk) {
+                loadingState.style.setProperty('display', 'none', 'important');
+                reportContent.style.display = 'block';
+            }
+            // 流真正结束才走到 100%
+            _stopWaitTimer();
+            finishProgressAnimation();
+            systemStatusText.innerText = "分析完成 | Report Generated";
+            btnDownloadPdf.disabled = false;
+            document.getElementById('btnWatch').disabled = false;
+            refreshWatchState();
+        } catch (error) {
+            _stopWaitTimer();
+            stopProfessionalProcess();
+            loadingState.style.setProperty('display', 'none', 'important');
+            reportContent.style.display = 'block';
+            if (error && error.name === 'AbortError') {
+                // 用户主动取消：不是故障，别甩红色报错吓人，也别丢掉已经收到的内容。
+                statusLight.className = 'indicator-light';
+                systemStatusText.innerText = "已取消分析";
+                systemStatusText.style.color = "#94a3b8";
+            } else {
+                statusLight.className = 'indicator-light error';
+                systemStatusText.innerText = "系统错误 / Error";
+                systemStatusText.style.color = "#ef4444";
+                // ⚠️ 必须区分「链路被掐断」和「服务端报错」：用户看到的都是同一个红色报错框，
+                //    但排查方向完全不同。分析要跑 1-2 分钟，中间若长时间无数据流动，
+                //    代理 / 内网穿透 / 云防火墙会当成空闲连接掐掉，fetch 抛 network error
+                //    —— 这跟股票代码毫无关系，旧文案却把人往代码上引。
+                const errMsg = String((error && error.message) || '');
+                const isNetErr = /network ?error|failed to fetch|load failed|connection (was )?(closed|reset|aborted)/i.test(errMsg);
+                reportContent.innerHTML = `
+                    <div class="alert alert-danger border-0 bg-danger bg-opacity-10 text-danger p-4 rounded-3">
+                        <h4 class="alert-heading"><i class="fa-solid fa-triangle-exclamation me-2"></i>分析中断</h4>
+                        <p>${isNetErr
+                            ? '网络连接在分析过程中被中断。分析包含「数据拉取 + 模型生成」，整体可达 1-2 分钟；若中途长时间没有数据流动，代理、内网穿透或云防火墙会把这条连接当成空闲连接掐掉。<b>这与股票代码无关</b>，请直接重试；若频繁出现，建议改用局域网直连地址访问。'
+                            : '在连接数据节点时发生错误，请检查股票代码是否正确或稍后重试。'}</p>
+                        <hr><p class="mb-0 font-mono small opacity-75">${esc(errMsg)}</p>
+                    </div>`;
+            }
+        } finally {
+            // 无论成功 / 失败 / 取消 / 409，都要解除运行态，否则按钮永远灰着。
+            isAnalyzing = false;
+            analysisAbort = null;
+            setRunBusy(false);
+            // ⚠️ 导出/收藏按钮只在成功路径恢复过 —— 取消/报错后必须在这里统一恢复，
+            //    否则半份正文能看却不能导出/收藏，按钮要等下一次完整成功才复活（2026-09-09 修复）。
+            btnDownloadPdf.disabled = false;
+            const _wBtn = document.getElementById('btnWatch');
+            if (_wBtn) _wBtn.disabled = false;
+            // 复位后再按当前模型/偏好重新判定是否该禁用（VIP 锁定 / 模型停用等）。
+            // renderOptions 只重绘列表、不碰 btnRun.disabled —— 真正的锁判定在
+            // updateSelectionState，必须显式调用，否则体检把模型判 hard-down 后
+            // 按钮会被 setRunBusy 无条件点亮（2026-09-09 修复）。
+            renderOptions();
+            updateSelectionState();
+        }
+    }
+
+    // PDF 导出逻辑
+    btnDownloadPdf.addEventListener('click', async function() {
+        const originalHtml = this.innerHTML;
+        this.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin me-2"></i>生成中...';
+        this.disabled = true;
+        try {
+            const res = await fetch('/api/export-pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ html_content: reportContent.innerHTML, stock_name: currentStockName })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (data.download_url) {
+                const link = document.createElement('a');
+                link.href = data.download_url;
+                link.download = data.filename;
+                link.click();
+            } else { alert(data.detail || '导出失败'); }
+        } catch (e) { alert('导出失败，请稍后重试'); }
+        finally { this.innerHTML = originalHtml; this.disabled = false; }
+    });
+
+    // ===== 自选股收藏 =====
+    async function refreshWatchState() {
+        try {
+            const res = await fetch('/api/watchlist/check?ts_code=' + encodeURIComponent(currentStockName));
+            const d = await res.json().catch(() => ({}));
+            if (d.logged_in === false) { setWatchUI(false, true); return; }
+            if (d.ts_code) currentWatchCode = d.ts_code;
+            setWatchUI(d.watched === true, false);
+        } catch (e) { setWatchUI(false, false); }
+    }
+    function setWatchUI(watched, disable) {
+        const btn = document.getElementById('btnWatch');
+        if (!btn) return;
+        btn.dataset.watched = watched ? 'true' : 'false';
+        if (watched) {
+            btn.innerHTML = '<i class="fa-solid fa-star me-2"></i>已收藏';
+            btn.style.color = '#fbbf24';
+            btn.style.borderColor = '#fbbf24';
+        } else {
+            btn.innerHTML = '<i class="fa-regular fa-star me-2"></i>收藏';
+            btn.style.color = '';
+            btn.style.borderColor = '';
+        }
+        if (disable) { btn.disabled = true; btn.title = '登录后可收藏'; }
+    }
+    async function toggleWatch() {
+        const btn = document.getElementById('btnWatch');
+        if (!btn || btn.disabled) return;
+        if (!currentStockName) { alert('请先完成一次分析'); return; }
+        const watched = btn.dataset.watched === 'true';
+        const prev = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>处理中…';
+        try {
+            const url = watched ? '/api/watchlist/remove' : '/api/watchlist';
+            const body = watched
+                ? { ts_code: currentWatchCode || currentStockName }
+                : { ts_code: currentWatchCode || currentStockName, stock_name: currentStockName };
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const d = await res.json().catch(() => ({}));
+            if (res.status === 401) { alert('请先登录后再收藏 / 取消'); btn.disabled = false; btn.innerHTML = prev; return; }
+            if (!res.ok || d.status !== 'success') { alert(d.detail || d.msg || '操作失败'); btn.disabled = false; btn.innerHTML = prev; return; }
+            if (d.ts_code) currentWatchCode = d.ts_code;
+            setWatchUI(!watched);
+        } catch (e) {
+            alert('操作失败，请稍后重试');
+            btn.disabled = false; btn.innerHTML = prev;
+            return;
+        }
+        btn.disabled = false;
+    }
+
+    // 股票搜索自动补全
+    const stockSuggest = document.getElementById('stockSuggest');
+    let suggestItems = [];
+    let suggestActive = -1;
+    let suggestTimer = null;
+    let suppressEnter = false;
+
+    function renderSuggest(results) {
+        suggestItems = results || [];
+        suggestActive = -1;
+        if (!suggestItems.length) { hideSuggest(); return; }
+        /* ⚠️ 所有插值必须过 esc()。
+           ① `analysisInput.value` 是**用户输入** —— 直接拼进 innerHTML 就是 XSS：
+              输入 `<img src=x onerror=...>` 一点回车就执行。虽然是 self-XSS（不持久化、
+              只能自己坑自己），但用户完全可能被诱导粘贴一段「股票代码」而中招。
+           ② `it.name` / `it.code` / `it.market` 来自搜索接口，同属不可信输入。
+           `data-i="${i}"` 是数字、`it.market === 'A'` 的三元结果是字面量，这两处安全。 */
+        const kw = esc(analysisInput.value.trim());
+        stockSuggest.innerHTML = `
+            <div class="suggest-item" data-i="-1">
+                <span class="suggest-name">分析「${kw}」</span>
+                <span class="suggest-code">原样提交 ↵</span>
+            </div>` + suggestItems.map((it, i) => `
+            <div class="suggest-item" data-i="${i}">
+                <span class="suggest-name">${esc(it.name)}</span>
+                <span style="display:flex;align-items:center;gap:8px;">
+                    <span class="suggest-code">${esc(it.code)}</span>
+                    <span class="suggest-market ${esc(it.market)}">${it.market === 'A' ? 'A股' : '港股'}</span>
+                </span>
+            </div>`).join('');
+        positionSuggest();
+        stockSuggest.style.display = 'block';
+        syncDsCardLift();   // 与 modelPanel 统一同步宿主抬升
+    }
+    // 面板与输入框对齐：left = 输入框左缘，right = 搜索按钮左缘。
+    // 硬编码偏移（left:52px / right:112px）会随布局/文案变化错位，改为实时测量。
+    function positionSuggest() {
+        if (!stockSuggest) return;
+        const input = analysisInput.getBoundingClientRect();
+        const hero = stockSuggest.parentElement.getBoundingClientRect();
+        stockSuggest.style.left = Math.round(input.left - hero.left) + 'px';
+        stockSuggest.style.right = Math.round(hero.right - input.right + 0) + 'px';
+        // right 端对齐输入框右缘；按钮区不覆盖，避免误触「立即分析」
+        stockSuggest.style.right = Math.round(hero.right - input.right) + 'px';
+    }
+    function hideSuggest() {
+        stockSuggest.style.display = 'none';
+        stockSuggest.innerHTML = '';
+        suggestItems = [];
+        suggestActive = -1;
+        syncDsCardLift();   // 与 modelPanel 统一同步宿主抬升
+    }
+    function highlightSuggest() {
+        stockSuggest.querySelectorAll('.suggest-item').forEach((el, i) => el.classList.toggle('active', i === suggestActive));
+    }
+    function pickSuggest(i) {
+        // data-i="-1" = 原样提交第一项
+        if (i === -1 || i < 0) {
+            const q = analysisInput.value.trim();
+            hideSuggest();
+            if (q) { runAnalysis(q); }
+            return;
+        }
+        const it = suggestItems[i];
+        if (!it) return;
+        analysisInput.value = it.name;
+        currentWatchCode = it.code || '';
+        hideSuggest();
+        // 选中不等于分析：仅填充，提示用户选择投资风格后点击「立即分析」
+        systemStatusText.innerText = `已选择 ${it.name}（${it.code}），请选择投资风格后点击「立即分析」`;
+        systemStatusText.style.color = '#38bdf8';
+    }
+    // 联想乱序守卫：快速连续输入时，先发的慢响应不得覆盖后发的（2026-09-09 修复）
+    let suggestSeq = 0;
+    analysisInput.addEventListener('input', () => {
+        const q = analysisInput.value.trim();
+        analysisInput.classList.remove('is-prefilled');   // 用户自己改了输入，取消预填态
+        clearTimeout(suggestTimer);
+        if (q.length < 1) { hideSuggest(); systemStatusText.innerText = '系统就绪 / Waiting for input'; systemStatusText.style.color = ''; return; }
+        // 先显示「原样提交」占位，请求回来后填充结果 —— 避免网络慢时面板闪跳
+        stockSuggest.innerHTML = '<div class="suggest-loading"><i class="fa-solid fa-spinner fa-spin me-2"></i>搜索中…</div>';
+        positionSuggest();
+        stockSuggest.style.display = 'block';
+        syncDsCardLift();   // 与 renderSuggest 同步宿主抬升
+        const mySeq = ++suggestSeq;   // 本次请求序号
+        suggestTimer = setTimeout(async () => {
+            try {
+                const r = await (await fetch('/api/stocks/search?q=' + encodeURIComponent(q) + '&limit=8')).json();
+                if (mySeq !== suggestSeq) return;   // 期间用户又输入了，丢弃过期结果
+                renderSuggest(r.results || []);
+            } catch (e) {
+                if (mySeq === suggestSeq) hideSuggest();   // 旧请求失败不得藏掉新结果
+            }
+        }, 220);
+    });
+    analysisInput.addEventListener('keydown', (e) => {
+        if (stockSuggest.style.display !== 'block') return;
+        if (e.key === 'ArrowDown') { e.preventDefault(); suggestActive = Math.min(suggestActive + 1, suggestItems.length); highlightSuggest(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); suggestActive = Math.max(suggestActive - 1, -1); highlightSuggest(); }
+        else if (e.key === 'Enter' && suggestActive >= -1) { e.preventDefault(); suppressEnter = true; pickSuggest(suggestActive); }
+        else if (e.key === 'Escape') { hideSuggest(); }
+    });
+    window.addEventListener('resize', () => { if (stockSuggest.style.display === 'block') positionSuggest(); });
+    stockSuggest.addEventListener('mousedown', (e) => {
+        const item = e.target.closest('.suggest-item');
+        if (item) { e.preventDefault(); pickSuggest(parseInt(item.getAttribute('data-i'), 10)); }
+    });
+    document.addEventListener('click', (e) => { if (!e.target.closest('.search-hero')) hideSuggest(); });
+
+    // 页面初始化
+    document.addEventListener('DOMContentLoaded', () => {
+        // URL 指定模型（首页带过来的）优先于后台默认；不合法时保持默认
+        if (urlModelId) {
+            const cand = findModelById(urlModelId) ||
+                (analysisOptions.models || []).find(c => c.id === urlModelId);
+            if (cand) { selectedModelId = cand.id; userPickedModel = true; }
+        }
+        if (!selectedModelId) selectedModelId = pickDefaultModel();
+        // 外部页面带 ?pref= 进来时直接选中该风格（VIP 锁定的风格免费用户不可用，
+        // 页面初始化阶段 isVip 尚未从接口刷新，这里只做基本匹配，loadOptions 会再校验）
+        const prefCand = (analysisOptions.preferences || []).find(p => p.id === urlPrefId);
+        if (prefCand) selectedPrefId = prefCand.id;
+        renderOptions();
+        updateSelectionState();
+        loadOptions();
+        // ⚠️ 外链带 ?code= 进来时只做「预填」，**不自动开跑**。原因有二：
+        //   ① 用户还没选择大模型与投资偏好，自动跑用的是系统默认值，不是他想要的配置；
+        //   ② 研报会消耗每日配额（会员还有深度额度），未确认就自动执行等于替用户花掉配额。
+        // 与 pickSuggest 的「选中 ≠ 分析」保持一致：填充输入框 + 给出提示，等用户点「立即分析」。
+        const code = _urlParams.get('code');
+        if (code) {
+            analysisInput.value = code;
+            analysisInput.classList.add('is-prefilled');
+            systemStatusText.innerText = `已带入 ${code}，请确认模型与投资偏好后点击「立即分析」`;
+            systemStatusText.style.color = '#38bdf8';
+            btnRun.classList.add('btn-attention');
+        }
+    });
+
+    btnRun.addEventListener('click', () => runAnalysis(analysisInput.value.trim()));
+    analysisInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { if (suppressEnter) { suppressEnter = false; return; } runAnalysis(analysisInput.value.trim()); } });
+</script>
+{% endblock %}
