@@ -964,7 +964,7 @@ async def analysis_archive_page(rid: int, request: Request):
 async def pdoc_page(request: Request):
     return templates.TemplateResponse(
         request,
-        "deepstock_dev_docs.html",
+        "dev_docs.html",
         {"request": request, "active_page": "doc"}
     )
 
