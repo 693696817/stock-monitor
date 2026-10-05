@@ -529,6 +529,7 @@ async def analyze_stock_stream(stock_name: str, stock_code: str, data_summary: s
         hard_deadline = t_start + FIRST_TOKEN_TIMEOUT * 3
         saw_thinking = False
         first_chunk = None
+        _skipped = []
         try:
             while True:
                 now = asyncio.get_event_loop().time()
@@ -551,6 +552,7 @@ async def analyze_stock_stream(stock_name: str, stock_code: str, data_summary: s
                     text = thinker.peek(text)
                     if not text.strip():
                         saw_thinking = True
+                        _skipped.append(chunk)
                         continue
                 if not text.strip() and not reason.strip():
                     continue
@@ -564,6 +566,8 @@ async def analyze_stock_stream(stock_name: str, stock_code: str, data_summary: s
             raise
         except StopAsyncIteration:
             return
+        for _c in _skipped:
+            yield _c
         yield first_chunk
         async for chunk in stream:
             yield chunk
@@ -615,6 +619,8 @@ async def analyze_stock_stream(stock_name: str, stock_code: str, data_summary: s
                         _extra_body = {"thinking": {"type": "disabled"}}
                     elif "maas.aliyuncs.com" in _base_l:
                         _extra_body = {"enable_thinking": False}
+                    elif "api.deepseek.com" in _base_l:
+                        _extra_body = {"thinking": {"type": "disabled"}}
 
                 async def _mk_stream(temp, max_tok):
                     sys_text = system_prompt
@@ -679,7 +685,7 @@ async def analyze_stock_stream(stock_name: str, stock_code: str, data_summary: s
                     raise _last_err
 
                 _REASON_PROBE_LIMIT = 1200
-                _REASON_GIVEUP = 20000
+                _REASON_GIVEUP = 30000
                 _REASON_GIVEUP_SECS = 240.0 if _is_local_channel(_ch) else 180.0
                 _BODY_MIN_CHARS = 3000 if _is_deep else 1500
                 _MIN_HEADINGS = 4 if _is_deep else 3
