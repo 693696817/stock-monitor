@@ -772,7 +772,7 @@ async def analyze_stock_stream(stock_name: str, stock_code: str, data_summary: s
                     if blob.strip() and _looks_like_body(blob):
                         produced = True
                         yield _take(_sanitize_reason_passage(blob))
-                _rest = thinker.flush() + eng_filt.flush()
+                _rest = eng_filt.feed(thinker.flush()) + eng_filt.flush()
                 if _rest.strip():
                     produced = True
                     yield _take(_rest)
