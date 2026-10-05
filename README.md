@@ -1,6 +1,6 @@
 <div align="center">
 
-# A股棱镜 · AI Value Prism
+# A股棱镜 · stock-monitor
 
 <img src="docs/images/home.jpg" alt="A股棱镜" width="820">
 
