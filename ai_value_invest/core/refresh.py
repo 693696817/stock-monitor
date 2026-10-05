@@ -8,7 +8,7 @@ def refresh_analysis_preferences(app):
 def refresh_site_settings(app):
     keys = ["SITE_NAME", "SITE_DOMAIN", "SITE_LOGO_URL",
             "SEO_TITLE", "SEO_KEYWORDS", "SEO_DESCRIPTION", "SEO_OG_IMAGE",
-            "ICP_NUMBER"]
+            "ICP_NUMBER", "BAIDU_TONGJI_ID"]
     site = {}
     for k in keys:
         site[k] = (settings.get_setting(k, "") or "")

@@ -615,6 +615,11 @@
                         <label class="admin-form-label">OG 分享图 URL（微信/社交分享卡片）</label>
                         <input class="admin-input" id="f_SEO_OG_IMAGE" placeholder="https://.../og.png（留空则用默认）">
                     </div>
+                    <div class="col-md-12">
+                        <label class="admin-form-label">百度统计 ID（留空 = 不加载统计脚本）</label>
+                        <input class="admin-input" id="f_BAIDU_TONGJI_ID" placeholder="如 abcdef1234567890abcdef1234567890（百度统计 → 管理 → 代码获取）">
+                        <div class="tab-help mt-1">全站注入统计脚本（<b>后台 /admin 除外</b>，避免管理员访问污染访客数据）。留空则完全不加载。</div>
+                    </div>
                 </div>
                 <button class="btn btn-analyze mt-3" id="saveSiteBtn"><i class="fa-solid fa-floppy-disk me-2"></i>保存站点设置</button>
             </div>
@@ -1288,7 +1293,7 @@
         reader.readAsText(file);
     }
     function saveSiteSettings() {
-        const keys = ['SITE_NAME','SITE_DOMAIN','SITE_LOGO_URL','SEO_TITLE','SEO_KEYWORDS','SEO_DESCRIPTION','SEO_OG_IMAGE'];
+        const keys = ['SITE_NAME','SITE_DOMAIN','SITE_LOGO_URL','SEO_TITLE','SEO_KEYWORDS','SEO_DESCRIPTION','SEO_OG_IMAGE','BAIDU_TONGJI_ID'];
         const payload = {};
         keys.forEach(function (k) { payload[k] = val('f_' + k) || ''; });
         postSettings(payload, 'saveSiteBtn', '<i class="fa-solid fa-floppy-disk me-2"></i>保存站点设置', '站点设置已保存并即时生效', false);
@@ -1820,7 +1825,7 @@
             // 先让 state 就位（含 plans/preferences），再一次性渲染
             render();
             // 站点输入框在 render 之后才存在，这里回填
-            ['SITE_NAME','SITE_DOMAIN','SITE_LOGO_URL','SEO_TITLE','SEO_KEYWORDS','SEO_DESCRIPTION','SEO_OG_IMAGE','ICP_NUMBER']
+            ['SITE_NAME','SITE_DOMAIN','SITE_LOGO_URL','SEO_TITLE','SEO_KEYWORDS','SEO_DESCRIPTION','SEO_OG_IMAGE','ICP_NUMBER','BAIDU_TONGJI_ID']
                 .forEach(function (k) { const el = document.getElementById('f_' + k); if (el) el.value = s[k] || ''; });
             // 法务运营者 / 公告条 / 配额规则输入框（在 site/plan tab 卡片里）
             ['entity','email','wechat','address','dpo','sla'].forEach(function (k) {

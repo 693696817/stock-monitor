@@ -178,6 +178,7 @@ SETTING_KEYS = {
     "SEO_KEYWORDS": "",
     "SEO_DESCRIPTION": "",
     "SEO_OG_IMAGE": "",
+    "BAIDU_TONGJI_ID": "",
     "PRICING_PLANS": json.dumps(_default_pricing_plans(), ensure_ascii=False),
     "ANALYSIS_PREFERENCES": json.dumps(_default_analysis_preferences(), ensure_ascii=False),
     "REGISTER_BONUS_NORMAL": "5",

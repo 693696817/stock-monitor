@@ -1,0 +1,13 @@
+{% set _tj_id = (site.get('BAIDU_TONGJI_ID') or '') | trim %}
+{% set _tj_path = request.url.path if request else '/' %}
+{% if _tj_id and _tj_id | length <= 64 and not _tj_path.startswith('/admin') %}
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?{{ _tj_id | e }}";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+{% endif %}
