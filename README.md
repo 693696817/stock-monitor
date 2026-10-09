@@ -1,21 +1,26 @@
 <div align="center">
 
-# A股棱镜 · stock-monitor
+<img src="docs/images/home.jpg" alt="A股棱镜 · 开源 A 股基本面分析与 AI 估值研究系统" width="820">
 
-<img src="docs/images/home.jpg" alt="A股棱镜" width="820">
+# A股棱镜（stock-monitor）
 
-# 拒绝盲目炒作，回归商业本质的价值投资
+**开源的 A 股基本面分析与 AI 估值研究系统 —— 把「AI 说的话」变成「可复核的结论」**
 
-**把「AI 说的话」变成「可复核的结论」**
+输入股票代码 → 聚合 22 组基本面数据 → 调用任意大模型生成深度研报 →
+在 20 / 60 / 120 / 250 个交易日后自动回填**真实涨跌**，公开对账模型的判断准确率。
 
-> A 股基本面分析 · 估值测算 · AI 研报 · 策略回测 · 智能选股
+**拒绝盲目炒作，回归商业本质的价值投资。**
+
+> A 股 · 基本面分析 · DCF 估值测算 · AI 深度研报 · 策略回测 · 智能选股 · 财务排雷
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Jinja2](https://img.shields.io/badge/Jinja2-3.1-b41717?logo=jinja&logoColor=white)](https://jinja.palletsprojects.com/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Gitee](https://img.shields.io/badge/Gitee-zyj118-c71d23?logo=gitee&logoColor=white)](https://gitee.com/zyj118/stock-monitor)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://gitee.com/zyj118/stock-mirror/pulls)
+[![GitHub](https://img.shields.io/badge/GitHub-stock--monitor-181717?logo=github&logoColor=white)](https://github.com/693696817/stock-monitor)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://gitee.com/zyj118/stock-monitor/pulls)
 
 🔗 **在线体验** → <https://stock.a654.com>
 
@@ -354,13 +359,18 @@ A股棱镜的做法是：**阈值自动取自你自己最近一次研报的合�
 |---|---|
 | Web 框架 | FastAPI + Jinja2（服务端渲染，**无前端构建步骤**） |
 | 数据库 | MySQL 8（生产）/ SQLite（本地开发回退），DBUtils 连接池 |
-| AI 接入 | **OpenAI 兼容协议，任意模型可配** |
+| AI 接入 | **OpenAI 兼容协议，任意 LLM 可配**（豆包 / DeepSeek / 通义千问 / GLM / Kimi / 本地 Ollama） |
 | 数据源 | **全部可任意配置**，支持多源冗余 |
 | PDF 导出 | WeasyPrint（主）+ xhtml2pdf（兜底）双引擎 |
 | 前端 | 原生 JS + Bootstrap 5 + Font Awesome，无打包工具 |
 | 设计系统 | CSS 变量令牌（`static/css/tokens.css`）+ 视觉增强层 |
 
 **规模**：60 个 Python 模块 / 26,521 行代码 / 32 个模板 / 68 个路由 / 15 张数据表。
+
+**定位**：这不是一个交易执行系统，而是一套**面向基本面研究的量化分析工具** ——
+用 22 组财务与估值指标做量化打分，用 LLM 生成可读的深度研报，
+再用事后回测（backtest）验证这些判断的真实命中率。**适合自部署、私有部署**，
+代码与数据都在你自己的服务器上。
 
 ### 强调：模型与数据源都不绑定
 
@@ -654,6 +664,8 @@ AI_MODEL_ID=qwen3:14b
 | 判断一家公司值不值得买 | AI 深度研报 + DCF 估值区间 |
 | 找被市场错杀的标的 | 深度价值偏好 + 研报复盘的评分有效性 |
 | 验证 AI 到底准不准 | 研报复盘（模型准确率 / 方向命中率） |
+| 量化筛选、批量扫标的 | 每日价值筛选 + 22 组基本面指标排序 |
+| 自己搭一套估值模型 | 估值参数、折现率、情景假设均可在后台配置 |
 | 盯住自己的持仓 | 合理价告警（阈值自动取自你的研报） |
 | 监控整个市场 | 大盘活跃度七维仪表 + 赚钱效应曲线 |
 | 跟踪财报窗口 | 财报披露日历 + 披露提醒 |
@@ -684,6 +696,24 @@ AI_MODEL_ID=qwen3:14b
 ---
 
 ## 常见问题
+
+<details>
+<summary><b>这是一个什么项目？</b></summary>
+
+**A股棱镜（stock-monitor）** 是一套**开源的 A 股基本面分析与 AI 估值研究系统**。
+技术栈为 FastAPI + Jinja2 + MySQL，可接入任意大模型（LLM）与多数据源，支持自部署与私有部署。
+
+核心差异是**让 AI 的结论可以被检验**：每条 AI 判断都会在 20 / 60 / 120 / 250 个交易日后
+自动回填真实涨跌并公开对账 —— 大多数「AI 选股」工具只输出结论、无法验证，
+本项目把这个缺口补上了。
+</details>
+
+<details>
+<summary><b>和常见的「AI 选股」工具有什么区别？</b></summary>
+
+区别在**可证伪性**。普通 AI 选股工具给你一段分析就结束了，涨了是它对、跌了不吭声；
+本项目把每条判断连同当时的估值区间一起存档，到期自动对账，准确率是**算出来的、不是喊出来的**。
+</details>
 
 <details>
 <summary><b>必须配置数据源吗？</b></summary>

@@ -1,0 +1,33 @@
+# ============================================================
+# GitHub linguist 语言统计修正
+# ------------------------------------------------------------
+# 本项目是 **Python 后端（FastAPI）** 项目，但仓库里同时有：
+#   · Jinja2 服务端模板（.html，约 1.0 MB）—— 是「渲染产物」，不是前端工程
+#   · 第三方前端库（echarts / chart.js / bootstrap / marked / purify，约 1.3 MB）
+# 两者的字节数都超过 Python 源码（约 0.88 MB），导致仓库被标成 HTML 项目，
+# 在「按语言筛选 Python 项目」时搜不到 —— 对想找 FastAPI/量化项目的开发者是损失。
+# 下面把非项目语言排除出统计，让 Python 正确成为主语言。
+# ============================================================
+
+# ---- 服务端模板：不是前端工程，不计入语言统计 ----
+ai_value_invest/templates/**  linguist-detectable=false
+
+# ---- 第三方前端库：一律标记为 vendored（不计入统计）----
+ai_value_invest/static/vendor/**  linguist-vendored
+*.min.js  linguist-vendored
+*.min.css  linguist-vendored
+
+# ---- 文档与静态资源 ----
+docs/**  linguist-documentation
+*.png  linguist-detectable=false
+*.jpg  linguist-detectable=false
+*.jpeg  linguist-detectable=false
+*.gif  linguist-detectable=false
+*.svg  linguist-detectable=false
+*.ico  linguist-detectable=false
+
+# ---- 强制换行符，避免跨平台 diff 噪音 ----
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
