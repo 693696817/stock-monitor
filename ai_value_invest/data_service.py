@@ -195,6 +195,23 @@ def task_realtime(symbol):
     except Exception as e:
         print(f"❌ Realtime Data Error: {e}")
 
+    try:
+        from dataservice import tencent_quote as tx_quote
+        tq = (tx_quote.realtime([symbol]) or {}).get(symbol)
+        if tq and tq.get("price"):
+            chg = tq.get("change_pct")
+            vol_hand = tq.get("volume_hand")
+            amt_wan = tq.get("amount_wan")
+            data.update({
+                "当前价格": f"{tq['price']:.2f} 元",
+                "今日涨跌幅": (f"{chg:+.2f}%" if chg is not None else "--"),
+                "成交量": (f"{vol_hand:.0f} 手" if vol_hand is not None else "--"),
+                "成交额": (f"{amt_wan / 10000:.2f} 亿元" if amt_wan is not None else "--"),
+                "换手率": (f"{tq.get('turnover_pct'):.2f}%" if tq.get("turnover_pct") is not None else "--"),
+            })
+    except Exception as e:
+        print(f"[Tencent] realtime fallback failed {symbol}: {e}")
+
     return data
 
 def task_daily_basic(ts_code):

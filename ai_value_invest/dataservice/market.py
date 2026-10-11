@@ -12,6 +12,7 @@ import db
 import lixinger_service as lx_svc
 from data_source import fetch_datahub, fetch_news_datahub
 from dataservice import common as dscommon
+from dataservice import tencent_quote as tx_quote
 from dataservice.common import SENTIMENT_ZONES, _CACHE_DIR, _WATCH_FUND_METRICS, _WATCH_KLINE_DAYS, _fetch_safe, _get_stock_list_safe, _guess_exchange, _latest_trade_date_datahub, _lookup_name_from_cache, _lx_name, _lx_rows, _lx_yi, _now_shanghai, _pulse_pick, _safe_float, analyze_sentiment_keywords, is_trading_time, pro
 from lixinger import LixingerError, get_client
 
@@ -1330,6 +1331,52 @@ def _fetch_watch_valuation(tsc):
         WATCH_VAL_CACHE[tsc] = {"v": v, "raw": raw, "ts": now}
     return {**v, "_raw": raw}
 
+
+def _tencent_watch_fallback(tsc):
+    """理杏仁行情失败时的腾讯兜底。返回 (q, raw)，失败返回 None。
+
+    单位换算：amount_wan 万元 → ×1e4 成元；volume_hand 手 → ×100 成股。
+    data_date 取腾讯字段[30]，休市自动是上一交易日，不拿今天冒充数据日。
+    """
+    try:
+        tq = (tx_quote.realtime([tsc]) or {}).get(tsc)
+        if not tq or not tq.get("price"):
+            return None
+        price = tq.get("price")
+        chg = tq.get("change_pct")
+        pre = tq.get("pre_close")
+        open_ = tq.get("open")
+        high = tq.get("high")
+        low = tq.get("low")
+        vol_hand = tq.get("volume_hand")
+        amt_wan = tq.get("amount_wan")
+        to_r = tq.get("turnover_pct")
+        q = {
+            "trade_date": tq.get("data_date") or "",
+            "close": f"{price:.2f}",
+            "pct_chg": (f"{chg:+.2f}" if chg is not None else "--"),
+            "is_up": (chg is not None and chg >= 0),
+            "open": (f"{open_:.2f}" if open_ is not None else "--"),
+            "high": (f"{high:.2f}" if high is not None else "--"),
+            "low": (f"{low:.2f}" if low is not None else "--"),
+            "pre_close": (f"{pre:.2f}" if pre is not None else "--"),
+            "amount": _fmt_amount_yuan(amt_wan * 1e4 if amt_wan is not None else None),
+            "vol": _fmt_vol_shares(vol_hand * 100 if vol_hand is not None else None),
+            "turnover": (f"{to_r:.2f}%" if to_r is not None else "--"),
+            "pe_ttm": (f"{tq['pe_ttm']:.2f}" if tq.get("pe_ttm") is not None else "--"),
+            "pb": (f"{tq['pb']:.2f}" if tq.get("pb") is not None else "--"),
+            "total_mv": (f"{tq['total_mv_yi']:.0f}亿" if tq.get("total_mv_yi") is not None else "--"),
+            "circ_mv": (f"{tq['circ_mv_yi']:.0f}亿" if tq.get("circ_mv_yi") is not None else "--"),
+        }
+        raw = {"price": price, "pct_chg": chg,
+               "pe_ttm": tq.get("pe_ttm"), "pb": tq.get("pb"),
+               "total_mv": tq.get("total_mv_yi")}
+        return q, raw
+    except Exception as e:
+        print(f"[Watch] tencent fallback failed {tsc}: {e}")
+        return None
+
+
 def fetch_watch_quotes_sync(ts_codes):
     result = {}
     if not ts_codes:
@@ -1352,10 +1399,28 @@ def fetch_watch_quotes_sync(ts_codes):
         print(f"⚠️ [Watch] 待刷新 {len(todo)} 只，超出单批上限 {_WATCH_BATCH_LIMIT}，本次只处理前 {_WATCH_BATCH_LIMIT} 只")
         todo = todo[:_WATCH_BATCH_LIMIT]
 
+    def _apply_fallback(tsc):
+        fb = _tencent_watch_fallback(tsc)
+        if not fb:
+            return False
+        q, raw = fb
+        for k in ("pe_ttm", "d_pe_ttm", "pb", "pb_wo_gw", "ps_ttm", "pcf_ttm", "dyr",
+                  "total_mv", "circ_mv", "free_mv", "shn",
+                  "pe_pos3y", "pe_pos5y", "pe_pos10y", "pb_pos5y", "ps_pos5y", "dyr_pos5y",
+                  "val_tier", "val_score"):
+            q.setdefault(k, "--")
+        q.setdefault("pos_warn", "")
+        result[tsc] = dict(q)
+        WATCH_QUOTE_CACHE[tsc] = {"q": q, "raw": raw, "ts": time.time()}
+        print(f"[Watch] {tsc} lxr failed, tencent fallback applied")
+        return True
+
     def _one(tsc):
         try:
             rows = lx_svc.fetch_candlestick(tsc, days=_WATCH_KLINE_DAYS, fq_type="lxr_fc_rights")
             if not rows:
+                if _apply_fallback(tsc):
+                    return
                 result[tsc] = None
                 return
             rows = sorted(rows, key=lambda r: str(r.get("date") or ""))
@@ -1397,6 +1462,8 @@ def fetch_watch_quotes_sync(ts_codes):
             WATCH_QUOTE_CACHE[tsc] = {"q": q, "raw": raw, "ts": time.time()}
         except Exception as e:
             print(f"⚠️ [Watch] 行情拉取失败 {tsc}: {type(e).__name__}: {e}")
+            if _apply_fallback(tsc):
+                return
             result[tsc] = None
 
     with ThreadPoolExecutor(max_workers=4) as ex:
